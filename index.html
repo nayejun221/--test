@@ -172,7 +172,8 @@
       const qs = Object.entries(params)
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
         .join('&');
-      const url = `https://api.odsay.com/v1/api/${endpoint}?${qs}&apiKey=${encodeURIComponent(ODSAY_KEY)}`;
+      const url = `https://api.odsay.com/v1/api/${endpoint}?${qs}&apiKey=${ODSAY_KEY}`;
+
       const res = await fetch(url, { referrerPolicy: 'origin' });
       return res.json();
     }
