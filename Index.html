@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>대중교통 경로 길찾기</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px 16px 40px;
+    }
+    h1 { font-size: 20px; margin-bottom: 14px; color: #fbbf24; }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .search-group { margin-bottom: 10px; position: relative; }
+    .search-group label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+    .row { display: flex; gap: 6px; }
+    input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    button {
+      background: #334155;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-primary {
+      width: 100%;
+      background: #fbbf24;
+      color: #0f172a;
+      padding: 13px;
+      font-size: 15px;
+      margin-top: 4px;
+    }
+    .btn-swap {
+      background: transparent;
+      color: #94a3b8;
+      font-size: 12px;
+      padding: 4px 0;
+      margin-bottom: 6px;
+    }
+    .dropdown {
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      margin-top: 4px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    .dropdown button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      padding: 10px 12px;
+      border-bottom: 1px solid #1e293b;
+      border-radius: 0;
+      font-weight: 400;
+    }
+    .dropdown button:hover { background: #1e293b; color: #fbbf24; }
+    .selected-info { font-size: 11px; color: #4ade80; margin-top: 4px; }
+    #map {
+      width: 100%;
+      height: 250px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      margin-bottom: 12px;
+      z-index: 1;
+    }
+    .status { font-size: 12px; color: #fbbf24; margin-bottom: 10px; line-height: 1.5; }
+    .route-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .route-card.active { border-color: #fbbf24; background: #262f40; }
+    .route-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #334155;
+      color: #fbbf24;
+    }
+    .time-big { font-size: 22px; font-weight: 800; }
+    .meta { font-size: 12px; color: #cbd5e1; margin-bottom: 10px; }
+    .steps { border-left: 2px solid #475569; padding-left: 12px; margin-left: 4px; font-size: 12px; }
+    .step-item { margin-bottom: 7px; line-height: 1.4; color: #e2e8f0; }
+    .dot-sub { color: #60a5fa; font-weight: 700; }
+    .dot-bus { color: #4ade80; font-weight: 700; }
+    .dot-walk { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>🚌 대중교통 경로 길찾기</h1>
+
+  <div class="card">
+    <div class="search-group">
+      <label>출발지 (역 또는 정류장 이름)</label>
+      <div class="row">
+        <input type="text" id="startInput" value="홍대입구역" placeholder="예: 홍대입구, 강남역">
+        <button onclick="searchStation('start')">검색</button>
+      </div>
+      <div class="selected-info" id="startInfo">✓ 홍대입구역 선택됨</div>
+      <div class="dropdown" id="startList" style="display:none;"></div>
+    </div>
+
+    <button class="btn-swap" onclick="swapPlaces()">⇅ 출발지 · 도착지 바꾸기</button>
+
+    <div class="search-group">
+      <label>도착지 (역 또는 정류장 이름)</label>
+      <div class="row">
+        <input type="text" id="endInput" value="수원역" placeholder="예: 수원역, 서울역">
+        <button onclick="searchStation('end')">검색</button>
+      </div>
+      <div class="selected-info" id="endInfo">✓ 수원역 선택됨</div>
+      <div class="dropdown" id="endList" style="display:none;"></div>
+    </div>
+
+    <button class="btn-primary" onclick="findTransitRoute()">대중교통 길찾기 실행</button>
+  </div>
+
+  <div id="map"></div>
+  <div class="status" id="status">버튼을 누르면 오디세이 API로 실시간 대중교통 경로를 탐색합니다.</div>
+  <div id="routeList"></div>
+
+  <script>
+    // 발급받은 ODsay API 키
+    const ODSAY_KEY = '2ukj7GB3bvxpGiLIE/olCg==';
+
+    let places = {
+      start: { name: '홍대입구역', x: 126.9244, y: 37.5567 },
+      end: { name: '수원역', x: 127.0000, y: 37.2659 }
+    };
+    let currentPaths = [];
+
+    // 1. Leaflet 지도 초기화
+    const map = L.map('map').setView([37.45, 126.96], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    let mapLayers = L.layerGroup().addTo(map);
+
+    // ODsay 공통 호출 함수
+    async function callOdsay(endpoint, params) {
+      const qs = Object.entries(params)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&');
+      const url = `https://api.odsay.com/v1/api/${endpoint}?${qs}&apiKey=${encodeURIComponent(ODSAY_KEY)}`;
+      const res = await fetch(url, { referrerPolicy: 'origin' });
+      return res.json();
+    }
+
+    // 2. 역/정류장 검색
+    async function searchStation(type) {
+      const keyword = document.getElementById(type + 'Input').value.trim();
+      const listEl = document.getElementById(type + 'List');
+      if (!keyword) return alert('역 또는 정류장 이름을 입력하세요.');
+
+      listEl.style.display = 'block';
+      listEl.innerHTML = '<button>검색 중...</button>';
+
+      try {
+        const data = await callOdsay('searchStation', { stationName: keyword, displayCnt: 8 });
+        if (data.error) {
+          listEl.innerHTML = `<button>❌ 에러: ${data.error[0].message}</button>`;
+          return;
+        }
+        const stations = data.result?.station || [];
+        if (stations.length === 0) {
+          listEl.innerHTML = '<button>검색 결과가 없습니다.</button>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        stations.forEach(st => {
+          const kind = st.stationClass === 2 ? '지하철' : '버스정류장';
+          const lane = st.laneName ? ` (${st.laneName})` : '';
+          const btn = document.createElement('button');
+          btn.textContent = `${st.stationName}${lane} · ${kind}`;
+          btn.onclick = () => {
+            places[type] = { name: st.stationName, x: Number(st.x), y: Number(st.y) };
+            document.getElementById(type + 'Input').value = st.stationName;
+            document.getElementById(type + 'Info').textContent = `✓ ${st.stationName} (${st.y}, ${st.x})`;
+            listEl.style.display = 'none';
+          };
+          listEl.appendChild(btn);
+        });
+      } catch (e) {
+        listEl.innerHTML = `<button>❌ 통신 오류: ${e}</button>`;
+      }
+    }
+
+    function swapPlaces() {
+      const temp = places.start;
+      places.start = places.end;
+      places.end = temp;
+      document.getElementById('startInput').value = places.start.name;
+      document.getElementById('endInput').value = places.end.name;
+      document.getElementById('startInfo').textContent = `✓ ${places.start.name} 선택됨`;
+      document.getElementById('endInfo').textContent = `✓ ${places.end.name} 선택됨`;
+    }
+
+    // 3. 대중교통 경로 탐색
+    async function findTransitRoute() {
+      const statusEl = document.getElementById('status');
+      const routeListEl = document.getElementById('routeList');
+      statusEl.textContent = `🔄 ${places.start.name} → ${places.end.name} 대중교통 경로 탐색 중...`;
+      routeListEl.innerHTML = '';
+
+      try {
+        const data = await callOdsay('searchPubTransPathT', {
+          SX: places.start.x,
+          SY: places.start.y,
+          EX: places.end.x,
+          EY: places.end.y,
+          OPT: 0
+        });
+
+        if (data.error) {
+          statusEl.textContent = `❌ API 에러: ${data.error[0].message} (현재 도메인: ${location.origin})`;
+          return;
+        }
+
+        currentPaths = (data.result?.path || []).slice(0, 5);
+        if (currentPaths.length === 0) {
+          statusEl.textContent = '검색된 대중교통 경로가 없습니다.';
+          return;
+        }
+
+        statusEl.textContent = `✅ 총 ${currentPaths.length}개의 추천 경로를 찾았습니다. 카드를 누르면 지도에 경로가 표시됩니다.`;
+        renderPathCards();
+        selectPath(0);
+      } catch (e) {
+        statusEl.textContent = '❌ 호출 실패: ' + e;
+      }
+    }
+
+    // 4. 경로 카드 렌더링
+    function renderPathCards() {
+      const routeListEl = document.getElementById('routeList');
+      routeListEl.innerHTML = '';
+      const typeNames = { 1: '지하철', 2: '버스', 3: '버스 + 지하철' };
+
+      currentPaths.forEach((path, idx) => {
+        const info = path.info;
+        const card = document.createElement('div');
+        card.className = 'route-card' + (idx === 0 ? ' active' : '');
+        card.id = 'pathCard_' + idx;
+        card.onclick = () => selectPath(idx);
+
+        let stepsHtml = '';
+        (path.subPath || []).forEach(sp => {
+          if (sp.trafficType === 1) {
+            const line = sp.lane?.[0]?.name || '지하철';
+            stepsHtml += `<div class="step-item"><span class="dot-sub">[${line}]</span> ${sp.startName} → ${sp.endName} (${sp.sectionTime}분, ${sp.stationCount}개역)</div>`;
+          } else if (sp.trafficType === 2) {
+            const buses = (sp.lane || []).map(l => l.busNo).join(', ');
+            stepsHtml += `<div class="step-item"><span class="dot-bus">[${buses}번]</span> ${sp.startName} → ${sp.endName} (${sp.sectionTime}분, ${sp.stationCount}정거장)</div>`;
+          } else if (sp.trafficType === 3 && sp.sectionTime > 0) {
+            stepsHtml += `<div class="step-item"><span class="dot-walk">[도보]</span> 약 ${sp.sectionTime}분 (${sp.distance}m)</div>`;
+          }
+        });
+
+        card.innerHTML = `
+          <div class="route-top">
+            <span class="badge">${typeNames[path.pathType] || '대중교통'}</span>
+            <span class="time-big">${info.totalTime}분</span>
+          </div>
+          <div class="meta">요금 ${Number(info.payment).toLocaleString()}원 · 환승 ${info.busTransitCount + info.subwayTransitCount}회 · 도보 ${info.totalWalk}m</div>
+          <div class="steps">${stepsHtml}</div>
+        `;
+        routeListEl.appendChild(card);
+      });
+    }
+
+    // 5. 선택한 경로를 지도에 그리기
+    function selectPath(index) {
+      document.querySelectorAll('.route-card').forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+      });
+
+      const path = currentPaths[index];
+      if (!path) return;
+
+      mapLayers.clearLayers();
+      const allCoords = [];
+
+      // 출발·도착 마커
+      const startLatLng = [places.start.y, places.start.x];
+      const endLatLng = [places.end.y, places.end.x];
+      L.marker(startLatLng).addTo(mapLayers).bindPopup(`<b>출발:</b> ${places.start.name}`);
+      L.marker(endLatLng).addTo(mapLayers).bindPopup(`<b>도착:</b> ${places.end.name}`);
+      allCoords.push(startLatLng, endLatLng);
+
+      // 구간별 경로선 그리기
+      (path.subPath || []).forEach(sp => {
+        const segCoords = [];
+        if (sp.startY && sp.startX) segCoords.push([Number(sp.startY), Number(sp.startX)]);
+        if (sp.passStopList?.stations) {
+          sp.passStopList.stations.forEach(st => {
+            if (st.y && st.x) segCoords.push([Number(st.y), Number(st.x)]);
+          });
+        }
+        if (sp.endY && sp.endX) segCoords.push([Number(sp.endY), Number(sp.endX)]);
+
+        if (segCoords.length >= 2) {
+          const isSubway = sp.trafficType === 1;
+          const isBus = sp.trafficType === 2;
+          L.polyline(segCoords, {
+            color: isSubway ? '#3b82f6' : isBus ? '#22c55e' : '#94a3b8',
+            weight: isSubway || isBus ? 5 : 3,
+            dashArray: isSubway || isBus ? null : '5, 8'
+          }).addTo(mapLayers);
+          allCoords.push(...segCoords);
+        }
+      });
+
+      if (allCoords.length > 0) {
+        map.fitBounds(L.latLngBounds(allCoords), { padding: [30, 30] });
+      }
+    }
+
+    // 페이지 열리면 기본 경로 자동 조회
+    window.onload = () => findTransitRoute();
+  </script>
+</body>
+</html>
