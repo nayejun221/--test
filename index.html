@@ -96,4 +96,565 @@
       vertical-align: middle;
     }
     .selected-info { font-size: 11px; color: #4ade80; margin-top: 4px; }
-    #map
+    #map {
+      width: 100%;
+      height: 240px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      margin-bottom: 12px;
+      z-index: 1;
+    }
+    .taxi-box {
+      background: linear-gradient(135deg, #1e293b, #292524);
+      border: 1px solid #f59e0b;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .taxi-title { font-weight: 800; color: #fbbf24; margin-bottom: 4px; font-size: 13px; }
+    .status { font-size: 12px; color: #cbd5e1; margin-bottom: 10px; line-height: 1.5; }
+    .route-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .route-card.active { border-color: #fbbf24; background: #262f40; }
+    .route-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px; }
+    .badges { display: flex; gap: 5px; flex-wrap: wrap; }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #334155;
+      color: #e2e8f0;
+    }
+    .badge-ok { background: #14532d; color: #4ade80; }
+    .badge-warn { background: #713f12; color: #fde047; }
+    .badge-fail { background: #7f1d1d; color: #fca5a5; }
+    .time-big { font-size: 21px; font-weight: 800; white-space: nowrap; }
+    .meta { font-size: 12px; color: #cbd5e1; margin-bottom: 10px; }
+    .steps { border-left: 2px solid #475569; padding-left: 12px; margin-left: 4px; font-size: 12px; }
+    .step-item { margin-bottom: 8px; line-height: 1.45; color: #e2e8f0; }
+    .last-tag {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .hybrid-alert {
+      margin-top: 10px;
+      background: #2b1d1d;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 12px;
+      color: #fecaca;
+      line-height: 1.45;
+    }
+    .dot-sub { color: #60a5fa; font-weight: 700; }
+    .dot-bus { color: #4ade80; font-weight: 700; }
+    .dot-walk { color: #94a3b8; }
+    .btn-qr {
+      width: 100%;
+      margin-top: 8px;
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #fbbf24;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌙 집에못갈지도</h1>
+    <div class="clock" id="nowClock">--:--</div>
+  </header>
+
+  <div class="card">
+    <div class="search-group">
+      <label><span>출발지 (장소 · 역 · 도로명/지번 주소)</span></label>
+      <div class="row">
+        <input type="text" id="startInput" value="홍대입구역" placeholder="예: 홍대입구, 양화로 160">
+        <button class="btn-gps" onclick="useCurrentGPS()">📍현위치</button>
+        <button onclick="searchPlace('start')">검색</button>
+      </div>
+      <div class="selected-info" id="startInfo">✓ 홍대입구역 선택됨</div>
+      <div class="dropdown" id="startList" style="display:none;"></div>
+    </div>
+
+    <button class="btn-swap" onclick="swapPlaces()">⇅ 출발지 · 도착지 바꾸기</button>
+
+    <div class="search-group">
+      <label><span>도착지 (장소 · 역 · 도로명/지번 주소)</span></label>
+      <div class="row">
+        <input type="text" id="endInput" value="수원역" placeholder="예: 수원역, 덕영대로 924">
+        <button onclick="searchPlace('end')">검색</button>
+      </div>
+      <div class="selected-info" id="endInfo">✓ 수원역 선택됨</div>
+      <div class="dropdown" id="endList" style="display:none;"></div>
+    </div>
+
+    <button class="btn-primary" onclick="runFullSearch()">막차 · 택시 하이브리드 경로 탐색</button>
+  </div>
+
+  <div id="map"></div>
+  <div id="taxiDirectBox" class="taxi-box" style="display:none;"></div>
+  <div class="status" id="status">출발지와 도착지를 선택하고 탐색 버튼을 누르세요.</div>
+  <div id="routeList"></div>
+
+  <button class="btn-qr" onclick="toggleQR()">📱 QR 코드로 공유하기</button>
+  <div id="qrBox" style="display:none; text-align:center; background:#fff; padding:16px; border-radius:12px; margin-top:10px;">
+    <img id="qrImg" alt="QR Code" style="width:180px; height:180px;">
+    <p style="color:#0f172a; font-size:12px; margin-top:8px; font-weight:700;">카메라로 스캔하면 바로 열립니다</p>
+  </div>
+
+  <script>
+    // API 키 설정 (인코딩 없이 원본 사용)
+    const ODSAY_KEY = '2ukj7GB3bvxpGiLIE/olCg';
+    const KAKAO_REST_KEY = '00635a15cd451240a8fd6e37cee0da22';
+
+    let places = {
+      start: { name: '홍대입구역', x: 126.9244, y: 37.5567 },
+      end: { name: '수원역', x: 127.0000, y: 37.2659 }
+    };
+    let currentPaths = [];
+    let hybridTaxiLines = {};
+
+    // 실시간 시계
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('nowClock').textContent = `현재 ${hh}:${mm}`;
+    }
+    setInterval(updateClock, 10000);
+    updateClock();
+
+    // Leaflet 지도 초기화
+    const map = L.map('map').setView([37.45, 126.96], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    let mapLayers = L.layerGroup().addTo(map);
+
+    // 1. ODsay 공통 호출
+    async function callOdsay(endpoint, params) {
+      const qs = Object.entries(params)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&');
+      const url = `https://api.odsay.com/v1/api/${endpoint}?${qs}&apiKey=${ODSAY_KEY}`;
+      const res = await fetch(url, { referrerPolicy: 'origin' });
+      return res.json();
+    }
+
+    // 2. 카카오 로컬 통합 검색 (장소·건물명 + 도로명·지번 주소 동시 지원)
+    async function searchPlace(type) {
+      const keyword = document.getElementById(type + 'Input').value.trim();
+      const listEl = document.getElementById(type + 'List');
+      if (!keyword) return alert('장소, 역 이름 또는 주소를 입력하세요.');
+
+      listEl.style.display = 'block';
+      listEl.innerHTML = '<button>장소 및 주소 검색 중...</button>';
+
+      try {
+        const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
+        const [kwRes, addrRes] = await Promise.all([
+          fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(keyword)}&size=5`, { headers }),
+          fetch(`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(keyword)}&size=5`, { headers })
+        ]);
+
+        const [kwData, addrData] = await Promise.all([kwRes.json(), addrRes.json()]);
+
+        // 도로명/지번 주소 결과 정규화
+        const addrItems = (addrData.documents || []).map(item => ({
+          kind: '주소',
+          name: item.road_address?.address_name || item.address_name,
+          sub: item.road_address ? `(지번) ${item.address_name}` : '도로명/지번 주소',
+          x: Number(item.x),
+          y: Number(item.y)
+        }));
+
+        // 장소/건물 키워드 결과 정규화
+        const kwItems = (kwData.documents || []).map(item => ({
+          kind: '장소',
+          name: item.place_name,
+          sub: item.road_address_name || item.address_name || '',
+          x: Number(item.x),
+          y: Number(item.y)
+        }));
+
+        const merged = [...addrItems, ...kwItems];
+
+        if (merged.length === 0) {
+          listEl.innerHTML = '<button>검색 결과가 없습니다.</button>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        merged.forEach(item => {
+          const btn = document.createElement('button');
+          btn.innerHTML = `<span class="tag-type">${item.kind}</span><b>${item.name}</b><small>${item.sub}</small>`;
+          btn.onclick = () => {
+            places[type] = { name: item.name, x: item.x, y: item.y };
+            document.getElementById(type + 'Input').value = item.name;
+            document.getElementById(type + 'Info').textContent = `✓ ${item.name} 선택됨`;
+            listEl.style.display = 'none';
+          };
+          listEl.appendChild(btn);
+        });
+      } catch (e) {
+        listEl.innerHTML = `<button>❌ 검색 오류: ${e}</button>`;
+      }
+    }
+
+    // 3. 스마트폰 GPS 현재 위치
+    function useCurrentGPS() {
+      if (!navigator.geolocation) return alert('GPS를 지원하지 않는 브라우저입니다.');
+      document.getElementById('startInfo').textContent = '📡 현재 위치 확인 중...';
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = Number(pos.coords.latitude.toFixed(6));
+          const lng = Number(pos.coords.longitude.toFixed(6));
+          places.start = { name: '현재 위치', x: lng, y: lat };
+          document.getElementById('startInput').value = '현재 위치';
+          document.getElementById('startInfo').textContent = `✓ 현재 위치 (${lat}, ${lng})`;
+        },
+        err => {
+          document.getElementById('startInfo').textContent = '❌ 위치 권한을 허용해 주세요.';
+        }
+      );
+    }
+
+    function swapPlaces() {
+      const temp = places.start;
+      places.start = places.end;
+      places.end = temp;
+      document.getElementById('startInput').value = places.start.name;
+      document.getElementById('endInput').value = places.end.name;
+      document.getElementById('startInfo').textContent = `✓ ${places.start.name} 선택됨`;
+      document.getElementById('endInfo').textContent = `✓ ${places.end.name} 선택됨`;
+    }
+
+    // 4. 카카오 모빌리티 자동차(택시) 경로 및 요금 조회
+    async function getKakaoTaxi(originX, originY, destX, destY) {
+      try {
+        const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${originX},${originY}&destination=${destX},${destY}&priority=RECOMMEND`;
+        const res = await fetch(url, {
+          headers: { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` }
+        });
+        const data = await res.json();
+        const route = data.routes?.[0];
+        if (!route || route.result_code !== 0) return null;
+
+        const summary = route.summary;
+        const lineCoords = [];
+        (route.sections || []).forEach(sec => {
+          (sec.roads || []).forEach(road => {
+            const v = road.vertexes || [];
+            for (let i = 0; i < v.length; i += 2) {
+              lineCoords.push([v[i + 1], v[i]]);
+            }
+          });
+        });
+
+        return {
+          durationMin: Math.round(summary.duration / 60),
+          distanceKm: (summary.distance / 1000).toFixed(1),
+          taxiFare: summary.fare?.taxi || 0,
+          coords: lineCoords
+        };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // 5. 지하철역 막차 시각 판별 (ODsay subwayTimeTable)
+    async function checkSubwayLastTrain(stationID, wayCode, arrivalDate) {
+      try {
+        const data = await callOdsay('subwayTimeTable', {
+          stationID: stationID,
+          wayCode: wayCode || 1
+        });
+        const day = arrivalDate.getDay(); // 0:일, 6:토
+        const listKey = day === 0 ? 'SunList' : day === 6 ? 'SatList' : 'OrdList';
+        const dirKey = wayCode === 2 ? 'down' : 'up';
+        const timeList = data.result?.[listKey]?.[dirKey]?.time || [];
+
+        if (timeList.length === 0) return null;
+
+        const lastRow = timeList[timeList.length - 1];
+        const rawTime = lastRow.Idx !== undefined ? lastRow.list : null;
+        let lastTimeStr = '';
+        if (Array.isArray(rawTime) && rawTime.length > 0) {
+          const lastTrain = rawTime[rawTime.length - 1];
+          const hh = String(lastRow.Idx).padStart(2, '0');
+          const mm = String(lastTrain.split('(')[0]).padStart(2, '0');
+          lastTimeStr = `${hh}:${mm}`;
+        }
+        if (!lastTimeStr) return null;
+
+        const toServiceMin = (h, m) => (h < 4 ? h + 24 : h) * 60 + m;
+        const [lh, lm] = lastTimeStr.split(':').map(Number);
+        const lastMin = toServiceMin(lh, lm);
+        const arrMin = toServiceMin(arrivalDate.getHours(), arrivalDate.getMinutes());
+        const diff = lastMin - arrMin;
+
+        return {
+          lastTimeStr,
+          diffMin: diff,
+          status: diff < 0 ? 'FAIL' : diff <= 10 ? 'WARN' : 'OK'
+        };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function formatTime(dateObj) {
+      return `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // 6. 전체 통합 탐색 실행
+    async function runFullSearch() {
+      const statusEl = document.getElementById('status');
+      const routeListEl = document.getElementById('routeList');
+      const taxiBoxEl = document.getElementById('taxiDirectBox');
+
+      statusEl.textContent = `🔄 ${places.start.name} → ${places.end.name} 대중교통·막차·택시 경로 동시 분석 중...`;
+      routeListEl.innerHTML = '';
+      taxiBoxEl.style.display = 'none';
+      hybridTaxiLines = {};
+
+      const directTaxi = await getKakaoTaxi(places.start.x, places.start.y, places.end.x, places.end.y);
+      if (directTaxi) {
+        taxiBoxEl.style.display = 'block';
+        taxiBoxEl.innerHTML = `
+          <div class="taxi-title">🚕 출발지 → 도착지 직행 택시 기준</div>
+          <div>예상 요금 <b>${directTaxi.taxiFare.toLocaleString()}원</b> · 약 ${directTaxi.durationMin}분 (${directTaxi.distanceKm}km)</div>
+        `;
+      }
+
+      try {
+        const data = await callOdsay('searchPubTransPathT', {
+          SX: places.start.x,
+          SY: places.start.y,
+          EX: places.end.x,
+          EY: places.end.y,
+          OPT: 0
+        });
+
+        if (data.error) {
+          statusEl.textContent = `❌ ODsay 에러: ${data.error[0].message}`;
+          return;
+        }
+
+        currentPaths = (data.result?.path || []).slice(0, 5);
+        if (currentPaths.length === 0) {
+          statusEl.textContent = '검색된 대중교통 경로가 없습니다. 상단 직행 택시 경로를 이용해 주세요.';
+          return;
+        }
+
+        const now = new Date();
+        for (let i = 0; i < currentPaths.length; i++) {
+          const path = currentPaths[i];
+          let elapsedMin = 0;
+          let overallStatus = 'OK';
+          let cutoffStation = null;
+
+          for (const sp of path.subPath || []) {
+            const arriveAtStep = new Date(now.getTime() + elapsedMin * 60000);
+            sp._arriveTimeStr = formatTime(arriveAtStep);
+
+            if (sp.trafficType === 1 && sp.startID) {
+              const lastCheck = await checkSubwayLastTrain(sp.startID, sp.wayCode, arriveAtStep);
+              sp._lastCheck = lastCheck;
+              if (lastCheck) {
+                if (lastCheck.status === 'FAIL') {
+                  overallStatus = 'FAIL';
+                  if (!cutoffStation) {
+                    cutoffStation = {
+                      name: sp.startName,
+                      x: Number(sp.startX),
+                      y: Number(sp.startY),
+                      transitMin: elapsedMin
+                    };
+                  }
+                } else if (lastCheck.status === 'WARN' && overallStatus !== 'FAIL') {
+                  overallStatus = 'WARN';
+                }
+              }
+            }
+            elapsedMin += Number(sp.sectionTime || 0);
+          }
+
+          path._overallStatus = overallStatus;
+          path._arriveDestStr = formatTime(new Date(now.getTime() + elapsedMin * 60000));
+
+          if (cutoffStation) {
+            const subTaxi = await getKakaoTaxi(cutoffStation.x, cutoffStation.y, places.end.x, places.end.y);
+            if (subTaxi) {
+              path._hybrid = {
+                stationName: cutoffStation.name,
+                transitMin: cutoffStation.transitMin,
+                taxiMin: subTaxi.durationMin,
+                totalMin: cutoffStation.transitMin + subTaxi.durationMin,
+                taxiFare: subTaxi.taxiFare,
+                savedFare: directTaxi ? Math.max(0, directTaxi.taxiFare - subTaxi.taxiFare) : 0
+              };
+              hybridTaxiLines[i] = subTaxi.coords;
+            }
+          }
+        }
+
+        statusEl.textContent = `✅ 총 ${currentPaths.length}개 경로의 막차 시각과 환승 가능 여부를 분석했습니다.`;
+        renderPathCards();
+        selectPath(0);
+      } catch (e) {
+        statusEl.textContent = '❌ 호출 실패: ' + e;
+      }
+    }
+
+    // 7. 경로 카드 출력
+    function renderPathCards() {
+      const routeListEl = document.getElementById('routeList');
+      routeListEl.innerHTML = '';
+      const typeNames = { 1: '지하철', 2: '버스', 3: '버스+지하철' };
+
+      currentPaths.forEach((path, idx) => {
+        const info = path.info;
+        const card = document.createElement('div');
+        card.className = 'route-card' + (idx === 0 ? ' active' : '');
+        card.id = 'pathCard_' + idx;
+        card.onclick = () => selectPath(idx);
+
+        let statusBadge = `<span class="badge badge-ok">막차 탑승 가능</span>`;
+        if (path._overallStatus === 'WARN') statusBadge = `<span class="badge badge-warn">막차 임박</span>`;
+        if (path._overallStatus === 'FAIL') statusBadge = `<span class="badge badge-fail">중간 막차 끊김</span>`;
+
+        let stepsHtml = '';
+        (path.subPath || []).forEach(sp => {
+          if (sp.trafficType === 1) {
+            const line = sp.lane?.[0]?.name || '지하철';
+            let tag = '';
+            if (sp._lastCheck) {
+              const lc = sp._lastCheck;
+              const cls = lc.status === 'FAIL' ? 'badge-fail' : lc.status === 'WARN' ? 'badge-warn' : 'badge-ok';
+              const msg = lc.status === 'FAIL'
+                ? `도착 ${sp._arriveTimeStr} / 막차 ${lc.lastTimeStr} 종료`
+                : `막차 ${lc.lastTimeStr} (${lc.diffMin}분 여유)`;
+              tag = `<span class="last-tag ${cls}">${msg}</span>`;
+            }
+            stepsHtml += `<div class="step-item"><span class="dot-sub">[${line}]</span> ${sp.startName} → ${sp.endName} (${sp.sectionTime}분) ${tag}</div>`;
+          } else if (sp.trafficType === 2) {
+            const buses = (sp.lane || []).map(l => l.busNo).join(', ');
+            stepsHtml += `<div class="step-item"><span class="dot-bus">[${buses}번]</span> ${sp.startName} → ${sp.endName} (${sp.sectionTime}분)</div>`;
+          } else if (sp.trafficType === 3 && sp.sectionTime > 0) {
+            stepsHtml += `<div class="step-item"><span class="dot-walk">[도보]</span> 약 ${sp.sectionTime}분 (${sp.distance}m)</div>`;
+          }
+        });
+
+        let hybridHtml = '';
+        if (path._hybrid) {
+          const h = path._hybrid;
+          hybridHtml = `
+            <div class="hybrid-alert">
+              <b>🚕 하이브리드 대안 (${h.stationName}역 하차 후 택시)</b><br>
+              대중교통 ${h.transitMin}분 + 택시 ${h.taxiMin}분 = <b>총 ${h.totalMin}분</b><br>
+              예상 택시비 <b>${h.taxiFare.toLocaleString()}원</b> ${h.savedFare > 0 ? `(직행 택시보다 약 ${h.savedFare.toLocaleString()}원 절약)` : ''}
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="route-top">
+            <div class="badges">
+              <span class="badge">${typeNames[path.pathType] || '대중교통'}</span>
+              ${statusBadge}
+            </div>
+            <span class="time-big">${info.totalTime}분</span>
+          </div>
+          <div class="meta">도착 예정 ${path._arriveDestStr} · 요금 ${Number(info.payment).toLocaleString()}원 · 환승 ${info.busTransitCount + info.subwayTransitCount}회</div>
+          <div class="steps">${stepsHtml}</div>
+          ${hybridHtml}
+        `;
+        routeListEl.appendChild(card);
+      });
+    }
+
+    // 8. 지도 경로선 그리기
+    function selectPath(index) {
+      document.querySelectorAll('.route-card').forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+      });
+
+      const path = currentPaths[index];
+      if (!path) return;
+
+      mapLayers.clearLayers();
+      const allCoords = [];
+
+      const startLatLng = [places.start.y, places.start.x];
+      const endLatLng = [places.end.y, places.end.x];
+      L.marker(startLatLng).addTo(mapLayers).bindPopup(`<b>출발:</b> ${places.start.name}`);
+      L.marker(endLatLng).addTo(mapLayers).bindPopup(`<b>도착:</b> ${places.end.name}`);
+      allCoords.push(startLatLng, endLatLng);
+
+      (path.subPath || []).forEach(sp => {
+        const segCoords = [];
+        if (sp.startY && sp.startX) segCoords.push([Number(sp.startY), Number(sp.startX)]);
+        if (sp.passStopList?.stations) {
+          sp.passStopList.stations.forEach(st => {
+            if (st.y && st.x) segCoords.push([Number(st.y), Number(st.x)]);
+          });
+        }
+        if (sp.endY && sp.endX) segCoords.push([Number(sp.endY), Number(sp.endX)]);
+
+        if (segCoords.length >= 2) {
+          const isSubway = sp.trafficType === 1;
+          const isBus = sp.trafficType === 2;
+          L.polyline(segCoords, {
+            color: isSubway ? '#3b82f6' : isBus ? '#22c55e' : '#94a3b8',
+            weight: isSubway || isBus ? 5 : 3,
+            dashArray: isSubway || isBus ? null : '5, 8'
+          }).addTo(mapLayers);
+          allCoords.push(...segCoords);
+        }
+      });
+
+      if (hybridTaxiLines[index]?.length > 0) {
+        L.polyline(hybridTaxiLines[index], {
+          color: '#f59e0b',
+          weight: 5,
+          dashArray: '8, 6'
+        }).addTo(mapLayers);
+        allCoords.push(...hybridTaxiLines[index]);
+      }
+
+      if (allCoords.length > 0) {
+        map.fitBounds(L.latLngBounds(allCoords), { padding: [30, 30] });
+      }
+    }
+
+    // 9. QR 코드 토글
+    function toggleQR() {
+      const box = document.getElementById('qrBox');
+      const img = document.getElementById('qrImg');
+      if (box.style.display === 'none') {
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(location.href);
+        box.style.display = 'block';
+      } else {
+        box.style.display = 'none';
+      }
+    }
+
+    window.onload = () => runFullSearch();
+  </script>
+</body>
+</html>
