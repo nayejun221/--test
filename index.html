@@ -93,6 +93,7 @@ body.light-theme .strategy.warning{background:#fef2f2}
 .line-badge-bus{background:#15803d;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
 .line-badge-nightbus{background:#991b1b;color:#fecaca;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
 .line-badge-taxi{background:#b45309;color:#fef3c7;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.line-badge-walk{background:#4b5563;color:#f3f4f6;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
 .selected-line-banner{background:rgba(255,185,24,0.12);border:1px solid var(--yellow);border-radius:10px;padding:11px 12px;margin:10px 0;font-size:12px;line-height:1.6}
 .selected-line-banner b{color:var(--yellow);font-size:13px}
 .tag{font-size:10px;color:var(--yellow);background:#3b351d;border-radius:6px;padding:4px 8px;font-weight:bold;white-space:nowrap}
@@ -275,7 +276,7 @@ color: #000;
 </div>
 
 <div class="micro" style="margin-top:8px;color:var(--muted)">
-💡 버스나 지하철이 출발 정류장·역에 도착하는 시각과 탑승할 노선(호선·버스번호)을 함께 알려줍니다.
+💡 환승 지점에서 2구간 막차가 끊길 경우, 환승역부터 택시·도보 전환 경로를 자동 계산합니다.
 </div>
 </div>
 
@@ -373,12 +374,12 @@ color: #000;
 <span class="badge">✨ Gemini AI + 🚌 서울시 실시간 경로 엔진</span>
 <span class="micro" id="aiStatusBadge">연동 준비 완료</span>
 </div>
-<p class="desc">경로 탐색, 탑승 노선, 막차·올빼미버스, 택시비를 바로 물어보세요.</p>
+<p class="desc">경로 탐색, 탑승 노선, 환승 막차 끊김 대안, 택시비를 바로 물어보세요.</p>
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
 <div class="msg bot">안녕하세요! 서울시 심야 귀가 어시스턴트입니다. ✨
 • "서울역에서 건대입구역 가는 귀가 경로와 탑승 노선 알려줘"
-• "현재 경로 중 가성비와 시간을 모두 잡는 최적 전략 분석해 줘"
+• "환승역에서 막차 끊겼을 때 택시·도보 전환 경로 분석해 줘"
 • "강남역에서 타는 올빼미버스 N버스 노선과 막차 알려줘"
 무엇이든 물어보세요!</div>
 </div>
@@ -515,14 +516,14 @@ color: #000;
 </div>
 <div class="resolved" id="viaResolved"></div>
 <div class="results" id="viaResults"></div>
-<label for="maxWalk">최대 도보 거리</label>
+<label for="maxWalk">막차 종료 시 허용 최대 도보 거리</label>
 <select id="maxWalk">
-<option value="500">500m</option>
-<option value="1000">1km</option>
-<option selected="" value="2000">2km</option>
-<option value="5000">5km</option>
+<option value="500">500m (도보 약 7분)</option>
+<option value="1000">1km (도보 약 15분)</option>
+<option selected="" value="2000">2km (도보 약 30분)</option>
+<option value="4000">4km (도보 약 60분)</option>
 </select>
-<div class="hintBox">서울시 전용 초고속 탐색 엔진으로 출발 정류장·역 실제 차량 도착 시각과 탑승 노선을 계산합니다.</div>
+<div class="hintBox">환승 지점 도착 시각이 2구간 막차 시각 이후로 예측되면, 환승역부터 허용 도보 거리 이내 시 도보 경로를, 초과 시 택시 전환 경로를 자동 계산합니다.</div>
 <button type="button" class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
 </dialog>
 
@@ -566,6 +567,11 @@ async function fetchSafeJson(url) {
   }
 }
 
+/* ───────────── 심야 시간 선형화 & 변환 유틸리티 ───────────── */
+function timeStrToServiceMin(timeStr) {
+  const [h, m] = String(timeStr || '00:00').split(':').map(Number);
+  return (h < 4 ? h + 24 : h) * 60 + m;
+}
 function minToTime(min) {
   const mNorm = ((Math.round(min) % 1440) + 1440) % 1440;
   const h = Math.floor(mNorm / 60);
@@ -577,12 +583,22 @@ function getNowTimeStr() {
   return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 }
 
+/* ───────────── 좌표 기반 직선·도보 거리 계산 (Haversine) ───────────── */
+function calcDistanceMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = d => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 /* ───────────── 역명·장소명 중복 '역' 방지 유틸리티 ───────────── */
 function cleanPlaceName(name) {
   if (!name) return '';
   return String(name).trim().replace(/역{2,}/g, '역');
 }
-
 function formatStationName(name) {
   if (!name) return '';
   const cleaned = cleanPlaceName(name);
@@ -692,7 +708,7 @@ $('btnNextSchedule')?.addEventListener('click', () => {
 $('btnLastSubway')?.addEventListener('click', () => {
   $('depTime').value = '23:38';
   runSeoulSearch();
-  toast('막차 임박(23:38) 이후 정류장·역 도착 노선 기준으로 탐색합니다.');
+  toast('막차 임박(23:38) 기준: 환승역 도착 시 2구간 막차 종료 여부를 판별합니다.');
 });
 $('btnNightBusSchedule')?.addEventListener('click', () => {
   $('depTime').value = '00:15';
@@ -839,10 +855,10 @@ async function searchPlaces(id) {
 }
 
 /* ───────────── 인근 지하철역 & 호선 조회 ───────────── */
-async function findNearestSubwayStation(lat, lng) {
+async function findNearestSubwayStation(lat, lng, radius = 1500) {
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
-    const res = await fetch(`https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=${lng}&y=${lat}&radius=1200&sort=distance&size=3`, { headers });
+    const res = await fetch(`https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=${lng}&y=${lat}&radius=${radius}&sort=distance&size=3`, { headers });
     const data = await res.json();
     const doc = data.documents?.[0];
     if (!doc) return null;
@@ -1009,21 +1025,144 @@ function computeVehicleArrivalTime({ baseServiceMin, nowServiceMin, isNowQuery, 
   };
 }
 
+/* ───────────── 핵심: 2구간 막차 끊김 판별 및 택시·도보 전환 알고리즘 ───────────── */
+async function evaluateMidRouteCutoffFallback({
+  depTimeStr,
+  sName,
+  eName,
+  walk1Min,
+  board1ServiceMin,
+  board1TimeStr,
+  leg1Label,
+  leg1OriginName,
+  leg1LineName,
+  leg1Cost,
+  leg2LineName,
+  endStationLabel,
+  transferHub,
+  maxWalkMeters
+}) {
+  // 1) 1구간 주행 시간 계산 (출발지 -> 환승 거점)
+  const leg1DistKm = Math.max(2.0, calcDistanceMeters(places.start.y, places.start.x, transferHub.y, transferHub.x) / 1000 * 1.25);
+  const leg1RideMin = Math.max(6, Math.round(leg1DistKm * 1.9));
+  const transferWalkMin = 4; // 환승 통로 도보 이동 버퍼
+
+  // 2) 환승 거점에서 2구간 탑승 준비 완료 시각
+  const transferArriveServiceMin = board1ServiceMin + leg1RideMin;
+  const transferReadyServiceMin = transferArriveServiceMin + transferWalkMin;
+  const transferArriveStr = minToTime(transferArriveServiceMin);
+  const transferReadyStr = minToTime(transferReadyServiceMin);
+
+  // 3) 2구간 막차 종료 기준 시각 (지하철 평균 00:05 = 1445분, 일반 시내버스 23:50 = 1430분)
+  const leg2LastServiceMin = leg2LineName.includes('버스') ? (23 * 60 + 50) : (24 * 60 + 5);
+  const leg2LastStr = minToTime(leg2LastServiceMin);
+
+  // 1구간 막차 자체는 이미 종료된 새벽 심야(00:35 이후)인 경우 제외
+  const leg1LastServiceMin = 24 * 60 + 30;
+  if (board1ServiceMin > leg1LastServiceMin) return [];
+
+  // 2구간 막차 전에 도착한다면 일반 환승 가능하므로 Fallback 미발동
+  if (transferReadyServiceMin <= leg2LastServiceMin) return [];
+
+  const fallbackRoutes = [];
+
+  // 4-A) 환승 거점 -> 최종 목적지 도보 거리 및 시간 계산
+  const straightRemainM = calcDistanceMeters(transferHub.y, transferHub.x, places.end.y, places.end.x);
+  const walkRemainM = Math.round(straightRemainM * 1.3);
+  const walkRemainMin = Math.max(3, Math.round(walkRemainM / 67));
+  const walkFinalArriveStr = minToTime(transferArriveServiceMin + walkRemainMin);
+  const walkKmStr = (walkRemainM / 1000).toFixed(1);
+
+  if (walkRemainM <= maxWalkMeters) {
+    fallbackRoutes.push({
+      id: 'cutoff_fallback_walk',
+      name: `🚨 1구간 막차 + ${transferHub.stationName} 하차 후 도보 (${walkKmStr}km)`,
+      cost: leg1Cost,
+      taxiCost: 0,
+      usesTaxi: false,
+      transfers: 1,
+      isHybrid: false,
+      isCutoffFallback: true,
+      departure: board1TimeStr,
+      boardStation: leg1OriginName,
+      lineBadges: [
+        { type: 'subway', label: `🚇 ${leg1LineName} (1구간 막차)` },
+        { type: 'walk', label: `🚶 ${transferHub.stationName} 이후 도보 ${walkRemainMin}분` }
+      ],
+      transitGuideText: `${leg1OriginName}에서 [${leg1LineName}] 탑승 ➔ ${transferHub.stationName} 도착(${transferArriveStr}) 시 [${leg2LineName}] 막차(${leg2LastStr}) 종료 ➔ 도보 ${walkKmStr}km(${walkRemainMin}분) 귀가`,
+      minutes: walk1Min + leg1RideMin + walkRemainMin,
+      tag: '2구간 막차종료·도보전환',
+      tagClass: 'tag-green',
+      isWarning: true,
+      remaining: `${transferHub.stationName} 이후 도보 ${walkRemainMin}분 · 택시비 0원`,
+      summary: `${leg1OriginName} ${board1TimeStr} 탑승 ➔ ${transferHub.stationName} 하차 후 도보 (${walkFinalArriveStr} 도착)`,
+      steps: [
+        { pill: 'pill-walk', tag: `도보 ${walk1Min}분`, label: `${depTimeStr} ${sName} 출발 ➔ ${leg1OriginName} 이동` },
+        { pill: 'pill-subway', tag: `${leg1LineName} · ${board1TimeStr}`, label: `${leg1OriginName}에서 [${leg1LineName}] 1구간 막차 탑승 (${leg1RideMin}분 이동)` },
+        { pill: 'pill-walk', tag: `막차 종료 (${leg2LastStr})`, label: `${transferArriveStr} ${transferHub.stationName} 도착 (환승 예정 [${leg2LineName}] 막차 종료됨)` },
+        { pill: 'pill-walk', tag: `도보 ${walkRemainMin}분`, label: `${transferHub.stationName}에서 ${eName}까지 도보 ${walkKmStr}km 이동 (${walkFinalArriveStr} 도착)` }
+      ],
+      note: `환승역(${transferHub.stationName}) 도착 후 환승 준비 시각(${transferReadyStr})이 [${leg2LineName}] 막차(${leg2LastStr})를 넘겨 도보 경로로 자동 전환했습니다.`
+    });
+  }
+
+  // 4-B) 환승 거점 -> 최종 목적지 카카오 택시 전환 계산
+  const remainTaxi = await getKakaoTaxiRoute(transferHub.x, transferHub.y, places.end.x, places.end.y);
+  if (remainTaxi) {
+    const totalFallbackMin = walk1Min + leg1RideMin + 3 + remainTaxi.durationMin;
+    const totalFallbackCost = leg1Cost + remainTaxi.fare;
+    const taxiFinalArriveStr = minToTime(transferArriveServiceMin + 3 + remainTaxi.durationMin);
+    const savedTaxiWon = Math.max(0, kakaoDriveData.fare - remainTaxi.fare);
+
+    fallbackRoutes.push({
+      id: 'cutoff_fallback_taxi',
+      name: `🚨 1구간 막차 + ${transferHub.stationName} 이후 택시 전환`,
+      cost: totalFallbackCost,
+      taxiCost: remainTaxi.fare,
+      usesTaxi: true,
+      transfers: 1,
+      isHybrid: true,
+      isCutoffFallback: true,
+      departure: board1TimeStr,
+      boardStation: leg1OriginName,
+      lineBadges: [
+        { type: 'subway', label: `🚇 ${leg1LineName} (1구간 막차)` },
+        { type: 'taxi', label: `🚖 ${transferHub.stationName} 이후 택시 (${remainTaxi.distanceKm}km)` }
+      ],
+      transitGuideText: `${leg1OriginName}에서 [${leg1LineName}] 탑승 ➔ ${transferHub.stationName} 도착(${transferArriveStr}) 시 [${leg2LineName}] 막차(${leg2LastStr}) 종료 ➔ 택시 환승 (${won(remainTaxi.fare)})`,
+      minutes: totalFallbackMin,
+      tag: '2구간 막차종료·택시전환',
+      tagClass: 'tag-red',
+      isWarning: true,
+      remaining: `막차종료 대응 · 직행택시 대비 ${won(savedTaxiWon)} 절약`,
+      summary: `${leg1OriginName} ${board1TimeStr} 탑승 ➔ ${transferHub.stationName} 택시 전환 (${taxiFinalArriveStr} 도착)`,
+      steps: [
+        { pill: 'pill-walk', tag: `도보 ${walk1Min}분`, label: `${depTimeStr} ${sName} 출발 ➔ ${leg1OriginName} 이동` },
+        { pill: 'pill-subway', tag: `${leg1LineName} · ${board1TimeStr}`, label: `${leg1OriginName}에서 [${leg1LineName}] 1구간 막차 탑승 (${leg1RideMin}분 이동)` },
+        { pill: 'pill-walk', tag: `막차 종료 (${leg2LastStr})`, label: `${transferArriveStr} ${transferHub.stationName} 도착 ([${leg2LineName}] 막차 종료로 택시 전환)` },
+        { pill: 'pill-taxi', tag: `택시 ${won(remainTaxi.fare)}`, label: `${transferHub.stationName} 출구 택시 탑승 (${remainTaxi.distanceKm}km · ${remainTaxi.durationMin}분) ➔ ${taxiFinalArriveStr} ${eName} 도착` }
+      ],
+      note: `환승역(${transferHub.stationName}) 환승 준비 시각(${transferReadyStr})에 [${leg2LineName}] 막차(${leg2LastStr})가 끊겨 잔여 구간만 택시로 전환했습니다.`
+    });
+  }
+
+  return fallbackRoutes;
+}
+
 /* ───────────── 서울 전용 초고속 경로 산출 ───────────── */
 async function runSeoulSearch() {
   if (!places.start || !places.end) return;
 
   const depTimeStr = $('depTime')?.value || getNowTimeStr();
-  const [dh, dm] = depTimeStr.split(':').map(Number);
-  const baseServiceMin = (dh < 4 ? dh + 24 : dh) * 60 + dm;
+  const baseServiceMin = timeStrToServiceMin(depTimeStr);
+  const [dh] = depTimeStr.split(':').map(Number);
 
-  const nowStr = getNowTimeStr();
-  const [nh, nm] = nowStr.split(':').map(Number);
-  const nowServiceMin = (nh < 4 ? nh + 24 : nh) * 60 + nm;
+  const nowServiceMin = timeStrToServiceMin(getNowTimeStr());
   const isNowQuery = Math.abs(baseServiceMin - nowServiceMin) <= 2;
   const isNightTime = (dh >= 23 || dh < 4);
 
   const budget = Number($('budget')?.value ?? 30000);
+  const maxWalkMeters = Number($('maxWalk')?.value ?? 2000);
   const sName = cleanPlaceName(places.start.name);
   const eName = cleanPlaceName(places.end.name);
 
@@ -1033,14 +1172,18 @@ async function runSeoulSearch() {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = '⚡ 탑승해야 할 버스·지하철 노선과 정류장·역 도착 시각을 조회 중...';
+    statusEl.textContent = '⚡ 탑승 노선, 정류장·역 도착 시각 및 환승 막차 끊김 여부를 분석 중...';
   }
 
   try {
-    const [taxiRes, startSubway, endSubway, busInfo] = await Promise.all([
+    const midX = (places.start.x + places.end.x) / 2;
+    const midY = (places.start.y + places.end.y) / 2;
+
+    const [taxiRes, startSubway, endSubway, midSubway, busInfo] = await Promise.all([
       getKakaoTaxiRoute(places.start.x, places.start.y, places.end.x, places.end.y),
       findNearestSubwayStation(places.start.y, places.start.x),
       findNearestSubwayStation(places.end.y, places.end.x),
+      findNearestSubwayStation(midY, midX, 2500),
       findNearestBusStopAndLines(places.start.y, places.start.x, isNightTime)
     ]);
 
@@ -1052,7 +1195,7 @@ async function runSeoulSearch() {
     const builtRoutes = [];
     let seoulSubwayLive = [];
 
-    // 1. 서울 지하철 경로 (택시비 0원)
+    // 1. 서울 지하철 경로 + 환승 지점 2구간 막차 끊김 판별
     if (startSubway && endSubway) {
       seoulSubwayLive = await getSeoulSubwayLive(startSubway.stationName);
       const walk1 = Math.max(1, Math.round(startSubway.distM / 67));
@@ -1071,49 +1214,77 @@ async function runSeoulSearch() {
         mode: 'subway'
       });
 
-      const finalArriveTimeStr = minToTime(subwayArrival.boardServiceMin + rideMin + walk2);
       const stationLabel = formatStationName(startSubway.stationName);
       const endStationLabel = formatStationName(endSubway.stationName);
-      const directionText = subwayArrival.trainDirection ? ` (${subwayArrival.trainDirection})` : '';
-      const lineBadges = sameLine
-        ? [{ type: 'subway', label: `🚇 ${startSubway.lineName}` }]
-        : [{ type: 'subway', label: `🚇 ${startSubway.lineName}` }, { type: 'subway', label: `환승 ➔ ${endSubway.lineName}` }];
+      const transferHub = places.via
+        ? { stationName: formatStationName(places.via.name), x: places.via.x, y: places.via.y }
+        : (midSubway || { stationName: '중간 환승역', x: midX, y: midY });
 
-      const transitGuideText = sameLine
-        ? `${stationLabel}에서 [${startSubway.lineName}]${directionText} 열차 탑승 ➔ ${endStationLabel} 하차`
-        : `${stationLabel}에서 [${startSubway.lineName}]${directionText} 탑승 ➔ 중간 환승역에서 [${endSubway.lineName}] 갈아타기 ➔ ${endStationLabel} 하차`;
+      // 환승이 필요한 경우 2구간 막차 끊김 여부 체크
+      let cutoffFallbacks = [];
+      if (!sameLine || places.via) {
+        cutoffFallbacks = await evaluateMidRouteCutoffFallback({
+          depTimeStr,
+          sName,
+          eName,
+          walk1Min: walk1,
+          board1ServiceMin: subwayArrival.boardServiceMin,
+          board1TimeStr: subwayArrival.boardTimeStr,
+          leg1OriginName: stationLabel,
+          leg1LineName: startSubway.lineName,
+          leg1Cost: 1400,
+          leg2LineName: endSubway.lineName,
+          endStationLabel,
+          transferHub,
+          maxWalkMeters
+        });
+      }
 
-      builtRoutes.push({
-        id: `subway_${stationLabel}_${endStationLabel}`,
-        name: `🚇 ${startSubway.lineName} 지하철 (${stationLabel} ➔ ${endStationLabel})`,
-        cost: 1400,
-        taxiCost: 0,
-        usesTaxi: false,
-        transfers: sameLine ? 0 : 1,
-        isHybrid: false,
-        departure: subwayArrival.boardTimeStr,
-        boardStation: stationLabel,
-        lineBadges,
-        transitGuideText,
-        minutes: totalSubwayMin,
-        tag: seoulSubwayLive.length > 0 ? '실시간 열차 도착' : '열차 역 도착',
-        tagClass: 'tag-blue',
-        isWarning: false,
-        remaining: subwayArrival.detailMsg,
-        summary: `${stationLabel} [${startSubway.lineName}] ${subwayArrival.boardTimeStr} 도착·탑승 ➔ ${finalArriveTimeStr} 도착`,
-        steps: [
-          { pill: 'pill-walk', tag: `도보 ${walk1}분`, label: `${depTimeStr} ${sName} 출발 ➔ ${stationLabel} (${startSubway.lineName}) 승강장 이동` },
-          { pill: 'pill-subway', tag: `${startSubway.lineName} · ${subwayArrival.boardTimeStr}`, label: `${stationLabel}에서 [${startSubway.lineName}]${directionText} 열차 탑승 (${subwayArrival.detailMsg})` },
-          ...(sameLine ? [] : [{ pill: 'pill-subway', tag: `${endSubway.lineName} 환승`, label: `중간 환승역에서 [${endSubway.lineName}] 열차로 환승 후 ${endStationLabel} 방면 이동` }]),
-          { pill: 'pill-walk', tag: `도착 ${finalArriveTimeStr}`, label: `${endStationLabel} 하차 후 도보 ${walk2}분 (${eName} 도착)` }
-        ],
-        note: transitGuideText
-      });
+      if (cutoffFallbacks.length > 0) {
+        // 2구간 막차가 끊긴 경우: 전환된 택시/도보 경로를 우선 등록
+        builtRoutes.push(...cutoffFallbacks);
+      } else {
+        // 정상 대중교통 환승(또는 직통) 가능한 경우
+        const finalArriveTimeStr = minToTime(subwayArrival.boardServiceMin + rideMin + walk2);
+        const directionText = subwayArrival.trainDirection ? ` (${subwayArrival.trainDirection})` : '';
+        const lineBadges = sameLine
+          ? [{ type: 'subway', label: `🚇 ${startSubway.lineName}` }]
+          : [{ type: 'subway', label: `🚇 ${startSubway.lineName}` }, { type: 'subway', label: `환승 ➔ ${endSubway.lineName}` }];
+
+        const transitGuideText = sameLine
+          ? `${stationLabel}에서 [${startSubway.lineName}]${directionText} 열차 탑승 ➔ ${endStationLabel} 하차`
+          : `${stationLabel}에서 [${startSubway.lineName}]${directionText} 탑승 ➔ ${transferHub.stationName}에서 [${endSubway.lineName}] 갈아타기 ➔ ${endStationLabel} 하차`;
+
+        builtRoutes.push({
+          id: `subway_${stationLabel}_${endStationLabel}`,
+          name: `🚇 ${startSubway.lineName} 지하철 (${stationLabel} ➔ ${endStationLabel})`,
+          cost: 1400,
+          taxiCost: 0,
+          usesTaxi: false,
+          transfers: sameLine ? 0 : 1,
+          isHybrid: false,
+          departure: subwayArrival.boardTimeStr,
+          boardStation: stationLabel,
+          lineBadges,
+          transitGuideText,
+          minutes: totalSubwayMin,
+          tag: seoulSubwayLive.length > 0 ? '실시간 열차 도착' : '열차 역 도착',
+          tagClass: 'tag-blue',
+          isWarning: false,
+          remaining: subwayArrival.detailMsg,
+          summary: `${stationLabel} [${startSubway.lineName}] ${subwayArrival.boardTimeStr} 도착·탑승 ➔ ${finalArriveTimeStr} 도착`,
+          steps: [
+            { pill: 'pill-walk', tag: `도보 ${walk1}분`, label: `${depTimeStr} ${sName} 출발 ➔ ${stationLabel} (${startSubway.lineName}) 승강장 이동` },
+            { pill: 'pill-subway', tag: `${startSubway.lineName} · ${subwayArrival.boardTimeStr}`, label: `${stationLabel}에서 [${startSubway.lineName}]${directionText} 열차 탑승 (${subwayArrival.detailMsg})` },
+            ...(sameLine ? [] : [{ pill: 'pill-subway', tag: `${endSubway.lineName} 환승`, label: `${transferHub.stationName}에서 [${endSubway.lineName}] 열차로 환승 후 ${endStationLabel} 방면 이동` }]),
+            { pill: 'pill-walk', tag: `도착 ${finalArriveTimeStr}`, label: `${endStationLabel} 하차 후 도보 ${walk2}분 (${eName} 도착)` }
+          ],
+          note: transitGuideText
+        });
+      }
     }
 
-    // 2. 시내버스 / 심야 올빼미버스(N버스) + 환승 택시 (택시 포함 경로)
-    const midX = (places.start.x + places.end.x) / 2;
-    const midY = (places.start.y + places.end.y) / 2;
+    // 2. 시내버스 / 심야 올빼미버스(N버스) + 중간 거점 환승 택시
     const subTaxi = await getKakaoTaxiRoute(midX, midY, places.end.x, places.end.y);
     if (subTaxi) {
       const busArrival = computeVehicleArrivalTime({
@@ -1217,7 +1388,7 @@ async function runSeoulSearch() {
       });
     }
 
-    // 4. 카카오 직행 택시 (택시 포함 경로)
+    // 4. 카카오 직행 택시
     const taxiDispatchWait = isNightTime ? 6 : 3;
     const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
     const taxiPickupTimeStr = minToTime(taxiPickupServiceMin);
@@ -1252,9 +1423,12 @@ async function runSeoulSearch() {
     rawRoutes = builtRoutes;
     applyConditionAndRender();
 
+    const hasFallback = visible.some(r => r.isCutoffFallback);
     if (statusEl) {
-      statusEl.style.color = '#8fdb6e';
-      statusEl.textContent = `✓ 탑승 노선 및 정류장·역 도착 시각 산출 완료 (${selected?.boardStation} ${selected?.departure} 도착)`;
+      statusEl.style.color = hasFallback ? '#ff8b8b' : '#8fdb6e';
+      statusEl.textContent = hasFallback
+        ? `🚨 환승역 2구간 막차 종료 감지! 택시·도보 전환 경로가 생성되었습니다.`
+        : `✓ 탑승 노선 및 정류장·역 도착 시각 산출 완료 (${selected?.boardStation} ${selected?.departure} 도착)`;
     }
     if ($('transitBadgeText') && selected) {
       $('transitBadgeText').textContent = `${selected.boardStation} ${selected.departure} 차량 도착 예정`;
@@ -1316,7 +1490,8 @@ function createLineBadgeElement(badgeInfo) {
     subway: 'line-badge-subway',
     bus: 'line-badge-bus',
     nightbus: 'line-badge-nightbus',
-    taxi: 'line-badge-taxi'
+    taxi: 'line-badge-taxi',
+    walk: 'line-badge-walk'
   };
   return node('span', badgeInfo.label, clsMap[badgeInfo.type] || 'line-badge-subway');
 }
@@ -1336,12 +1511,16 @@ function renderStrategyCards() {
   cardsEl.replaceChildren();
 
   const removedTaxiRoutes = rawRoutes.filter(r => r.usesTaxi && (budget === 0 || r.taxiCost > budget));
+  const hasCutoffFallback = rawRoutes.some(r => r.isCutoffFallback);
   const noticeBox = $('algorithmNotice');
   if (noticeBox) {
     noticeBox.replaceChildren();
+    if (hasCutoffFallback) {
+      noticeBox.append(node('div', `🚨 환승 거점 도착 시 2구간 막차 종료가 예상되어, 환승역 이후 택시·도보 전환 경로로 자동 재계산되었습니다.`, 'alertBox'));
+    }
     if (removedTaxiRoutes.length > 0) {
       noticeBox.append(node('div', `🚫 설정한 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${removedTaxiRoutes.length}개가 제외되었습니다.`, 'hintBox'));
-    } else {
+    } else if (!hasCutoffFallback) {
       noticeBox.append(node('div', `✅ 경로 카드를 선택하면 타야 할 버스 번호·지하철 호선과 출발 정류장·역 도착 시각을 아래에 바로 안내합니다.`, 'hintBox'));
     }
   }
@@ -1352,7 +1531,8 @@ function renderStrategyCards() {
 
   visible.forEach(r => {
     const isSel = selected?.id === r.id;
-    const b = node('button', undefined, 'strategy' + (isSel ? ' chosen' : ''));
+    const cardCls = 'strategy' + (isSel ? ' chosen' : '') + (r.isWarning && !isSel ? ' warning' : '');
+    const b = node('button', undefined, cardCls);
     b.type = 'button';
 
     const top = node('div', undefined, 'between');
@@ -1385,7 +1565,7 @@ function renderStrategyCards() {
       head.append(node('h3', '선택 경로 탑승 노선 및 세부 순서'), node('span', selected.tag, selected.tagClass));
 
       const banner = node('div', undefined, 'selected-line-banner');
-      const bTitle = node('b', '🚏 지금 타야 할 대중교통 노선');
+      const bTitle = node('b', selected.isCutoffFallback ? '🚨 막차 끊김 대응 환승 전환 안내' : '🚏 지금 타야 할 대중교통 노선');
       const bDesc = document.createElement('div');
       bDesc.style.marginTop = '4px';
       bDesc.textContent = selected.transitGuideText || selected.note;
@@ -1399,7 +1579,7 @@ function renderStrategyCards() {
 
       const line = node('div', undefined, 'timeline');
       selected.steps.forEach(s => {
-        const stepDiv = node('div');
+        const stepDiv = node('div', undefined, s.tag.includes('종료') ? 'warn' : '');
         if (s.tag) stepDiv.append(node('span', s.tag, 'route-line-pill ' + (s.pill || 'pill-subway')));
         stepDiv.append(document.createTextNode(s.label));
         line.append(stepDiv);
@@ -1414,7 +1594,10 @@ function renderStrategyCards() {
       );
     }
     if ($('homeRemain')) $('homeRemain').textContent = `이동 ${selected.minutes}분 · ${won(selected.cost)}`;
-    if ($('homeBadge')) $('homeBadge').textContent = (selected.lineBadges?.[0]?.label || selected.tag);
+    if ($('homeBadge')) {
+      $('homeBadge').textContent = (selected.lineBadges?.[0]?.label || selected.tag);
+      $('homeBadge').className = 'badge' + (selected.isCutoffFallback ? ' badge-alert' : '');
+    }
     if ($('homeRec')) $('homeRec').textContent = selected.name;
     if ($('homeRoute')) $('homeRoute').textContent = selected.transitGuideText || selected.summary;
     if ($('heroPlace')) $('heroPlace').textContent = `${eName} · 귀가 알림`;
@@ -1463,7 +1646,7 @@ async function generateLocalSmartReply(userText) {
     return `📍 **[${sName} ➔ ${eName}]** (${depTime} 기준 실시간 분석)\n\n${lines}\n\n💡 상세 시간표와 카운트다운 타이머는 하단 **[귀가 전략]** 탭에서 바로 확인하실 수 있습니다.`;
   }
 
-  return `현재 **[${sName} ➔ ${eName}]** 기준으로 서울 시내 지하철(수도권 전철 막차 평균 23:40~00:30) 및 심야 올빼미버스(N버스 23:40~03:30 운행) 경로를 탐색할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
+  return `현재 **[${sName} ➔ ${eName}]** 기준으로 서울 시내 지하철 및 환승 막차 종료 시 택시·도보 전환 경로를 탐색할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
 }
 
 /* ───────────── Gemini AI 챗봇 ───────────── */
@@ -1472,7 +1655,7 @@ let isChatSending = false;
 
 const appRouteFunctionDeclaration = {
   name: 'search_seoul_route',
-  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 실시간 지하철 호선, 시내버스·심야버스 번호, 환승 택시 경로와 출발 정류장·역 도착 시각을 앱 내에서 직접 검색하고 반환합니다.',
+  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 실시간 지하철 호선, 시내버스·심야버스 번호, 환승 막차 종료 시 택시·도보 전환 경로를 앱 내에서 직접 검색하고 반환합니다.',
   parameters: {
     type: 'OBJECT',
     properties: {
@@ -1521,6 +1704,7 @@ async function executeAppRouteSearch({ start_place, end_place, departure_time })
     distanceKm: kakaoDriveData.distanceKm,
     routes: visible.map(r => ({
       name: r.name,
+      isCutoffFallback: Boolean(r.isCutoffFallback),
       boardingLines: r.lineBadges?.map(b => b.label) || [],
       transitGuide: r.transitGuideText,
       transitArrivalAtOriginStopOrStation: r.departure,
@@ -1578,7 +1762,7 @@ async function askGeminiChatbot(userMessage) {
   sendBtn.textContent = '전송중';
   box.scrollTop = box.scrollHeight;
 
-  const loadingMsg = node('div', '🔍 탑승 노선 및 실시간 경로를 분석하고 있습니다...', 'msg bot');
+  const loadingMsg = node('div', '🔍 탑승 노선 및 환승 막차 여부를 분석하고 있습니다...', 'msg bot');
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
 
@@ -1596,7 +1780,7 @@ async function askGeminiChatbot(userMessage) {
 - 출발지: ${sName}, 도착지: ${eName}, 기준시각: ${depTime}, 택시예산: ${budget}
 - 현재 추천 경로 및 탑승 노선:
 ${routeSummaryText || '없음'}
-사용자가 경로를 물어보면 'search_seoul_route' 함수를 호출하고, 타야 할 버스 번호·지하철 호선과 정류장·역 도착 시각을 간결하고 친절하게 안내하세요.`;
+사용자가 경로를 물어보면 'search_seoul_route' 함수를 호출하고, 타야 할 버스 번호·지하철 호선, 환승 시 2구간 막차 종료 여부에 따른 택시·도보 전환 안내를 간결하고 친절하게 답변하세요.`;
 
   chatHistory.push({ role: 'user', parts: [{ text }] });
 
