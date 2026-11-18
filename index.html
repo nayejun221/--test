@@ -574,6 +574,18 @@ function getNowTimeStr() {
   return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 }
 
+/* ───────────── 역명·장소명 중복 '역' 방지 유틸리티 ───────────── */
+function cleanPlaceName(name) {
+  if (!name) return '';
+  return String(name).trim().replace(/역{2,}$/g, '역');
+}
+
+function formatStationName(name) {
+  if (!name) return '';
+  const base = cleanPlaceName(name).replace(/역+$/, '');
+  return base ? `${base}역` : '';
+}
+
 /* ───────────── 서울 전용 기본 설정 ───────────── */
 const defaults = {
   theme: 'dark',
@@ -696,17 +708,7 @@ $('setNowBtn')?.addEventListener('click', () => {
   toast(`현재 시각(${$('depTime').value}) 기준 다음 차량 도착 시각으로 재계산합니다.`);
 });
 
-/* ───────────── 카카오 로컬 장소 & 좌표 변환 API (중복 '역역' 제거 적용) ───────────── */
-function cleanPlaceName(name) {
-  if (!name) return '';
-  let cleaned = name.trim();
-  // 이미 끝에 '역역'이 들어가거나 '역'이 겹치는 현상 방지
-  while (cleaned.endsWith('역역')) {
-    cleaned = cleaned.slice(0, -1);
-  }
-  return cleaned;
-}
-
+/* ───────────── 카카오 로컬 장소 & 좌표 변환 API ───────────── */
 async function resolveSinglePlace(query) {
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
@@ -848,10 +850,10 @@ async function findNearestSubwayStation(lat, lng) {
     const doc = data.documents?.[0];
     if (!doc) return null;
     const parts = doc.place_name.split(' ');
-    const stationName = cleanPlaceName(parts[0]);
+    const stationName = formatStationName(parts[0]);
     const lineName = parts.slice(1).join(' ') || '수도권전철';
     const allLines = [...new Set((data.documents || [])
-      .filter(d => cleanPlaceName(d.place_name).startsWith(stationName))
+      .filter(d => formatStationName(d.place_name.split(' ')[0]) === stationName)
       .map(d => d.place_name.split(' ').slice(1).join(' '))
       .filter(Boolean))];
     return {
@@ -938,7 +940,7 @@ async function getKakaoTaxiRoute(ox, oy, dx, dy) {
 
 /* ───────────── 서울시 실시간 지하철 도착 예정 초(barvlDt) 및 방면 파싱 ───────────── */
 async function getSeoulSubwayLive(stationName) {
-  const cleanName = cleanPlaceName(stationName).replace(/역$/, '').trim();
+  const cleanName = cleanPlaceName(stationName).replace(/역+$/, '').trim();
   if (!cleanName) return [];
   const url = `http://swopenAPI.seoul.go.kr/api/subway/${SEOUL_OPEN_KEY}/json/realtimeStationArrival/0/10/${encodeURIComponent(cleanName)}`;
   const data = await fetchSafeJson(url);
@@ -1025,8 +1027,8 @@ async function runSeoulSearch() {
   const isNightTime = (dh >= 23 || dh < 4);
 
   const budget = Number($('budget')?.value ?? 30000);
-  const sName = places.start.name;
-  const eName = places.end.name;
+  const sName = cleanPlaceName(places.start.name);
+  const eName = cleanPlaceName(places.end.name);
 
   if ($('budgetText')) $('budgetText').textContent = won(budget);
   if ($('myBudget')) $('myBudget').textContent = won(budget);
@@ -1073,8 +1075,8 @@ async function runSeoulSearch() {
       });
 
       const finalArriveTimeStr = minToTime(subwayArrival.boardServiceMin + rideMin + walk2);
-      const stationLabel = `${startSubway.stationName}역`;
-      const endStationLabel = `${endSubway.stationName}역`;
+      const stationLabel = formatStationName(startSubway.stationName);
+      const endStationLabel = formatStationName(endSubway.stationName);
       const directionText = subwayArrival.trainDirection ? ` (${subwayArrival.trainDirection})` : '';
       const lineBadges = sameLine
         ? [{ type: 'subway', label: `🚇 ${startSubway.lineName}` }]
@@ -1085,7 +1087,7 @@ async function runSeoulSearch() {
         : `${stationLabel}에서 [${startSubway.lineName}]${directionText} 탑승 ➔ 중간 환승역에서 [${endSubway.lineName}] 갈아타기 ➔ ${endStationLabel} 하차`;
 
       builtRoutes.push({
-        id: `subway_${startSubway.stationName}_${endSubway.stationName}`,
+        id: `subway_${stationLabel}_${endStationLabel}`,
         name: `🚇 ${startSubway.lineName} 지하철 (${stationLabel} ➔ ${endStationLabel})`,
         cost: 1400,
         taxiCost: 0,
@@ -1273,7 +1275,6 @@ function applyConditionAndRender() {
   const budget = Number($('budget')?.value ?? 30000);
   const availableTaxiRoutes = rawRoutes.filter(r => r.usesTaxi && r.taxiCost <= budget);
 
-  // 예산 내 이용 가능한 택시가 하나도 없으면 '택시' 조건 버튼 비활성화 및 자동 복귀
   const taxiBtn = $('condTaxiBtn');
   if (taxiBtn) {
     taxiBtn.disabled = (rawRoutes.length > 0 && availableTaxiRoutes.length === 0);
@@ -1324,8 +1325,8 @@ function createLineBadgeElement(badgeInfo) {
 }
 
 function renderStrategyCards() {
-  const sName = places.start?.name || '출발지';
-  const eName = places.end?.name || '도착지';
+  const sName = cleanPlaceName(places.start?.name || '출발지');
+  const eName = cleanPlaceName(places.end?.name || '도착지');
   const budget = Number($('budget')?.value ?? 30000);
 
   if ($('budgetText')) $('budgetText').textContent = won(budget);
@@ -1453,8 +1454,8 @@ async function generateLocalSmartReply(userText) {
     await executeAppRouteSearch({ start_place: routeMatch[1], end_place: routeMatch[2] });
   }
 
-  const sName = places.start?.name || '출발지';
-  const eName = places.end?.name || '도착지';
+  const sName = cleanPlaceName(places.start?.name || '출발지');
+  const eName = cleanPlaceName(places.end?.name || '도착지');
   const depTime = $('depTime')?.value || getNowTimeStr();
 
   if (visible.length > 0) {
@@ -1585,8 +1586,8 @@ async function askGeminiChatbot(userMessage) {
   box.scrollTop = box.scrollHeight;
 
   const depTime = $('depTime')?.value || getNowTimeStr();
-  const sName = places.start?.name || '출발지';
-  const eName = places.end?.name || '도착지';
+  const sName = cleanPlaceName(places.start?.name || '출발지');
+  const eName = cleanPlaceName(places.end?.name || '도착지');
   const budget = won($('budget')?.value ?? 30000);
 
   const routeSummaryText = visible.map((r, idx) =>
@@ -1791,8 +1792,8 @@ function updateHomeMap() {
   const iconS = L.divIcon({ html: '<div style="background:#ffb918;width:14px;height:14px;border-radius:50%;border:2px solid #fff;"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
   const iconE = L.divIcon({ html: '<div style="background:#ef4444;width:18px;height:18px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:10px">🏠</div>', iconSize: [18, 18], iconAnchor: [9, 9] });
 
-  homeMarkers.start = L.marker([s.y, s.x], { icon: iconS }).addTo(homeLeaflet).bindPopup(`📍 출발: ${s.name}`);
-  homeMarkers.end = L.marker([e.y, e.x], { icon: iconE }).addTo(homeLeaflet).bindPopup(`🏠 도착: ${e.name}`);
+  homeMarkers.start = L.marker([s.y, s.x], { icon: iconS }).addTo(homeLeaflet).bindPopup(`📍 출발: ${cleanPlaceName(s.name)}`);
+  homeMarkers.end = L.marker([e.y, e.x], { icon: iconE }).addTo(homeLeaflet).bindPopup(`🏠 도착: ${cleanPlaceName(e.name)}`);
 
   if (kakaoDriveData.coordinates && kakaoDriveData.coordinates.length > 0) {
     const latlngs = kakaoDriveData.coordinates.map(c => [c[1], c[0]]);
@@ -1806,10 +1807,10 @@ function updateHomeMap() {
 
 function buildShareUrl() {
   const url = new URL(window.location.href.split('?')[0]);
-  url.searchParams.set('sn', places.start.name);
+  url.searchParams.set('sn', cleanPlaceName(places.start.name));
   url.searchParams.set('sx', places.start.x);
   url.searchParams.set('sy', places.start.y);
-  url.searchParams.set('dn', places.end.name);
+  url.searchParams.set('dn', cleanPlaceName(places.end.name));
   url.searchParams.set('dx', places.end.x);
   url.searchParams.set('dy', places.end.y);
   url.searchParams.set('t', $('depTime')?.value || getNowTimeStr());
@@ -1818,7 +1819,7 @@ function buildShareUrl() {
 
 function updateQrCodes() {
   const shareUrl = buildShareUrl();
-  if ($('groupRouteLabel')) $('groupRouteLabel').textContent = `${places.start.name} ➔ ${places.end.name} (${selected?.departure || $('depTime')?.value} 정류장·역 도착)`;
+  if ($('groupRouteLabel')) $('groupRouteLabel').textContent = `${cleanPlaceName(places.start.name)} ➔ ${cleanPlaceName(places.end.name)} (${selected?.departure || $('depTime')?.value} 정류장·역 도착)`;
   const gBox = $('groupQrBox');
   if (gBox) {
     gBox.innerHTML = '';
@@ -1829,7 +1830,7 @@ function updateQrCodes() {
 }
 
 $('btnShareQr')?.addEventListener('click', () => {
-  if ($('qrDialogDesc')) $('qrDialogDesc').textContent = `${places.start.name} ➔ ${places.end.name} (${selected?.departure || ''} 정류장·역 도착)`;
+  if ($('qrDialogDesc')) $('qrDialogDesc').textContent = `${cleanPlaceName(places.start.name)} ➔ ${cleanPlaceName(places.end.name)} (${selected?.departure || ''} 정류장·역 도착)`;
   const box = $('qrDialogBox');
   if (box) {
     box.innerHTML = '';
@@ -1840,7 +1841,7 @@ $('btnShareQr')?.addEventListener('click', () => {
 $('btnCopyModalLink')?.addEventListener('click', () => navigator.clipboard.writeText(buildShareUrl()).then(() => toast('링크 복사 완료!')));
 $('btnCopyGroupLink')?.addEventListener('click', () => navigator.clipboard.writeText(buildShareUrl()).then(() => toast('링크 복사 완료!')));
 $('btnOpenKakaoMap')?.addEventListener('click', () => {
-  window.open(`https://map.kakao.com/link/by/traffic/${encodeURIComponent(places.start.name)},${places.start.y},${places.start.x}/${encodeURIComponent(places.end.name)},${places.end.y},${places.end.x}`, '_blank');
+  window.open(`https://map.kakao.com/link/by/traffic/${encodeURIComponent(cleanPlaceName(places.start.name))},${places.start.y},${places.start.x}/${encodeURIComponent(cleanPlaceName(places.end.name))},${places.end.y},${places.end.x}`, '_blank');
 });
 
 function renderSaved() {
@@ -1883,7 +1884,6 @@ document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click
 
 $('depTime')?.addEventListener('change', () => runSeoulSearch());
 
-// 슬라이더 조작 시 즉시(input & change 모두) 예산 초과 택시 선택지 제거
 function handleBudgetSliderChange() {
   const bVal = Number($('budget')?.value ?? 30000);
   if ($('budgetText')) $('budgetText').textContent = won(bVal);
@@ -1896,10 +1896,10 @@ $('budget')?.addEventListener('change', handleBudgetSliderChange);
 $('homeSwap')?.addEventListener('click', () => {
   const a = places.start, b = places.end;
   places.start = b; places.end = a;
-  if ($('start')) $('start').value = b.name;
-  if ($('end')) $('end').value = a.name;
-  if ($('startResolved')) $('startResolved').textContent = `✓ ${b.name} 선택됨`;
-  if ($('endResolved')) $('endResolved').textContent = `✓ ${a.name} 선택됨`;
+  if ($('start')) $('start').value = cleanPlaceName(b.name);
+  if ($('end')) $('end').value = cleanPlaceName(a.name);
+  if ($('startResolved')) $('startResolved').textContent = `✓ ${cleanPlaceName(b.name)} 선택됨`;
+  if ($('endResolved')) $('endResolved').textContent = `✓ ${cleanPlaceName(a.name)} 선택됨`;
   runSeoulSearch();
 });
 
