@@ -696,7 +696,17 @@ $('setNowBtn')?.addEventListener('click', () => {
   toast(`현재 시각(${$('depTime').value}) 기준 다음 차량 도착 시각으로 재계산합니다.`);
 });
 
-/* ───────────── 카카오 로컬 장소 & 좌표 변환 API ───────────── */
+/* ───────────── 카카오 로컬 장소 & 좌표 변환 API (중복 '역역' 제거 적용) ───────────── */
+function cleanPlaceName(name) {
+  if (!name) return '';
+  let cleaned = name.trim();
+  // 이미 끝에 '역역'이 들어가거나 '역'이 겹치는 현상 방지
+  while (cleaned.endsWith('역역')) {
+    cleaned = cleaned.slice(0, -1);
+  }
+  return cleaned;
+}
+
 async function resolveSinglePlace(query) {
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
@@ -704,9 +714,10 @@ async function resolveSinglePlace(query) {
     const data = await res.json();
     const d = data.documents?.[0];
     if (!d) return null;
+    const name = cleanPlaceName(d.place_name);
     return {
-      label: `${d.place_name} (${d.road_address_name || d.address_name || ''})`,
-      name: d.place_name,
+      label: `${name} (${d.road_address_name || d.address_name || ''})`,
+      name: name,
       x: Number(d.x),
       y: Number(d.y)
     };
@@ -733,7 +744,8 @@ async function resolveCurrentGpsPlace() {
             if (addr) placeName = `현재 위치 (${addr})`;
           }
         } catch {}
-        resolve({ label: placeName, name: placeName, x: lng, y: lat });
+        const cleaned = cleanPlaceName(placeName);
+        resolve({ label: cleaned, name: cleaned, x: lng, y: lat });
       },
       () => resolve(null),
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
@@ -795,12 +807,15 @@ async function searchPlaces(id) {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
     const res = await fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('서울 ' + q)}&size=5`, { headers });
     const data = await res.json();
-    const docs = (data.documents || []).map(d => ({
-      label: `${d.place_name} (${d.road_address_name || d.address_name || ''})`,
-      name: d.place_name,
-      x: Number(d.x),
-      y: Number(d.y)
-    }));
+    const docs = (data.documents || []).map(d => {
+      const name = cleanPlaceName(d.place_name);
+      return {
+        label: `${name} (${d.road_address_name || d.address_name || ''})`,
+        name: name,
+        x: Number(d.x),
+        y: Number(d.y)
+      };
+    });
 
     box.replaceChildren();
     if (docs.length > 0) {
@@ -833,10 +848,10 @@ async function findNearestSubwayStation(lat, lng) {
     const doc = data.documents?.[0];
     if (!doc) return null;
     const parts = doc.place_name.split(' ');
-    const stationName = parts[0];
+    const stationName = cleanPlaceName(parts[0]);
     const lineName = parts.slice(1).join(' ') || '수도권전철';
     const allLines = [...new Set((data.documents || [])
-      .filter(d => d.place_name.startsWith(stationName))
+      .filter(d => cleanPlaceName(d.place_name).startsWith(stationName))
       .map(d => d.place_name.split(' ').slice(1).join(' '))
       .filter(Boolean))];
     return {
@@ -854,7 +869,7 @@ async function findNearestSubwayStation(lat, lng) {
 
 /* ───────────── 출발지 인근 버스 정류장 및 노선 번호 조회 ───────────── */
 async function findNearestBusStopAndLines(lat, lng, isNightTime) {
-  let stopName = `${places.start?.name || '출발지'} 정류장`;
+  let stopName = `${cleanPlaceName(places.start?.name || '출발지')} 정류장`;
   let walkMin = 3;
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
@@ -862,7 +877,7 @@ async function findNearestBusStopAndLines(lat, lng, isNightTime) {
     const data = await res.json();
     const doc = data.documents?.[0];
     if (doc) {
-      stopName = doc.place_name.replace(/\[.*?\]/g, '').trim();
+      stopName = cleanPlaceName(doc.place_name.replace(/\[.*?\]/g, '').trim());
       walkMin = Math.max(1, Math.round(Number(doc.distance) / 67));
     }
   } catch {}
@@ -923,7 +938,7 @@ async function getKakaoTaxiRoute(ox, oy, dx, dy) {
 
 /* ───────────── 서울시 실시간 지하철 도착 예정 초(barvlDt) 및 방면 파싱 ───────────── */
 async function getSeoulSubwayLive(stationName) {
-  const cleanName = stationName.replace(/역$/, '').trim();
+  const cleanName = cleanPlaceName(stationName).replace(/역$/, '').trim();
   if (!cleanName) return [];
   const url = `http://swopenAPI.seoul.go.kr/api/subway/${SEOUL_OPEN_KEY}/json/realtimeStationArrival/0/10/${encodeURIComponent(cleanName)}`;
   const data = await fetchSafeJson(url);
@@ -1281,7 +1296,6 @@ function curateRecommendedRoutes(pool, cond) {
   if (!pool || pool.length === 0) return [];
   const budget = Number($('budget')?.value ?? 30000);
 
-  // 택시를 이용하는 모든 경로(직행 택시, 환승 택시) 중 예산을 초과하거나 예산이 0원인 경우 완전히 제거
   let filtered = pool.filter(r => {
     if (!r.usesTaxi) return true;
     return budget > 0 && r.taxiCost <= budget;
@@ -1737,7 +1751,7 @@ $('saveDestinations')?.addEventListener('click', () => {
     const idx = Number(inp.dataset.idx);
     const field = inp.dataset.field;
     if (settings.destinations[idx] && inp.value.trim()) {
-      settings.destinations[idx][field] = inp.value.trim();
+      settings.destinations[idx][field] = cleanPlaceName(inp.value.trim());
     }
   });
   localStorage.setItem('homeway.app.v25', JSON.stringify(settings));
@@ -1976,8 +1990,8 @@ document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click',
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search);
   if (params.has('sx') && params.has('sy') && params.has('dx') && params.has('dy')) {
-    places.start = { label: params.get('sn') || '출발지', name: params.get('sn') || '출발지', x: Number(params.get('sx')), y: Number(params.get('sy')) };
-    places.end = { label: params.get('dn') || '도착지', name: params.get('dn') || '도착지', x: Number(params.get('dx')), y: Number(params.get('dy')) };
+    places.start = { label: cleanPlaceName(params.get('sn') || '출발지'), name: cleanPlaceName(params.get('sn') || '출발지'), x: Number(params.get('sx')), y: Number(params.get('sy')) };
+    places.end = { label: cleanPlaceName(params.get('dn') || '도착지'), name: cleanPlaceName(params.get('dn') || '도착지'), x: Number(params.get('dx')), y: Number(params.get('dy')) };
     if ($('start')) $('start').value = places.start.name;
     if ($('end')) $('end').value = places.end.name;
     if ($('startResolved')) $('startResolved').textContent = `✓ ${places.start.name} 선택됨`;
