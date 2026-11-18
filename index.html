@@ -28,7 +28,7 @@ body{margin:0;background:var(--body-bg);color:var(--text);font:14px system-ui,'A
 button,input,select{font:inherit}
 button{cursor:pointer;color:inherit}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
-.app{max-width:440px;min-height:100dvh;margin:auto;background:var(--bg);padding:0 20px 120px;position:relative;box-shadow:0 0 25px rgba(0,0,0,0.1)}
+.app{max-width:440px;min-height:100dvh;margin:auto;background:var(--bg);padding:0 20px 105px;position:relative;box-shadow:0 0 25px rgba(0,0,0,0.1);overflow-x:hidden}
 .statusbar{display:flex;justify-content:space-between;padding:16px 2px 23px;font-size:11px;font-weight:700}
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 header h1{font-size:21px;margin:0;letter-spacing:-.8px}
@@ -67,7 +67,7 @@ body.light-theme .saved.active{border-color:#86efac}
 body.light-theme .primary{color:#ffffff}
 .primary:disabled{opacity:.5;cursor:default}
 .footnote{font-size:9px;color:var(--muted);text-align:center;line-height:1.8;margin-top:22px}
-.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(440px,100%);background:var(--bottom-bg);backdrop-filter:blur(15px);border-top:1px solid var(--line);display:flex;padding:10px 8px max(14px,env(safe-area-inset-bottom));z-index:10}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(440px,100%);background:var(--bottom-bg);backdrop-filter:blur(15px);border-top:1px solid var(--line);display:flex;padding:10px 8px max(14px,env(safe-area-inset-bottom));z-index:30}
 .bottom button{flex:1;border:0;background:none;color:var(--muted);font-size:10px;font-weight:600;padding:4px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:color 0.2s}
 .bottom button svg{width:22px;height:22px;stroke:currentColor;display:block;transition:stroke 0.2s, transform 0.2s}
 .bottom button.on{color:var(--yellow)}
@@ -154,21 +154,25 @@ body.light-theme .leaflet-container{background:#f8f9fa}
 body.light-theme .toast{background:#1e293b;border-color:#334155;color:#f8fafc}
 .hidden{display:none!important}
 
-/* 채팅 */
-.chat-container{position:relative;z-index:20;display:flex;flex-direction:column;height:calc(100dvh - 280px);min-height:320px;max-height:520px;border:1px solid var(--line);border-radius:14px;background:var(--bg);overflow:hidden;margin-top:12px;margin-bottom:20px}
-.chat-messages{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:12px}
-.msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.6;word-break:break-word;white-space:pre-line}
+/* 채팅 화면 이탈 방지 & 스크롤 고정 */
+#chat.screen.on{display:flex;flex-direction:column;height:calc(100dvh - 195px);min-height:420px;max-height:680px;overflow:hidden}
+#chat .desc{margin:0 0 10px;font-size:12px;line-height:1.5;flex-shrink:0}
+.chat-container{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--bg);overflow:hidden;margin-top:4px;margin-bottom:0}
+.chat-messages{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.msg{max-width:86%;padding:11px 14px;border-radius:16px;font-size:13px;line-height:1.65;word-break:break-word;overflow-wrap:anywhere;white-space:pre-line}
+.msg b{color:var(--yellow);font-weight:700}
+.msg.user b{color:inherit}
 .msg.bot{background:var(--card);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--line)}
 .msg.user{background:var(--yellow);color:#111;align-self:flex-end;border-bottom-right-radius:4px;font-weight:500}
 body.light-theme .msg.user{color:#fff}
-.grounding-sources{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:5px}
-.grounding-link{display:inline-block;font-size:10px;padding:3px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--line);color:#7bd3ff;text-decoration:none}
+.grounding-sources{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:5px;max-width:100%}
+.grounding-link{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;padding:3px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--line);color:#7bd3ff;text-decoration:none}
 body.light-theme .grounding-link{color:#2563eb}
-.chat-chips{display:flex;gap:6px;overflow-x:auto;padding:8px 10px;scrollbar-width:none;background:var(--bg);border-top:1px solid var(--line)}
+.chat-chips{flex-shrink:0;display:flex;gap:6px;overflow-x:auto;padding:8px 10px;scrollbar-width:none;background:var(--bg);border-top:1px solid var(--line)}
 .chat-chips::-webkit-scrollbar{display:none}
 .chat-chip{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--text-sub);padding:7px 12px;border-radius:14px;font-size:11px;flex-shrink:0;cursor:pointer}
 .chat-chip:hover,.chat-chip:active{border-color:var(--yellow);color:var(--yellow)}
-.chat-input-area{position:relative;z-index:25;display:flex;padding:10px;background:var(--card);border-top:1px solid var(--line);gap:8px;align-items:center}
+.chat-input-area{flex-shrink:0;display:flex;padding:10px;background:var(--card);border-top:1px solid var(--line);gap:8px;align-items:center}
 .chat-input-area input{flex:1;min-width:0;border:1px solid var(--line);background:var(--input-bg);color:var(--text);padding:11px 15px;border-radius:20px;font-size:13px}
 .chat-input-area button{flex-shrink:0;border:0;background:var(--yellow);color:#111;padding:11px 18px;border-radius:20px;font-weight:800;font-size:13px;cursor:pointer;touch-action:manipulation}
 .chat-input-area button:active{transform:scale(0.96);opacity:0.9}
@@ -183,7 +187,7 @@ body.light-theme .transit-badge{background:#e0f2fe;border-color:#bae6fd;color:#0
 .quick-times button{flex:1;border:1px solid var(--line);background:var(--input-bg);color:var(--text-sub);padding:7px;border-radius:8px;font-size:11px}
 .quick-times button:hover{border-color:var(--yellow);color:var(--yellow)}
 
-/* 풀스크린 타이머 다이얼로그 */
+/* 풀스크린 타이머 다이얼로그 (초록 / 노랑 / 빨강 상태 색상) */
 #timerDialog {
 border: 0;
 padding: 0;
@@ -211,17 +215,18 @@ transition: background-color 0.4s ease, color 0.4s ease;
 color: #000;
 }
 .fullscreen-timer-screen.state-green { background-color: #22c55e; color: #052e16; }
-.fullscreen-timer-screen.state-yellow { background-color: #ffc107; color: #1c1500; }
+.fullscreen-timer-screen.state-yellow { background-color: #facc15; color: #1c1500; }
 .fullscreen-timer-screen.state-red { background-color: #ef4444; color: #ffffff; }
 .timer-top-bar { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; }
-.screen-top-label { font-size: 18px; font-weight: 800; opacity: 0.9; }
-.status-caption { font-size: 15px; font-weight: 800; padding: 4px 12px; border-radius: 20px; background: rgba(0, 0, 0, 0.15); }
+.screen-top-label { font-size: 18px; font-weight: 800; opacity: 0.95; }
+.status-caption { font-size: 15px; font-weight: 800; padding: 5px 14px; border-radius: 20px; background: rgba(0, 0, 0, 0.18); }
 .timer-center-content { text-align: center; margin: auto 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.screen-middle-line1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
-.screen-middle-big { font-size: 88px; font-weight: 900; line-height: 1; letter-spacing: -3px; margin: 10px 0; }
-.screen-middle-line3 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+.screen-middle-line1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+.screen-middle-big { font-size: 86px; font-weight: 900; line-height: 1; letter-spacing: -3px; margin: 10px 0; }
+.screen-middle-line3 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+.timer-rule-hint { font-size: 12px; font-weight: 700; opacity: 0.8; margin-top: 8px; padding: 4px 12px; border-radius: 12px; background: rgba(0,0,0,0.1); }
 .timer-bottom-bar { display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%; }
-.screen-bottom-route { font-size: 14px; font-weight: 700; opacity: 0.9; text-align: center; }
+.screen-bottom-route { font-size: 14px; font-weight: 700; opacity: 0.95; text-align: center; }
 .btn-timer-back { width: 100%; max-width: 320px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.3); color: inherit; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800; cursor: pointer; backdrop-filter: blur(5px); }
 .btn-timer-back:active { background: rgba(0, 0, 0, 0.4); }
 
@@ -354,12 +359,11 @@ color: #000;
 
 <!-- 물어보기 탭 (Gemini 3.8 Flash + Google 검색 그라운딩 + 앱 경로 함수 연동) -->
 <section class="screen" id="chat">
-<div class="between">
+<div class="between" style="flex-shrink:0;margin-bottom:6px">
 <span class="badge">✨ Gemini 3.8 Flash + 🌐 Google 실시간 검색</span>
 <span class="micro">Max Output: 8,192 Tokens</span>
 </div>
-<h2 style="margin-top:8px;">막차 &amp; 귀가 전략 물어보기</h2>
-<p class="desc">제미나이가 Google 실시간 웹 검색(막차, N버스, 교통통제)과 앱 내 카카오·서울시 경로 탐색을 직접 수행해 알려드립니다.</p>
+<p class="desc">제미나이가 Google 실시간 웹 검색과 앱 내 경로 탐색을 직접 수행해 알려드립니다.</p>
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
 <div class="msg bot">안녕하세요! <b>Google 실시간 검색</b>과 <b>앱 내 경로 탐색</b>이 연결된 Gemini 3.8 Flash입니다. ✨
@@ -482,6 +486,7 @@ color: #000;
 <div class="screen-middle-line1" id="timerLine1">출발까지</div>
 <div class="screen-middle-big" id="timerBig">40분</div>
 <div class="screen-middle-line3" id="timerLine3">아직 괜찮아요</div>
+<div class="timer-rule-hint" id="timerRuleHint">🟢 16분 이상 여유 · 🟡 6~15분 주의 · 🔴 5분 이하 긴급</div>
 </div>
 <div class="timer-bottom-bar">
 <div class="screen-bottom-route" id="timerBottomRoute">출발 · 대중교통 ➔ 택시</div>
@@ -581,7 +586,7 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v18'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v19'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
@@ -1112,6 +1117,19 @@ document.querySelectorAll('#conditionBar .cond-btn').forEach(btn => {
   });
 });
 
+/* ───────────── 마크다운 텍스트 안전 변환기 (채팅 말풍선 가독성 개선) ───────────── */
+function renderFormattedBotText(container, rawText) {
+  const escaped = String(rawText || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  const formatted = escaped
+    .replace(/^###\s*(.+)$/gm, '<b>$1</b>')
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/^\*\s+/gm, '• ');
+  container.innerHTML = formatted;
+}
+
 /* ───────────── Gemini 3.8 Flash (Google Search + 앱 내부 경로 검색 통합) ───────────── */
 const chatHistory = [];
 let isChatSending = false;
@@ -1287,7 +1305,6 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
   };
 
   try {
-    // 1단계: Google Search 그라운딩 + 앱 경로 검색 함수 도구 동시 활성화
     const combinedTools = [
       { google_search: {} },
       { functionDeclarations: [appRouteFunctionDeclaration] }
@@ -1296,13 +1313,11 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
     let activeModel = GEMINI_MODEL;
     let data = await callGeminiApi(activeModel, chatHistory, combinedTools);
 
-    // 모델 미지원 시 폴백 모델로 재시도
     if (data?.error && /not found|not supported|no longer available/i.test(data.error.message || '')) {
       activeModel = GEMINI_FALLBACK_MODEL;
       data = await callGeminiApi(activeModel, chatHistory, combinedTools);
     }
 
-    // 만약 결합 도구(google_search + functionDeclarations)가 해당 키/모델에서 거부될 경우 google_search 단독으로 재시도
     if (data?.error && /tool|grounding|function/i.test(data.error.message || '')) {
       data = await callGeminiApi(activeModel, chatHistory, [{ google_search: {} }]);
     }
@@ -1310,7 +1325,6 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
     let candidate = data?.candidates?.[0];
     let modelParts = candidate?.content?.parts || [];
 
-    // 2단계: 모델이 앱 내 경로 탐색 함수(search_seoul_route) 호출을 요청한 경우 실행 후 결과 전달
     const fnCallPart = modelParts.find(p => p.functionCall);
     if (fnCallPart) {
       const fnName = fnCallPart.functionCall.name;
@@ -1342,7 +1356,7 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
     const replyText = modelParts.filter(p => p.text).map(p => p.text).join('\n').trim();
 
     if (replyText) {
-      loadingMsg.textContent = replyText;
+      renderFormattedBotText(loadingMsg, replyText);
       appendGroundingSources(loadingMsg, candidate);
       if (candidate?.content) {
         chatHistory.push(candidate.content);
@@ -1383,7 +1397,7 @@ $('chatInput')?.addEventListener('keydown', e => {
 $('saveSettings')?.addEventListener('click', () => {
   settings.budget = Number($('budget')?.value || 30000);
   settings.pref = activeCondition;
-  localStorage.setItem('homeway.app.v18', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v19', JSON.stringify(settings));
   toast('✓ 귀가 설정이 기기에 저장되었습니다.');
 });
 
@@ -1423,14 +1437,14 @@ $('saveDestinations')?.addEventListener('click', () => {
       settings.destinations[idx][field] = inp.value.trim();
     }
   });
-  localStorage.setItem('homeway.app.v18', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v19', JSON.stringify(settings));
   renderSaved();
   $('destinationDialog')?.close();
   toast('✓ 저장 목적지가 업데이트되었습니다.');
 });
 
 $('reset')?.addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v18');
+  localStorage.removeItem('homeway.app.v19');
   settings = structuredClone(defaults);
   applyTheme(settings.theme);
   syncPrefButtons(settings.pref);
@@ -1567,18 +1581,74 @@ $('homeSwap')?.addEventListener('click', () => {
   runSeoulSearch();
 });
 
-$('navigate')?.addEventListener('click', () => {
+/* ───────────── 풀스크린 귀가 타이머 (초록 / 노랑 / 빨강 상태 연동 & 실시간 갱신) ───────────── */
+let timerInterval = null;
+
+function refreshFullscreenTimer() {
   if (!selected) return;
-  $('timerDialog')?.showModal();
-  const nowMin = timeToMin(getNowTimeStr());
-  let depMin = timeToMin(selected.departure);
-  if (depMin < nowMin && nowMin >= 21 * 60) depMin += 1440;
-  const remaining = Math.max(0, depMin - nowMin);
+  const screenEl = $('timerPhoneScreen');
+  if (!screenEl) return;
+
+  const now = new Date();
+  const nowTotalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const [dh, dm] = String(selected.departure || getNowTimeStr()).split(':').map(Number);
+  let depTotalSec = dh * 3600 + dm * 60;
+
+  // 자정 넘어가는 심야 출발 처리 (예: 현재 23:40, 출발 00:15)
+  if (depTotalSec < nowTotalSec && now.getHours() >= 20 && dh < 5) {
+    depTotalSec += 86400;
+  }
+
+  const diffSec = Math.max(0, depTotalSec - nowTotalSec);
+  const remainingMin = Math.ceil(diffSec / 60);
+
+  screenEl.classList.remove('state-green', 'state-yellow', 'state-red');
+
+  if (remainingMin <= 5) {
+    // 🔴 빨강: 5분 이하 (0분 포함) -> 긴급 출발
+    screenEl.classList.add('state-red');
+    if ($('timerStatusCaption')) $('timerStatusCaption').textContent = remainingMin === 0 ? '출발 시각!' : '긴급';
+    if ($('timerLine1')) $('timerLine1').textContent = remainingMin === 0 ? '지금 바로' : '출발까지';
+    if ($('timerBig')) $('timerBig').textContent = remainingMin === 0 ? '출발!' : `${remainingMin}분`;
+    if ($('timerLine3')) $('timerLine3').textContent = remainingMin === 0 ? '놓치지 않게 서두르세요!' : '지금 바로 출발하세요!';
+  } else if (remainingMin <= 15) {
+    // 🟡 노랑: 6분 ~ 15분 -> 주의
+    screenEl.classList.add('state-yellow');
+    if ($('timerStatusCaption')) $('timerStatusCaption').textContent = '주의';
+    if ($('timerLine1')) $('timerLine1').textContent = '출발까지';
+    if ($('timerBig')) $('timerBig').textContent = `${remainingMin}분`;
+    if ($('timerLine3')) $('timerLine3').textContent = '슬슬 자리 정리하고 준비하세요';
+  } else {
+    // 🟢 초록: 16분 이상 -> 여유
+    screenEl.classList.add('state-green');
+    if ($('timerStatusCaption')) $('timerStatusCaption').textContent = '여유';
+    if ($('timerLine1')) $('timerLine1').textContent = '출발까지';
+    if ($('timerBig')) $('timerBig').textContent = `${remainingMin}분`;
+    if ($('timerLine3')) $('timerLine3').textContent = '아직 괜찮아요';
+  }
+
   if ($('timerDestLabel')) $('timerDestLabel').textContent = `집 (${places?.end?.name || '도착지'})까지 출발`;
   if ($('timerBottomRoute')) $('timerBottomRoute').textContent = `${selected.departure} 출발 · ${selected.summary}`;
-  if ($('timerBig')) $('timerBig').textContent = `${remaining}분`;
+}
+
+function closeFullscreenTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  $('timerDialog')?.close();
+}
+
+$('navigate')?.addEventListener('click', () => {
+  if (!selected) return;
+  refreshFullscreenTimer();
+  $('timerDialog')?.showModal();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(refreshFullscreenTimer, 1000);
 });
-$('btnCloseTimer')?.addEventListener('click', () => $('timerDialog')?.close());
+$('btnCloseTimer')?.addEventListener('click', closeFullscreenTimer);
+$('timerDialog')?.addEventListener('close', () => {
+  clearInterval(timerInterval);
+  timerInterval = null;
+});
 
 function tab(id) {
   document.querySelectorAll('.screen').forEach(e => e.classList.toggle('on', e.id === id));
@@ -1591,6 +1661,10 @@ function tab(id) {
   window.scrollTo(0, 0);
   if (id === 'home' && homeLeaflet) { setTimeout(() => { homeLeaflet.invalidateSize(); updateHomeMap(); }, 150); }
   if (id === 'group') updateQrCodes();
+  if (id === 'chat') {
+    const box = $('chatMessages');
+    if (box) box.scrollTop = box.scrollHeight;
+  }
 }
 document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => tab(b.dataset.tab)));
 
