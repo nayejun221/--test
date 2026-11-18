@@ -79,6 +79,7 @@ body.light-theme .primary{color:#ffffff}
 .condition-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 12px}
 .cond-btn{border:1px solid var(--line);background:var(--card);color:var(--text-sub);border-radius:10px;padding:9px 4px;font-size:11px;font-weight:700;text-align:center;transition:all 0.2s}
 .cond-btn.on{background:var(--chip-on-bg);border-color:var(--chip-on-border);color:var(--yellow)}
+.cond-btn:disabled{opacity:0.35;cursor:not-allowed;text-decoration:line-through}
 .strategy{display:block;width:100%;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:15px;text-align:left;padding:17px;margin:10px 0;transition:all 0.2s}
 .strategy.chosen{border-color:var(--yellow);background:#272a20}
 body.light-theme .strategy.chosen{background:#fffbeb;border-color:var(--yellow)}
@@ -340,7 +341,7 @@ color: #000;
 <button type="button" class="cond-btn on" data-cond="time">⚡ 최소 시간</button>
 <button type="button" class="cond-btn" data-cond="cost">💰 최소 금액</button>
 <button type="button" class="cond-btn" data-cond="transfer">🔄 최소 환승</button>
-<button type="button" class="cond-btn" data-cond="taxi">🚖 택시</button>
+<button type="button" class="cond-btn" id="condTaxiBtn" data-cond="taxi">🚖 택시</button>
 </div>
 
 <div id="algorithmNotice"></div>
@@ -424,7 +425,7 @@ color: #000;
 <button type="button" class="chip" data-pref="transfer" onclick="setDefaultPref('transfer')">🔄 최소 환승</button>
 <button type="button" class="chip" data-pref="taxi" onclick="setDefaultPref('taxi')">🚖 택시</button>
 </div>
-<div class="setting"><span>기본 택시비 예산</span><b id="myBudget">3만원</b></div>
+<div class="setting"><span>기본 택시비 예산</span><b id="myBudget">30,000원</b></div>
 </div>
 
 <div class="panel">
@@ -586,11 +587,13 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v24'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v25'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
 if ($('budget')) $('budget').value = settings.budget;
+if ($('budgetText')) $('budgetText').textContent = won(settings.budget);
+if ($('myBudget')) $('myBudget').textContent = won(settings.budget);
 
 let activeCondition = settings.pref || 'time';
 
@@ -738,7 +741,7 @@ async function resolveCurrentGpsPlace() {
   });
 }
 
-/* ───────────── 원탭 귀가 (출발지 = 현재 위치, 도착지 = 저장된 귀가지) ───────────── */
+/* ───────────── 원탭 귀가 ───────────── */
 async function triggerOneTapReturn(destObj, idx) {
   activeDestination = idx;
   renderSaved();
@@ -1006,7 +1009,7 @@ async function runSeoulSearch() {
   const isNowQuery = Math.abs(baseServiceMin - nowServiceMin) <= 2;
   const isNightTime = (dh >= 23 || dh < 4);
 
-  const budget = Number($('budget')?.value || 30000);
+  const budget = Number($('budget')?.value ?? 30000);
   const sName = places.start.name;
   const eName = places.end.name;
 
@@ -1035,7 +1038,7 @@ async function runSeoulSearch() {
     const builtRoutes = [];
     let seoulSubwayLive = [];
 
-    // 1. 서울 지하철 경로
+    // 1. 서울 지하철 경로 (택시비 0원)
     if (startSubway && endSubway) {
       seoulSubwayLive = await getSeoulSubwayLive(startSubway.stationName);
       const walk1 = Math.max(1, Math.round(startSubway.distM / 67));
@@ -1071,6 +1074,7 @@ async function runSeoulSearch() {
         name: `🚇 ${startSubway.lineName} 지하철 (${stationLabel} ➔ ${endStationLabel})`,
         cost: 1400,
         taxiCost: 0,
+        usesTaxi: false,
         transfers: sameLine ? 0 : 1,
         isHybrid: false,
         departure: subwayArrival.boardTimeStr,
@@ -1093,7 +1097,7 @@ async function runSeoulSearch() {
       });
     }
 
-    // 2. 시내버스 / 심야 올빼미버스(N버스) + 환승 택시
+    // 2. 시내버스 / 심야 올빼미버스(N버스) + 환승 택시 (택시 포함 경로)
     const midX = (places.start.x + places.end.x) / 2;
     const midY = (places.start.y + places.end.y) / 2;
     const subTaxi = await getKakaoTaxiRoute(midX, midY, places.end.x, places.end.y);
@@ -1126,6 +1130,7 @@ async function runSeoulSearch() {
         name: `🚌 ${busInfo.primaryBus} 버스 + 환승 택시`,
         cost: totalHybridCost,
         taxiCost: subTaxi.fare,
+        usesTaxi: true,
         transfers: 1,
         isHybrid: true,
         departure: busArrival.boardTimeStr,
@@ -1147,7 +1152,7 @@ async function runSeoulSearch() {
       });
     }
 
-    // 3. 시내버스 단독 이동 경로
+    // 3. 시내버스 단독 이동 경로 (택시비 0원)
     {
       const busOnlyArrival = computeVehicleArrivalTime({
         baseServiceMin,
@@ -1175,6 +1180,7 @@ async function runSeoulSearch() {
         name: `🚌 ${busInfo.primaryBus} ➔ ${secondBus} (${busCategory})`,
         cost: isNightTime ? 2500 : 1500,
         taxiCost: 0,
+        usesTaxi: false,
         transfers: 1,
         isHybrid: false,
         departure: busOnlyArrival.boardTimeStr,
@@ -1197,7 +1203,7 @@ async function runSeoulSearch() {
       });
     }
 
-    // 4. 카카오 직행 택시
+    // 4. 카카오 직행 택시 (택시 포함 경로)
     const taxiDispatchWait = isNightTime ? 6 : 3;
     const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
     const taxiPickupTimeStr = minToTime(taxiPickupServiceMin);
@@ -1208,6 +1214,7 @@ async function runSeoulSearch() {
       name: `🚖 카카오 직행 택시 (${kakaoDriveData.distanceKm}km)`,
       cost: kakaoDriveData.fare,
       taxiCost: kakaoDriveData.fare,
+      usesTaxi: true,
       transfers: 0,
       isHybrid: false,
       departure: taxiPickupTimeStr,
@@ -1248,6 +1255,18 @@ async function runSeoulSearch() {
 }
 
 function applyConditionAndRender() {
+  const budget = Number($('budget')?.value ?? 30000);
+  const availableTaxiRoutes = rawRoutes.filter(r => r.usesTaxi && r.taxiCost <= budget);
+
+  // 예산 내 이용 가능한 택시가 하나도 없으면 '택시' 조건 버튼 비활성화 및 자동 복귀
+  const taxiBtn = $('condTaxiBtn');
+  if (taxiBtn) {
+    taxiBtn.disabled = (rawRoutes.length > 0 && availableTaxiRoutes.length === 0);
+  }
+  if (activeCondition === 'taxi' && rawRoutes.length > 0 && availableTaxiRoutes.length === 0) {
+    syncPrefButtons('time');
+  }
+
   visible = curateRecommendedRoutes(rawRoutes, activeCondition);
   if (!visible.some(r => r.id === selected?.id)) {
     selected = visible[0] || null;
@@ -1257,16 +1276,19 @@ function applyConditionAndRender() {
   renderStrategyCards();
 }
 
-/* ───────────── 택시비 예산 초과 경로 완전 제외 필터링 ───────────── */
+/* ───────────── 택시비 예산 초과 시 택시 선택지 완전 제거 ───────────── */
 function curateRecommendedRoutes(pool, cond) {
   if (!pool || pool.length === 0) return [];
   const budget = Number($('budget')?.value ?? 30000);
 
-  // 택시 요금이 설정된 예산을 초과하면 택시(직행 택시, 환승 택시) 선택지 자체를 제거
-  let filtered = pool.filter(r => r.taxiCost <= budget);
+  // 택시를 이용하는 모든 경로(직행 택시, 환승 택시) 중 예산을 초과하거나 예산이 0원인 경우 완전히 제거
+  let filtered = pool.filter(r => {
+    if (!r.usesTaxi) return true;
+    return budget > 0 && r.taxiCost <= budget;
+  });
 
   if (cond === 'taxi') {
-    filtered = filtered.filter(r => r.taxiCost > 0);
+    filtered = filtered.filter(r => r.usesTaxi);
   }
 
   filtered.sort((a, b) => {
@@ -1301,22 +1323,19 @@ function renderStrategyCards() {
   if (!cardsEl) return;
   cardsEl.replaceChildren();
 
-  const hiddenTaxiCount = rawRoutes.filter(r => r.taxiCost > budget).length;
+  const removedTaxiRoutes = rawRoutes.filter(r => r.usesTaxi && (budget === 0 || r.taxiCost > budget));
   const noticeBox = $('algorithmNotice');
   if (noticeBox) {
     noticeBox.replaceChildren();
-    if (hiddenTaxiCount > 0) {
-      noticeBox.append(node('div', `💡 허용 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${hiddenTaxiCount}개는 목록에서 제외되었습니다.`, 'hintBox'));
+    if (removedTaxiRoutes.length > 0) {
+      noticeBox.append(node('div', `🚫 설정한 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${removedTaxiRoutes.length}개가 제외되었습니다.`, 'hintBox'));
     } else {
       noticeBox.append(node('div', `✅ 경로 카드를 선택하면 타야 할 버스 번호·지하철 호선과 출발 정류장·역 도착 시각을 아래에 바로 안내합니다.`, 'hintBox'));
     }
   }
 
   if (visible.length === 0) {
-    const emptyMsg = activeCondition === 'taxi'
-      ? `현재 설정한 허용 택시비 예산(${won(budget)}) 이내로 이용할 수 있는 택시 경로가 없습니다. 아래 슬라이더로 택시비 예산을 늘리거나 다른 조건을 선택해 주세요.`
-      : '조건에 맞는 경로가 없습니다.';
-    cardsEl.append(node('div', emptyMsg, 'alertBox'));
+    cardsEl.append(node('div', '조건에 맞는 경로가 없습니다.', 'alertBox'));
   }
 
   visible.forEach(r => {
@@ -1394,6 +1413,7 @@ function renderStrategyCards() {
 
 document.querySelectorAll('#conditionBar .cond-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (btn.disabled) return;
     syncPrefButtons(btn.dataset.cond);
     applyConditionAndRender();
   });
@@ -1680,7 +1700,7 @@ $('chatInput')?.addEventListener('keydown', e => {
 $('saveSettings')?.addEventListener('click', () => {
   settings.budget = Number($('budget')?.value ?? 30000);
   settings.pref = activeCondition;
-  localStorage.setItem('homeway.app.v24', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v25', JSON.stringify(settings));
   toast('✓ 귀가 설정이 기기에 저장되었습니다.');
 });
 
@@ -1720,14 +1740,14 @@ $('saveDestinations')?.addEventListener('click', () => {
       settings.destinations[idx][field] = inp.value.trim();
     }
   });
-  localStorage.setItem('homeway.app.v24', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v25', JSON.stringify(settings));
   renderSaved();
   $('destinationDialog')?.close();
   toast('✓ 저장 목적지가 업데이트되었습니다.');
 });
 
 $('reset')?.addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v24');
+  localStorage.removeItem('homeway.app.v25');
   settings = structuredClone(defaults);
   applyTheme(settings.theme);
   syncPrefButtons(settings.pref);
@@ -1848,12 +1868,16 @@ $('homeFit')?.addEventListener('click', () => updateHomeMap());
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => $(b.dataset.close)?.close()));
 
 $('depTime')?.addEventListener('change', () => runSeoulSearch());
-$('budget')?.addEventListener('input', () => {
-  const bVal = Number($('budget').value);
+
+// 슬라이더 조작 시 즉시(input & change 모두) 예산 초과 택시 선택지 제거
+function handleBudgetSliderChange() {
+  const bVal = Number($('budget')?.value ?? 30000);
   if ($('budgetText')) $('budgetText').textContent = won(bVal);
   if ($('myBudget')) $('myBudget').textContent = won(bVal);
   applyConditionAndRender();
-});
+}
+$('budget')?.addEventListener('input', handleBudgetSliderChange);
+$('budget')?.addEventListener('change', handleBudgetSliderChange);
 
 $('homeSwap')?.addEventListener('click', () => {
   const a = places.start, b = places.end;
@@ -1940,6 +1964,7 @@ function tab(id) {
   if ($('pageTitle')) $('pageTitle').textContent = titles[id] || '집에 못 갈 지도';
   window.scrollTo(0, 0);
   if (id === 'home' && homeLeaflet) { setTimeout(() => { homeLeaflet.invalidateSize(); updateHomeMap(); }, 150); }
+  if (id === 'strategy') applyConditionAndRender();
   if (id === 'group') updateQrCodes();
   if (id === 'chat') {
     const box = $('chatMessages');
