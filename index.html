@@ -314,7 +314,7 @@ color: #000;
 <div id="savedRoutes" style="margin-top:8px"></div>
 </div>
 <button class="primary" id="openStrategy" type="button">추천 귀가 전략 (3~5개) 상세 보기 <span>→</span></button>
-<p class="footnote" id="homeFoot">서울특별시 열린데이터광장 · 카카오모빌리티 · Gemini 3.5 Flash 통합</p>
+<p class="footnote" id="homeFoot">서울특별시 열린데이터광장 · 카카오모빌리티 · Gemini 3.8 Flash 통합</p>
 </section>
 
 <!-- 전략 탭 -->
@@ -349,17 +349,17 @@ color: #000;
 </div>
 </section>
 
-<!-- 물어보기 탭 (Gemini 3.5 Flash AI 연동) -->
+<!-- 물어보기 탭 (Gemini 3.8 Flash AI 연동) -->
 <section class="screen" id="chat">
 <div class="between">
-<span class="badge">✨ Gemini 3.5 Flash AI 어시스턴트</span>
+<span class="badge">✨ Gemini 3.8 Flash AI 어시스턴트</span>
 <span class="micro">Max Output: 8,192 Tokens</span>
 </div>
 <h2 style="margin-top:8px;">막차 &amp; 귀가 전략 물어보기</h2>
 <p class="desc">현재 검색한 출발·도착지와 시각, 택시 예산을 제미나이가 실시간으로 분석해 최적의 귀가 조언을 드립니다.</p>
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
-<div class="msg bot">안녕하세요! Gemini 3.5 Flash AI 귀가 어시스턴트입니다. ✨
+<div class="msg bot">안녕하세요! Gemini 3.8 Flash AI 귀가 어시스턴트입니다. ✨
 현재 설정된 서울 경로와 실시간 데이터를 바탕으로 <b>최소 시간 · 최소 금액 · 심야 택시 환승 · 막차 전략</b>까지 무엇이든 상세하게 답해 드릴게요!</div>
 </div>
 <div class="chat-chips" id="chatQuickChips">
@@ -530,8 +530,8 @@ color: #000;
 const KAKAO_REST_KEY = '00635a15cd451240a8fd6e37cee0da22';
 const SEOUL_OPEN_KEY = '77484a55786e617939344567517158';
 const GEMINI_API_KEY = 'AQ.Ab8RN6K0XVIU9hJrBmHvYWLCOrC32PyCp4mXEBRuhxqlN_XsoQ';
-const GEMINI_MODEL = 'gemini-3.5-flash';
-const GEMINI_FALLBACK_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.8-flash';
+const GEMINI_FALLBACK_MODEL = 'gemini-3.8-flash-lite';
 const GEMINI_MAX_TOKENS = 8192;
 
 const $ = id => document.getElementById(id);
@@ -575,7 +575,7 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v16'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v17'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
@@ -1106,7 +1106,7 @@ document.querySelectorAll('#conditionBar .cond-btn').forEach(btn => {
   });
 });
 
-/* ───────────── Gemini 3.5 Flash AI 챗봇 로직 ───────────── */
+/* ───────────── Gemini 3.8 Flash AI 챗봇 로직 ───────────── */
 const chatHistory = [];
 let isChatSending = false;
 
@@ -1130,7 +1130,7 @@ async function askGeminiChatbot(userMessage) {
   sendBtn.textContent = '전송중';
   box.scrollTop = box.scrollHeight;
 
-  const loadingMsg = node('div', '✨ Gemini 3.5 Flash가 경로와 막차 데이터를 분석 중입니다...', 'msg bot');
+  const loadingMsg = node('div', '✨ Gemini 3.8 Flash가 경로와 막차 데이터를 분석 중입니다...', 'msg bot');
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
 
@@ -1218,7 +1218,7 @@ $('chatInput')?.addEventListener('keydown', e => {
 $('saveSettings')?.addEventListener('click', () => {
   settings.budget = Number($('budget')?.value || 30000);
   settings.pref = activeCondition;
-  localStorage.setItem('homeway.app.v16', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v17', JSON.stringify(settings));
   toast('✓ 귀가 설정이 기기에 저장되었습니다.');
 });
 
@@ -1258,14 +1258,14 @@ $('saveDestinations')?.addEventListener('click', () => {
       settings.destinations[idx][field] = inp.value.trim();
     }
   });
-  localStorage.setItem('homeway.app.v16', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v17', JSON.stringify(settings));
   renderSaved();
   $('destinationDialog')?.close();
   toast('✓ 저장 목적지가 업데이트되었습니다.');
 });
 
 $('reset')?.addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v16');
+  localStorage.removeItem('homeway.app.v17');
   settings = structuredClone(defaults);
   applyTheme(settings.theme);
   syncPrefButtons(settings.pref);
