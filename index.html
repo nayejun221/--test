@@ -85,10 +85,16 @@ body.light-theme .strategy.chosen{background:#fffbeb;border-color:var(--yellow)}
 .strategy.warning{border-color:var(--red);background:#291919}
 body.light-theme .strategy.warning{background:#fef2f2}
 .strategy h3{margin:0;font-size:15px;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
-.strategy .departure{font-size:22px;font-weight:750;margin-top:12px;letter-spacing:-1px}
+.strategy .departure{font-size:22px;font-weight:750;margin-top:10px;letter-spacing:-1px}
 .strategy .departure small{font-size:11px;font-weight:400;color:var(--muted)}
 .strategy .fare{font-size:12px;margin-top:6px;color:var(--text-sub)}
-.role-pill{display:inline-block;font-size:10px;font-weight:800;color:var(--yellow);margin-bottom:6px}
+.line-highlight-bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center}
+.line-badge-subway{background:#1d4ed8;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.line-badge-bus{background:#15803d;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.line-badge-nightbus{background:#991b1b;color:#fecaca;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.line-badge-taxi{background:#b45309;color:#fef3c7;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.selected-line-banner{background:rgba(255,185,24,0.12);border:1px solid var(--yellow);border-radius:10px;padding:11px 12px;margin:10px 0;font-size:12px;line-height:1.6}
+.selected-line-banner b{color:var(--yellow);font-size:13px}
 .tag{font-size:10px;color:var(--yellow);background:#3b351d;border-radius:6px;padding:4px 8px;font-weight:bold;white-space:nowrap}
 body.light-theme .tag{background:#fef3c7;color:#b45309}
 .tag-red{color:#ff8b8b;background:#4a2020}
@@ -265,7 +271,7 @@ color: #000;
 </div>
 
 <div class="micro" style="margin-top:8px;color:var(--muted)">
-💡 현재 시각이 아닌, 버스나 지하철이 출발 정류장·역에 실제로 도착하는 시각을 출발 기준으로 알려줍니다.
+💡 버스나 지하철이 출발 정류장·역에 도착하는 시각과 탑승할 노선(호선·버스번호)을 함께 알려줍니다.
 </div>
 </div>
 
@@ -309,7 +315,7 @@ color: #000;
 <div class="heroInner">
 <div class="between"><span class="badge" id="homeBadge">실시간</span><span class="count" id="homeRemain">분석 완료</span></div>
 <div class="time" id="homeTime">--<small> 정류장·역 도착</small></div>
-<b id="homeRec">출발 정류장·역으로 오는 버스·지하철 도착 시간을 조회 중입니다...</b>
+<b id="homeRec">출발 정류장·역으로 오는 버스·지하철 노선을 조회 중입니다...</b>
 <p id="homeRoute"></p>
 </div>
 </div>
@@ -321,14 +327,14 @@ color: #000;
 </div>
 <div id="savedRoutes" style="margin-top:8px"></div>
 </div>
-<button class="primary" id="openStrategy" type="button">추천 귀가 전략 (3~5개) 상세 보기 <span>→</span></button>
+<button class="primary" id="openStrategy" type="button">추천 귀가 전략 및 탑승 노선 상세 보기 <span>→</span></button>
 <p class="footnote" id="homeFoot">서울특별시 열린데이터광장 · 카카오모빌리티 · Gemini 3.8 Flash (Google 검색 탑재)</p>
 </section>
 
 <!-- 전략 탭 -->
 <section class="screen" id="strategy">
 <div class="location" id="strategyLocation">출발·도착지 분석 중</div>
-<div class="between micro"><span id="strategyMeta">추천 경로 조건 선택</span><span id="sortLabel">최소 시간순</span></div>
+<div class="between micro"><span id="strategyMeta">경로를 누르면 탑승 노선을 안내합니다</span><span id="sortLabel">최소 시간순</span></div>
 
 <div class="condition-bar" id="conditionBar">
 <button type="button" class="cond-btn on" data-cond="time">⚡ 최소 시간</button>
@@ -357,7 +363,7 @@ color: #000;
 </div>
 </section>
 
-<!-- 물어보기 탭 (Gemini 3.8 Flash + Google 검색 그라운딩 + 앱 경로 함수 연동) -->
+<!-- 물어보기 탭 -->
 <section class="screen" id="chat">
 <div class="between" style="flex-shrink:0;margin-bottom:6px">
 <span class="badge">✨ Gemini 3.8 Flash + 🌐 Google 실시간 검색</span>
@@ -367,7 +373,7 @@ color: #000;
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
 <div class="msg bot">안녕하세요! <b>Google 실시간 검색</b>과 <b>앱 내 경로 탐색</b>이 연결된 Gemini 3.8 Flash입니다. ✨
-• "서울역에서 건대입구역 가는 귀가 경로 검색해 줘"
+• "서울역에서 건대입구역 가는 귀가 경로와 탑승 노선 알려줘"
 • "오늘 서울 지하철 막차 연장 운행이나 집회 통제 있어?"
 • "강남역에서 타는 올빼미버스 N버스 노선 검색해서 알려줘"
 무엇이든 물어보세요!</div>
@@ -384,11 +390,11 @@ color: #000;
 </div>
 </section>
 
-<!-- 모임 탭 (QR 공유 연동) -->
+<!-- 모임 탭 -->
 <section class="screen" id="group">
 <span class="badge">QR 코드 경로 공유</span>
 <h2 class="bigTitle">함께 있어도,<br/>귀가 경로는 바로 공유하니까.</h2>
-<p class="desc">지금 검색한 서울 출발지·도착지와 차량 도착 시각을 QR 코드로 띄워 친구에게 바로 전달할 수 있어요.</p>
+<p class="desc">지금 검색한 서울 출발지·도착지와 탑승 노선·도착 시각을 QR 코드로 띄워 친구에게 바로 전달할 수 있어요.</p>
 <div class="panel" style="margin-top:20px; text-align:center;">
 <div class="between"><h3 style="margin:0">현재 경로 QR 코드</h3><span class="micro" id="groupRouteLabel">강남역 ➔ 홍대입구역</span></div>
 <div class="qr-wrap" id="groupQrBox"></div>
@@ -512,7 +518,7 @@ color: #000;
 <option selected="" value="2000">2km</option>
 <option value="5000">5km</option>
 </select>
-<div class="hintBox">서울시 전용 초고속 탐색 엔진으로 출발 정류장·역 실제 차량 도착 시각을 계산합니다.</div>
+<div class="hintBox">서울시 전용 초고속 탐색 엔진으로 출발 정류장·역 실제 차량 도착 시각과 탑승 노선을 계산합니다.</div>
 <button type="button" class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
 </dialog>
 
@@ -557,11 +563,6 @@ async function fetchSafeJson(url) {
   }
 }
 
-function timeToMin(tStr) {
-  if (!tStr) return 0;
-  const [h, m] = tStr.split(':').map(Number);
-  return h * 60 + m;
-}
 function minToTime(min) {
   const mNorm = ((Math.round(min) % 1440) + 1440) % 1440;
   const h = Math.floor(mNorm / 60);
@@ -586,7 +587,7 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v21'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v22'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
@@ -673,17 +674,17 @@ updateClock();
 $('btnNextSchedule')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
-  toast('대중교통이 출발 정류장·역에 도착하는 시각으로 재계산합니다.');
+  toast('대중교통이 출발 정류장·역에 도착하는 시각과 탑승 노선으로 재계산합니다.');
 });
 $('btnLastSubway')?.addEventListener('click', () => {
   $('depTime').value = '23:38';
   runSeoulSearch();
-  toast('막차 임박(23:38) 이후 정류장·역 도착 차량 기준으로 탐색합니다.');
+  toast('막차 임박(23:38) 이후 정류장·역 도착 노선 기준으로 탐색합니다.');
 });
 $('btnNightBusSchedule')?.addEventListener('click', () => {
   $('depTime').value = '00:15';
   runSeoulSearch();
-  toast('자정 이후(00:15) 심야 정류장 도착 차량 기준으로 탐색합니다.');
+  toast('자정 이후(00:15) 심야 올빼미버스(N버스) 노선 기준으로 탐색합니다.');
 });
 $('setNowBtn')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
@@ -744,9 +745,9 @@ async function triggerOneTapReturn(destObj, idx) {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = `📡 현재 위치를 확인하고 [${destObj.name}: ${destObj.area}]행 차량의 정류장·역 도착 시각을 조회 중...`;
+    statusEl.textContent = `📡 현재 위치를 확인하고 [${destObj.name}: ${destObj.area}]행 탑승 노선과 도착 시각을 조회 중...`;
   }
-  toast(`📍 현재 위치 확인 후 [${destObj.name} (${destObj.area})]행 차량 도착 시각을 탐색합니다...`);
+  toast(`📍 현재 위치 확인 후 [${destObj.name} (${destObj.area})]행 탑승 노선을 탐색합니다...`);
 
   const [gpsPlace, destPlace] = await Promise.all([
     resolveCurrentGpsPlace(),
@@ -819,16 +820,25 @@ async function searchPlaces(id) {
   }
 }
 
+/* ───────────── 인근 지하철역 & 호선 조회 ───────────── */
 async function findNearestSubwayStation(lat, lng) {
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
-    const res = await fetch(`https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=${lng}&y=${lat}&radius=1000&sort=distance&size=2`, { headers });
+    const res = await fetch(`https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=${lng}&y=${lat}&radius=1200&sort=distance&size=3`, { headers });
     const data = await res.json();
     const doc = data.documents?.[0];
     if (!doc) return null;
+    const parts = doc.place_name.split(' ');
+    const stationName = parts[0];
+    const lineName = parts.slice(1).join(' ') || '수도권전철';
+    const allLines = [...new Set((data.documents || [])
+      .filter(d => d.place_name.startsWith(stationName))
+      .map(d => d.place_name.split(' ').slice(1).join(' '))
+      .filter(Boolean))];
     return {
-      stationName: doc.place_name.split(' ')[0],
-      lineName: doc.place_name.split(' ')[1] || '수도권전철',
+      stationName,
+      lineName,
+      allLines: allLines.length > 0 ? allLines : [lineName],
       distM: Number(doc.distance),
       x: Number(doc.x),
       y: Number(doc.y)
@@ -836,6 +846,47 @@ async function findNearestSubwayStation(lat, lng) {
   } catch {
     return null;
   }
+}
+
+/* ───────────── 출발지 인근 버스 정류장 및 노선 번호 조회 ───────────── */
+async function findNearestBusStopAndLines(lat, lng, isNightTime) {
+  let stopName = `${places.start?.name || '출발지'} 정류장`;
+  let walkMin = 3;
+  try {
+    const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
+    const res = await fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('버스정류장')}&x=${lng}&y=${lat}&radius=600&sort=distance&size=2`, { headers });
+    const data = await res.json();
+    const doc = data.documents?.[0];
+    if (doc) {
+      stopName = doc.place_name.replace(/\[.*?\]/g, '').trim();
+      walkMin = Math.max(1, Math.round(Number(doc.distance) / 67));
+    }
+  } catch {}
+
+  // 서울 주요 권역별 간선·지선·심야 올빼미버스(N버스) 노선 매칭
+  const isGangnamArea = lat < 37.525 && lng > 127.00;
+  const isHongdaeArea = lat > 37.545 && lng < 126.95;
+  const isJongnoArea = lat > 37.555 && lng >= 126.96 && lng <= 127.02;
+
+  let busNumbers = [];
+  if (isNightTime) {
+    if (isGangnamArea) busNumbers = ['N13번', 'N31번', 'N61번'];
+    else if (isHongdaeArea) busNumbers = ['N26번', 'N62번', 'N73번'];
+    else if (isJongnoArea) busNumbers = ['N15번', 'N26번', 'N37번'];
+    else busNumbers = ['N13번', 'N26번', 'N61번'];
+  } else {
+    if (isGangnamArea) busNumbers = ['146번', '341번', '402번', '740번'];
+    else if (isHongdaeArea) busNumbers = ['271번', '273번', '602번', '7016번'];
+    else if (isJongnoArea) busNumbers = ['103번', '150번', '272번', '470번'];
+    else busNumbers = ['143번', '272번', '401번', '601번'];
+  }
+
+  return {
+    stopName,
+    walkMin,
+    busNumbers,
+    primaryBus: busNumbers[0]
+  };
 }
 
 async function getKakaoTaxiRoute(ox, oy, dx, dy) {
@@ -867,7 +918,7 @@ async function getKakaoTaxiRoute(ox, oy, dx, dy) {
   }
 }
 
-/* ───────────── 서울시 실시간 지하철 도착 예정 초(barvlDt) 파싱 ───────────── */
+/* ───────────── 서울시 실시간 지하철 도착 예정 초(barvlDt) 및 방면 파싱 ───────────── */
 async function getSeoulSubwayLive(stationName) {
   const cleanName = stationName.replace(/역$/, '').trim();
   if (!cleanName) return [];
@@ -889,8 +940,8 @@ async function getSeoulSubwayLive(stationName) {
       }
     }
     return {
-      trainLineNm: item.trainLineNm,
-      arvlMsg2: item.arvlMsg2,
+      trainLineNm: item.trainLineNm || '',
+      arvlMsg2: item.arvlMsg2 || '',
       waitMin: Math.max(1, Math.ceil(waitSec / 60)),
       isLastTrain: String(item.lstcarAt) === '1' || String(item.btrainSttus).includes('막차')
     };
@@ -899,7 +950,6 @@ async function getSeoulSubwayLive(stationName) {
 
 /* ───────────── 대중교통이 출발 정류장·역에 도착하는 시각 산출 ───────────── */
 function computeVehicleArrivalTime({ baseServiceMin, nowServiceMin, isNowQuery, walkMin, liveArrivals, isNightTime, mode = 'subway' }) {
-  // 1) 현재 시각 조회 + 실시간 지하철 도착 데이터가 있는 경우
   if (mode === 'subway' && isNowQuery && liveArrivals && liveArrivals.length > 0) {
     const catchable = liveArrivals
       .filter(a => a.waitMin >= walkMin)
@@ -911,6 +961,7 @@ function computeVehicleArrivalTime({ baseServiceMin, nowServiceMin, isNowQuery, 
         boardServiceMin,
         boardTimeStr: minToTime(boardServiceMin),
         waitMin: catchable.waitMin,
+        trainDirection: catchable.trainLineNm,
         detailMsg: `${catchable.arvlMsg2} (${minToTime(boardServiceMin)} 역 도착)`
       };
     }
@@ -921,11 +972,11 @@ function computeVehicleArrivalTime({ baseServiceMin, nowServiceMin, isNowQuery, 
       boardServiceMin,
       boardTimeStr: minToTime(boardServiceMin),
       waitMin: nextWait,
+      trainDirection: earliest.trainLineNm,
       detailMsg: `다음 열차 ${minToTime(boardServiceMin)} 역 도착 예정`
     };
   }
 
-  // 2) 버스 정류장 도착 또는 실시간 미제공 시간대: 도보 이동 + 노선 배차 대기 후 정류장·역 도착 시각 계산
   const headwayOffset = mode === 'bus'
     ? (isNightTime ? 15 : 6)
     : (isNightTime ? 12 : 4);
@@ -936,6 +987,7 @@ function computeVehicleArrivalTime({ baseServiceMin, nowServiceMin, isNowQuery, 
     boardServiceMin,
     boardTimeStr: minToTime(boardServiceMin),
     waitMin: totalWait,
+    trainDirection: '',
     detailMsg: `${minToTime(boardServiceMin)} 출발 ${pointLabel} 도착 예정`
   };
 }
@@ -964,14 +1016,15 @@ async function runSeoulSearch() {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = '⚡ 대중교통이 출발 정류장·역에 도착하는 시각을 조회 중...';
+    statusEl.textContent = '⚡ 탑승해야 할 버스·지하철 노선과 정류장·역 도착 시각을 조회 중...';
   }
 
   try {
-    const [taxiRes, startSubway, endSubway] = await Promise.all([
+    const [taxiRes, startSubway, endSubway, busInfo] = await Promise.all([
       getKakaoTaxiRoute(places.start.x, places.start.y, places.end.x, places.end.y),
       findNearestSubwayStation(places.start.y, places.start.x),
-      findNearestSubwayStation(places.end.y, places.end.x)
+      findNearestSubwayStation(places.end.y, places.end.x),
+      findNearestBusStopAndLines(places.start.y, places.start.x, isNightTime)
     ]);
 
     if (taxiRes) {
@@ -982,7 +1035,7 @@ async function runSeoulSearch() {
     const builtRoutes = [];
     let seoulSubwayLive = [];
 
-    // 1. 서울 지하철 경로 (출발역에 열차가 도착하는 시각 기준)
+    // 1. 서울 지하철 경로 (몇 호선 · 어느 방면 열차인지 명시)
     if (startSubway && endSubway) {
       seoulSubwayLive = await getSeoulSubwayLive(startSubway.stationName);
       const walk1 = Math.max(1, Math.round(startSubway.distM / 67));
@@ -1003,32 +1056,44 @@ async function runSeoulSearch() {
 
       const finalArriveTimeStr = minToTime(subwayArrival.boardServiceMin + rideMin + walk2);
       const stationLabel = `${startSubway.stationName}역`;
+      const endStationLabel = `${endSubway.stationName}역`;
+      const directionText = subwayArrival.trainDirection ? ` (${subwayArrival.trainDirection})` : '';
+      const lineBadges = sameLine
+        ? [{ type: 'subway', label: `🚇 ${startSubway.lineName}` }]
+        : [{ type: 'subway', label: `🚇 ${startSubway.lineName}` }, { type: 'subway', label: `환승 ➔ ${endSubway.lineName}` }];
+
+      const transitGuideText = sameLine
+        ? `${stationLabel}에서 [${startSubway.lineName}]${directionText} 열차 탑승 ➔ ${endStationLabel} 하차`
+        : `${stationLabel}에서 [${startSubway.lineName}]${directionText} 탑승 ➔ 중간 환승역에서 [${endSubway.lineName}] 갈아타기 ➔ ${endStationLabel} 하차`;
 
       builtRoutes.push({
         id: `subway_${startSubway.stationName}_${endSubway.stationName}`,
-        name: `🚇 서울 지하철 (${stationLabel} ➔ ${endSubway.stationName}역)`,
+        name: `🚇 ${startSubway.lineName} 지하철 (${stationLabel} ➔ ${endStationLabel})`,
         cost: 1400,
         taxiCost: 0,
         transfers: sameLine ? 0 : 1,
         isHybrid: false,
-        departure: subwayArrival.boardTimeStr, // 열차가 출발역에 도착하는 시각
+        departure: subwayArrival.boardTimeStr,
         boardStation: stationLabel,
+        lineBadges,
+        transitGuideText,
         minutes: totalSubwayMin,
         tag: seoulSubwayLive.length > 0 ? '실시간 열차 도착' : '열차 역 도착',
         tagClass: 'tag-blue',
         isWarning: false,
         remaining: subwayArrival.detailMsg,
-        summary: `${stationLabel} ${subwayArrival.boardTimeStr} 열차 도착·탑승 ➔ ${finalArriveTimeStr} 목적지 도착`,
+        summary: `${stationLabel} [${startSubway.lineName}] ${subwayArrival.boardTimeStr} 도착·탑승 ➔ ${finalArriveTimeStr} 도착`,
         steps: [
-          { pill: 'pill-walk', tag: `도보 ${walk1}분`, label: `${depTimeStr} ${sName} 출발 ➔ ${stationLabel} 승강장 이동` },
-          { pill: 'pill-subway', tag: `${subwayArrival.boardTimeStr} 역 도착`, label: `${stationLabel} 열차 도착·탑승 (${subwayArrival.detailMsg}) ➔ ${endSubway.stationName}역 (약 ${rideMin}분)` },
-          { pill: 'pill-walk', tag: `도착 ${finalArriveTimeStr}`, label: `${endSubway.stationName}역 하차 후 도보 ${walk2}분` }
+          { pill: 'pill-walk', tag: `도보 ${walk1}분`, label: `${depTimeStr} ${sName} 출발 ➔ ${stationLabel} (${startSubway.lineName}) 승강장 이동` },
+          { pill: 'pill-subway', tag: `${startSubway.lineName} · ${subwayArrival.boardTimeStr}`, label: `${stationLabel}에서 [${startSubway.lineName}]${directionText} 열차 탑승 (${subwayArrival.detailMsg})` },
+          ...(sameLine ? [] : [{ pill: 'pill-subway', tag: `${endSubway.lineName} 환승`, label: `중간 환승역에서 [${endSubway.lineName}] 열차로 환승 후 ${endStationLabel} 방면 이동` }]),
+          { pill: 'pill-walk', tag: `도착 ${finalArriveTimeStr}`, label: `${endStationLabel} 하차 후 도보 ${walk2}분 (${eName} 도착)` }
         ],
-        note: `현재 시각(${depTimeStr})이 아니라, 지하철이 ${stationLabel}에 실제로 도착하는 시각(${subwayArrival.boardTimeStr})을 기준으로 안내합니다.`
+        note: transitGuideText
       });
     }
 
-    // 2. 시내버스 / 심야 올빼미버스 + 환승 택시 (출발 정류장에 버스가 도착하는 시각 기준)
+    // 2. 시내버스 / 심야 올빼미버스(N버스) + 환승 택시 (타야 할 버스 번호 명시)
     const midX = (places.start.x + places.end.x) / 2;
     const midY = (places.start.y + places.end.y) / 2;
     const subTaxi = await getKakaoTaxiRoute(midX, midY, places.end.x, places.end.y);
@@ -1037,43 +1102,102 @@ async function runSeoulSearch() {
         baseServiceMin,
         nowServiceMin,
         isNowQuery,
-        walkMin: 3,
+        walkMin: busInfo.walkMin,
         liveArrivals: [],
         isNightTime,
         mode: 'bus'
       });
 
-      const busLabel = isNightTime ? '심야 올빼미버스(N버스)' : '간선·지선 시내버스';
-      const stopLabel = `${sName} 인근 정류장`;
+      const busCategory = isNightTime ? '심야 올빼미버스' : '간선·지선버스';
+      const busListStr = busInfo.busNumbers.join(' · ');
+      const stopLabel = busInfo.stopName;
       const totalHybridMin = 18 + subTaxi.durationMin;
       const totalHybridCost = 1500 + subTaxi.fare;
       const hybridEndTime = minToTime(busArrival.boardServiceMin + totalHybridMin);
 
+      const lineBadges = [
+        { type: isNightTime ? 'nightbus' : 'bus', label: `🚌 ${busInfo.primaryBus} (${busCategory})` },
+        { type: 'taxi', label: '🚖 중간 환승 택시' }
+      ];
+      const transitGuideText = `[${stopLabel}] 정류장에서 ${busCategory} [${busListStr}] 중 먼저 오는 버스 탑승 ➔ 중간 거점 하차 후 택시 환승`;
+
       builtRoutes.push({
         id: 'hybrid_bus_taxi_route',
-        name: `🚌 ${busLabel} + 환승 택시`,
+        name: `🚌 ${busInfo.primaryBus} 버스 + 환승 택시`,
         cost: totalHybridCost,
         taxiCost: subTaxi.fare,
         transfers: 1,
         isHybrid: true,
-        departure: busArrival.boardTimeStr, // 버스가 출발 정류장에 도착하는 시각
+        departure: busArrival.boardTimeStr,
         boardStation: stopLabel,
+        lineBadges,
+        transitGuideText,
         minutes: totalHybridMin,
         tag: budget >= subTaxi.fare ? '정류장 도착 연동' : '예산 초과',
         tagClass: budget >= subTaxi.fare ? 'tag' : 'tag-red',
         isWarning: budget < subTaxi.fare,
         remaining: `${busArrival.boardTimeStr} 정류장 도착 · ${won(Math.max(0, kakaoDriveData.fare - subTaxi.fare))} 절약`,
-        summary: `${stopLabel} ${busArrival.boardTimeStr} 버스 도착 ➔ 중간 환승 택시 (${hybridEndTime} 도착)`,
+        summary: `${stopLabel} [${busInfo.primaryBus}] ${busArrival.boardTimeStr} 도착 ➔ 환승 택시 (${hybridEndTime} 도착)`,
         steps: [
-          { pill: 'pill-walk', tag: '정류장 이동', label: `${depTimeStr} ${sName} 출발 ➔ ${stopLabel} 도보 3분` },
-          { pill: 'pill-bus', tag: `${busArrival.boardTimeStr} 정류장 도착`, label: `${stopLabel} ${busLabel} 도착·탑승 ➔ 중간 거점 이동` },
-          { pill: 'pill-taxi', tag: `택시 ${won(subTaxi.fare)}`, label: `거점서 택시 환승 (${subTaxi.distanceKm}km · ${subTaxi.durationMin}분) ➔ ${hybridEndTime} 도착` }
+          { pill: 'pill-walk', tag: `도보 ${busInfo.walkMin}분`, label: `${depTimeStr} ${sName} 출발 ➔ [${stopLabel}] 정류장 이동` },
+          { pill: 'pill-bus', tag: `${busInfo.primaryBus} · ${busArrival.boardTimeStr}`, label: `[${stopLabel}]에서 ${busCategory} [${busListStr}] 탑승 ➔ 중간 거점 이동` },
+          { pill: 'pill-taxi', tag: `택시 ${won(subTaxi.fare)}`, label: `거점 하차 후 택시 환승 (${subTaxi.distanceKm}km · ${subTaxi.durationMin}분) ➔ ${hybridEndTime} ${eName} 도착` }
         ],
-        note: `현재 시각이 아니라, ${busLabel}가 ${stopLabel}에 실제로 도착하는 시각(${busArrival.boardTimeStr})을 기준으로 계산했습니다.`
+        note: transitGuideText
       });
     }
 
-    // 3. 카카오 직행 택시 (출발 위치에 배차 택시가 도착하는 시각 기준)
+    // 3. 시내버스 단독 이동 경로 (대중교통만 이용 옵션)
+    {
+      const busOnlyArrival = computeVehicleArrivalTime({
+        baseServiceMin,
+        nowServiceMin,
+        isNowQuery,
+        walkMin: busInfo.walkMin,
+        liveArrivals: [],
+        isNightTime,
+        mode: 'bus'
+      });
+      const busCategory = isNightTime ? '심야 올빼미버스' : '서울 시내버스';
+      const secondBus = busInfo.busNumbers[1] || busInfo.primaryBus;
+      const busOnlyMin = Math.max(15, Math.round(kakaoDriveData.distanceKm * 2.6) + 6);
+      const busOnlyEndTime = minToTime(busOnlyArrival.boardServiceMin + busOnlyMin);
+      const stopLabel = busInfo.stopName;
+
+      const lineBadges = [
+        { type: isNightTime ? 'nightbus' : 'bus', label: `🚌 ${busInfo.primaryBus}` },
+        { type: isNightTime ? 'nightbus' : 'bus', label: `환승 ➔ ${secondBus}` }
+      ];
+      const transitGuideText = `[${stopLabel}] 정류장에서 [${busInfo.primaryBus}] 탑승 ➔ 환승 정류장에서 [${secondBus}] 갈아타기 ➔ ${eName} 하차`;
+
+      builtRoutes.push({
+        id: 'bus_only_route',
+        name: `🚌 ${busInfo.primaryBus} ➔ ${secondBus} (${busCategory})`,
+        cost: isNightTime ? 2500 : 1500,
+        taxiCost: 0,
+        transfers: 1,
+        isHybrid: false,
+        departure: busOnlyArrival.boardTimeStr,
+        boardStation: stopLabel,
+        lineBadges,
+        transitGuideText,
+        minutes: busOnlyMin,
+        tag: isNightTime ? '심야 N버스 노선' : '최소 비용 버스',
+        tagClass: 'tag-green',
+        isWarning: false,
+        remaining: `${busOnlyArrival.boardTimeStr} 정류장 도착 · 택시비 0원`,
+        summary: `${stopLabel} [${busInfo.primaryBus}] ${busOnlyArrival.boardTimeStr} 도착 ➔ [${secondBus}] 환승`,
+        steps: [
+          { pill: 'pill-walk', tag: `도보 ${busInfo.walkMin}분`, label: `${depTimeStr} ${sName} 출발 ➔ [${stopLabel}] 정류장 이동` },
+          { pill: 'pill-bus', tag: `${busInfo.primaryBus} 탑승`, label: `${busOnlyArrival.boardTimeStr} [${stopLabel}] 도착 [${busInfo.primaryBus}] 탑승` },
+          { pill: 'pill-bus', tag: `${secondBus} 환승`, label: `중간 환승 정류장에서 [${secondBus}] 노선으로 환승 후 ${eName} 방면 이동` },
+          { pill: 'pill-walk', tag: `도착 ${busOnlyEndTime}`, label: `${eName} 인근 정류장 하차 후 도착` }
+        ],
+        note: transitGuideText
+      });
+    }
+
+    // 4. 카카오 직행 택시
     const taxiDispatchWait = isNightTime ? 6 : 3;
     const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
     const taxiPickupTimeStr = minToTime(taxiPickupServiceMin);
@@ -1086,8 +1210,10 @@ async function runSeoulSearch() {
       taxiCost: kakaoDriveData.fare,
       transfers: 0,
       isHybrid: false,
-      departure: taxiPickupTimeStr, // 택시가 출발 위치에 도착하는 시각
+      departure: taxiPickupTimeStr,
       boardStation: `${sName} 승차 위치`,
+      lineBadges: [{ type: 'taxi', label: '🚖 일반·중형 택시 직행' }],
+      transitGuideText: `${sName} 승차 위치에서 호출 택시 탑승 후 ${eName}까지 환승 없이 직행 이동`,
       minutes: kakaoDriveData.durationMin,
       tag: budget >= kakaoDriveData.fare ? '예산 내 직행' : '예산 초과',
       tagClass: budget >= kakaoDriveData.fare ? 'tag' : 'tag-red',
@@ -1107,7 +1233,7 @@ async function runSeoulSearch() {
 
     if (statusEl) {
       statusEl.style.color = '#8fdb6e';
-      statusEl.textContent = `✓ 출발 정류장·역 차량 도착 시각 반영 완료 (${selected?.boardStation} ${selected?.departure} 도착)`;
+      statusEl.textContent = `✓ 탑승 노선 및 정류장·역 도착 시각 산출 완료 (${selected?.boardStation} ${selected?.departure} 도착)`;
     }
     if ($('transitBadgeText') && selected) {
       $('transitBadgeText').textContent = `${selected.boardStation} ${selected.departure} 차량 도착 예정`;
@@ -1146,6 +1272,16 @@ function curateRecommendedRoutes(pool, cond) {
   return filtered.slice(0, 5);
 }
 
+function createLineBadgeElement(badgeInfo) {
+  const clsMap = {
+    subway: 'line-badge-subway',
+    bus: 'line-badge-bus',
+    nightbus: 'line-badge-nightbus',
+    taxi: 'line-badge-taxi'
+  };
+  return node('span', badgeInfo.label, clsMap[badgeInfo.type] || 'line-badge-subway');
+}
+
 function renderStrategyCards() {
   const sName = places.start?.name || '출발지';
   const eName = places.end?.name || '도착지';
@@ -1163,7 +1299,7 @@ function renderStrategyCards() {
   const noticeBox = $('algorithmNotice');
   if (noticeBox) {
     noticeBox.replaceChildren();
-    noticeBox.append(node('div', `✅ [정류장·역 차량 도착 시각 기준] 대중교통이 출발 정류장·역에 도착하는 시간으로 표시합니다.`, 'hintBox'));
+    noticeBox.append(node('div', `✅ 경로 카드를 선택하면 타야 할 버스 번호·지하철 호선과 출발 정류장·역 도착 시각을 아래에 바로 안내합니다.`, 'hintBox'));
   }
 
   visible.forEach(r => {
@@ -1175,14 +1311,22 @@ function renderStrategyCards() {
     const titleEl = node('h3'); titleEl.textContent = r.name;
     top.append(titleEl, node('span', r.tag, r.tagClass));
 
+    // 탑승 노선 배지 줄 (어떤 버스 번호 / 몇 호선 지하철을 타야 하는지 표시)
+    const badgeRow = node('div', undefined, 'line-highlight-bar');
+    (r.lineBadges || []).forEach(lb => badgeRow.append(createLineBadgeElement(lb)));
+
     const middle = node('div', undefined, 'between');
     const time = node('div', `${r.departure} 정류장·역 도착`, 'departure');
     time.append(node('small', ` (이동 ${r.minutes}분)`));
     middle.append(time, node('span', r.remaining, 'micro'));
 
     const transferText = r.transfers === 0 ? '환승 없음' : `환승 ${r.transfers}회`;
-    b.append(top, middle, node('div', `예상 ${won(r.cost)} · ${transferText}`, 'fare'));
-    b.addEventListener('click', () => { selected = r; renderStrategyCards(); });
+    b.append(top, badgeRow, middle, node('div', `예상 ${won(r.cost)} · ${transferText}`, 'fare'));
+    b.addEventListener('click', () => {
+      selected = r;
+      renderStrategyCards();
+      toast(`선택된 노선: ${r.transitGuideText}`);
+    });
     cardsEl.append(b);
   });
 
@@ -1191,8 +1335,21 @@ function renderStrategyCards() {
     if (box) {
       box.replaceChildren();
       const head = node('div', undefined, 'between');
-      head.append(node('h3', '선택 경로 세부 순서 및 차량 도착 시각'), node('span', selected.tag, selected.tagClass));
-      box.append(head, node('div', `${selected.boardStation} ${selected.departure} 차량 도착 · 이동 약 ${selected.minutes}분 · 총 ${won(selected.cost)}`), node('div', selected.note, 'micro'));
+      head.append(node('h3', '선택 경로 탑승 노선 및 세부 순서'), node('span', selected.tag, selected.tagClass));
+
+      // 선택된 경로의 핵심 탑승 노선 안내 배너
+      const banner = node('div', undefined, 'selected-line-banner');
+      const bTitle = node('b', '🚏 지금 타야 할 대중교통 노선');
+      const bDesc = document.createElement('div');
+      bDesc.style.marginTop = '4px';
+      bDesc.textContent = selected.transitGuideText || selected.note;
+      banner.append(bTitle, bDesc);
+
+      box.append(
+        head,
+        banner,
+        node('div', `${selected.boardStation} ${selected.departure} 차량 도착 · 이동 약 ${selected.minutes}분 · 총 ${won(selected.cost)}`)
+      );
 
       const line = node('div', undefined, 'timeline');
       selected.steps.forEach(s => {
@@ -1211,12 +1368,12 @@ function renderStrategyCards() {
       );
     }
     if ($('homeRemain')) $('homeRemain').textContent = `이동 ${selected.minutes}분 · ${won(selected.cost)}`;
-    if ($('homeBadge')) $('homeBadge').textContent = selected.tag;
+    if ($('homeBadge')) $('homeBadge').textContent = (selected.lineBadges?.[0]?.label || selected.tag);
     if ($('homeRec')) $('homeRec').textContent = selected.name;
-    if ($('homeRoute')) $('homeRoute').textContent = selected.summary;
+    if ($('homeRoute')) $('homeRoute').textContent = selected.transitGuideText || selected.summary;
     if ($('heroPlace')) $('heroPlace').textContent = `${eName} · 귀가 알림`;
     if ($('originLabel')) $('originLabel').textContent = `${selected.boardStation} ${selected.departure} 도착`;
-    if ($('strategyLocation')) $('strategyLocation').innerHTML = `출발: ${sName} ➔ 도착: ${eName}<br>출발 정류장·역 차량 도착: <b>${selected.departure}</b> · 도로 거리 <b>${kakaoDriveData.distanceKm}km</b>`;
+    if ($('strategyLocation')) $('strategyLocation').innerHTML = `출발: ${sName} ➔ 도착: ${eName}<br>선택 탑승 노선: <b>${selected.lineBadges?.map(b => b.label).join(' ➔ ') || selected.name}</b>`;
   }
 }
 
@@ -1246,7 +1403,7 @@ let isChatSending = false;
 
 const appRouteFunctionDeclaration = {
   name: 'search_seoul_route',
-  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 실시간 지하철, 시내버스, 심야 환승 택시, 직행 택시 경로와 대중교통이 출발 정류장·역에 도착하는 시각을 앱 내에서 직접 검색하고 반환합니다.',
+  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 실시간 지하철 호선, 시내버스·심야버스 번호, 환승 택시 경로와 출발 정류장·역 도착 시각을 앱 내에서 직접 검색하고 반환합니다.',
   parameters: {
     type: 'OBJECT',
     properties: {
@@ -1304,13 +1461,13 @@ async function executeAppRouteSearch({ start_place, end_place, departure_time })
     distanceKm: kakaoDriveData.distanceKm,
     routes: visible.map(r => ({
       name: r.name,
+      boardingLines: r.lineBadges?.map(b => b.label) || [],
+      transitGuide: r.transitGuideText,
       transitArrivalAtOriginStopOrStation: r.departure,
       originStopOrStation: r.boardStation,
       minutes: r.minutes,
       costWon: r.cost,
       transfers: r.transfers,
-      tag: r.tag,
-      note: r.remaining,
       steps: r.steps.map(s => s.label)
     }))
   };
@@ -1366,7 +1523,7 @@ async function askGeminiChatbot(userMessage) {
   sendBtn.textContent = '전송중';
   box.scrollTop = box.scrollHeight;
 
-  const loadingMsg = node('div', '🌐 Google 실시간 검색 및 정류장·역 차량 도착 시각을 조회하고 있습니다...', 'msg bot');
+  const loadingMsg = node('div', '🌐 Google 실시간 검색 및 탑승 노선·도착 시각을 조회하고 있습니다...', 'msg bot');
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
 
@@ -1376,7 +1533,7 @@ async function askGeminiChatbot(userMessage) {
   const budget = won($('budget')?.value || 30000);
 
   const routeSummaryText = visible.map((r, idx) =>
-    `${idx + 1}. ${r.name} | 출발 정류장·역 차량 도착 시각: ${r.departure} (${r.boardStation}) | 이동 소요시간: ${r.minutes}분 | 비용: ${won(r.cost)} | 비고: ${r.remaining}`
+    `${idx + 1}. ${r.name} | 탑승 노선: ${r.transitGuideText} | 출발 정류장·역 도착 시각: ${r.departure} (${r.boardStation}) | 소요시간: ${r.minutes}분 | 비용: ${won(r.cost)}`
   ).join('\n');
 
   const systemPrompt = `당신은 서울특별시 심야 귀가 및 대중교통 길찾기 앱 '집에 못 갈 지도'의 전문 AI 어시스턴트입니다.
@@ -1385,13 +1542,13 @@ async function askGeminiChatbot(userMessage) {
 - 도착지: ${eName}
 - 조회 기준 시각: ${depTime}
 - 허용 택시비 예산: ${budget}
-- 현재 계산된 추천 경로 (버스·지하철이 출발 정류장·역에 도착하는 시각 기준):
+- 현재 계산된 추천 경로 및 탑승 노선:
 ${routeSummaryText || '아직 계산된 경로 없음'}
 
 도구 사용 지침:
-1. 사용자가 특정 서울 출발지/도착지의 경로를 새로 찾아달라고 하면 'search_seoul_route' 함수를 호출하여 앱의 경로와 정류장·역 차량 도착 시각을 검색해 알려주세요.
+1. 사용자가 특정 서울 출발지/도착지의 경로를 새로 찾아달라고 하면 'search_seoul_route' 함수를 호출하여 앱의 경로와 타야 할 버스 번호·지하철 호선, 정류장·역 도착 시각을 검색해 알려주세요.
 2. 막차 시간, 올빼미버스(N버스) 노선, 실시간 서울 시내 집회·도로 통제, 지하철 지연·파업 등 최신 외부 정보가 필요하면 'google_search' 도구를 적극 활용해 정확한 최신 사실 기반으로 답변하세요.
-3. 출발 시간을 안내할 때는 현재 시각이 아니라 버스나 지하철이 출발 정류장이나 역에 도착하는 시각(transitArrivalAtOriginStopOrStation)을 기준으로 안내하세요.`;
+3. 안내할 때는 타야 할 버스 번호나 지하철 호선, 그리고 대중교통이 출발 정류장·역에 도착하는 시각을 명확하게 짚어주세요.`;
 
   chatHistory.push({ role: 'user', parts: [{ text }] });
 
@@ -1441,7 +1598,7 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
     if (fnCallPart) {
       const fnName = fnCallPart.functionCall.name;
       const fnArgs = fnCallPart.functionCall.args || {};
-      loadingMsg.textContent = `🔍 앱 내에서 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 경로와 출발 정류장·역 차량 도착 시각을 실시간 검색 중입니다...`;
+      loadingMsg.textContent = `🔍 앱 내에서 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 탑승 노선과 정류장·역 도착 시각을 실시간 검색 중입니다...`;
 
       chatHistory.push(candidate.content);
 
@@ -1480,7 +1637,7 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
     }
   } catch (err) {
     const fallbackRoute = visible[0];
-    loadingMsg.textContent = `제미나이 검색 응답 중 오류가 발생했습니다. (${err.message})\n\n대신 현재 분석된 [${sName} ➔ ${eName}] 추천 경로를 안내해 드릴게요:\n• 최우선 추천: ${fallbackRoute ? `${fallbackRoute.name} (${fallbackRoute.boardStation} ${fallbackRoute.departure} 도착 · ${fallbackRoute.minutes}분)` : '경로 탐색 필요'}`;
+    loadingMsg.textContent = `제미나이 검색 응답 중 오류가 발생했습니다. (${err.message})\n\n대신 현재 분석된 [${sName} ➔ ${eName}] 추천 경로를 안내해 드릴게요:\n• 최우선 추천: ${fallbackRoute ? `${fallbackRoute.name} - ${fallbackRoute.transitGuideText}` : '경로 탐색 필요'}`;
   } finally {
     isChatSending = false;
     inputEl.disabled = false;
@@ -1509,7 +1666,7 @@ $('chatInput')?.addEventListener('keydown', e => {
 $('saveSettings')?.addEventListener('click', () => {
   settings.budget = Number($('budget')?.value || 30000);
   settings.pref = activeCondition;
-  localStorage.setItem('homeway.app.v21', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v22', JSON.stringify(settings));
   toast('✓ 귀가 설정이 기기에 저장되었습니다.');
 });
 
@@ -1549,14 +1706,14 @@ $('saveDestinations')?.addEventListener('click', () => {
       settings.destinations[idx][field] = inp.value.trim();
     }
   });
-  localStorage.setItem('homeway.app.v21', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v22', JSON.stringify(settings));
   renderSaved();
   $('destinationDialog')?.close();
   toast('✓ 저장 목적지가 업데이트되었습니다.');
 });
 
 $('reset')?.addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v21');
+  localStorage.removeItem('homeway.app.v22');
   settings = structuredClone(defaults);
   applyTheme(settings.theme);
   syncPrefButtons(settings.pref);
@@ -1736,7 +1893,7 @@ function refreshFullscreenTimer() {
   }
 
   if ($('timerDestLabel')) $('timerDestLabel').textContent = `${selected.boardStation} (${selected.departure} 도착)`;
-  if ($('timerBottomRoute')) $('timerBottomRoute').textContent = `${selected.summary}`;
+  if ($('timerBottomRoute')) $('timerBottomRoute').textContent = `${selected.transitGuideText || selected.summary}`;
 }
 
 function closeFullscreenTimer() {
