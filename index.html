@@ -114,7 +114,7 @@ body.light-theme .timeline{border-left-color:#86efac}
 .setting{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid var(--line);font-size:12px}
 .setting:last-child{border-bottom:0}
 .setting b{color:var(--yellow);font-size:13px}
-.chip{border:1px solid var(--line);background:var(--card);padding:10px 14px;border-radius:8px;font-size:11px;color:var(--text-sub);transition:all 0.2s}
+.chip{border:1px solid var(--line);background:var(--card);padding:10px 14px;border-radius:8px;font-size:11px;color:var(--text-sub);transition:all 0.2s;cursor:pointer}
 .chip.on{background:var(--chip-on-bg);border-color:var(--chip-on-border);color:var(--yellow);font-weight:bold}
 .row{display:flex;gap:7px;flex-wrap:wrap}
 .hintBox{font-size:11px;line-height:1.8;color:#c9b46a;border:1px solid #51482b;border-radius:12px;padding:12px;margin:12px 0}
@@ -150,11 +150,11 @@ body:not(.light-theme) .leaflet-container{background:#0b1117}
 body.light-theme .leaflet-tile{filter:none}
 body.light-theme .leaflet-container{background:#f8f9fa}
 
-.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);max-width:380px;width:88%;background:#36402b;border:1px solid #6e7749;color:#f6f7ec;border-radius:12px;padding:14px;z-index:30;font-size:12px;line-height:1.7}
+.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);max-width:380px;width:88%;background:#36402b;border:1px solid #6e7749;color:#f6f7ec;border-radius:12px;padding:14px;z-index:40;font-size:12px;line-height:1.7}
 body.light-theme .toast{background:#1e293b;border-color:#334155;color:#f8fafc}
 .hidden{display:none!important}
 
-/* 채팅 (하단 내비게이션과 겹치지 않도록 높이 및 z-index 최적화) */
+/* 채팅 */
 .chat-container{position:relative;z-index:20;display:flex;flex-direction:column;height:calc(100dvh - 280px);min-height:320px;max-height:520px;border:1px solid var(--line);border-radius:14px;background:var(--bg);overflow:hidden;margin-top:12px;margin-bottom:20px}
 .chat-messages{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:12px}
 .msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.6;word-break:break-word;white-space:pre-line}
@@ -360,13 +360,13 @@ color: #000;
 현재 설정된 서울 경로와 실시간 데이터를 바탕으로 <b>최소 시간 · 최소 금액 · 심야 택시 환승 · 막차 전략</b>까지 무엇이든 상세하게 답해 드릴게요!</div>
 </div>
 <div class="chat-chips" id="chatQuickChips">
-<button type="button" class="chat-chip" data-q="현재 경로 중 가성비가 제일 좋은 전략을 추천해 줘">💰 가성비 최고 전략은?</button>
-<button type="button" class="chat-chip" data-q="막차가 끊겼을 때 심야버스(올빼미버스)나 환승 택시 타는 팁 알려줘">🌙 심야 올빼미버스·택시 팁</button>
-<button type="button" class="chat-chip" data-q="지금 택시비 예산 안에서 제일 빨리 집에 가는 법 분석해 줘">⚡ 예산 내 최단 시간 분석</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 경로 중 가성비가 제일 좋은 전략을 추천해 줘">💰 가성비 최고 전략은?</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="막차가 끊겼을 때 심야버스(올빼미버스)나 환승 택시 타는 팁 알려줘">🌙 심야 올빼미버스·택시 팁</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="지금 택시비 예산 안에서 제일 빨리 집에 가는 법 분석해 줘">⚡ 예산 내 최단 시간 분석</button>
 </div>
 <div class="chat-input-area">
 <input type="text" id="chatInput" placeholder="제미나이에게 귀가 경로에 대해 물어보세요..." autocomplete="off"/>
-<button type="button" id="chatSend">전송</button>
+<button type="button" id="chatSend" onclick="handleChatSend()">전송</button>
 </div>
 </div>
 </section>
@@ -400,10 +400,10 @@ color: #000;
 <div class="panel">
 <h3>기본 추천 경로 조건</h3>
 <div class="row" id="preferences">
-<button type="button" class="chip on" data-pref="time">⚡ 최소 시간</button>
-<button type="button" class="chip" data-pref="cost">💰 최소 금액</button>
-<button type="button" class="chip" data-pref="transfer">🔄 최소 환승</button>
-<button type="button" class="chip" data-pref="taxi">🚖 택시</button>
+<button type="button" class="chip on" data-pref="time" onclick="setDefaultPref('time')">⚡ 최소 시간</button>
+<button type="button" class="chip" data-pref="cost" onclick="setDefaultPref('cost')">💰 최소 금액</button>
+<button type="button" class="chip" data-pref="transfer" onclick="setDefaultPref('transfer')">🔄 최소 환승</button>
+<button type="button" class="chip" data-pref="taxi" onclick="setDefaultPref('taxi')">🚖 택시</button>
 </div>
 <div class="setting"><span>기본 택시비 예산</span><b id="myBudget">3만원</b></div>
 </div>
@@ -571,7 +571,7 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v14'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v15'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
@@ -591,6 +591,29 @@ function applyTheme(theme) {
   });
 }
 applyTheme(settings.theme || 'dark');
+
+function syncPrefButtons(pref) {
+  activeCondition = pref;
+  settings.pref = pref;
+  const labelMap = { time: '최소 시간순', cost: '최소 금액순', transfer: '최소 환승순', taxi: '택시 우선순' };
+  const sortEl = $('sortLabel');
+  if (sortEl) sortEl.textContent = labelMap[pref] || '최소 시간순';
+
+  document.querySelectorAll('#preferences [data-pref]').forEach(b => {
+    b.classList.toggle('on', b.dataset.pref === pref);
+  });
+  document.querySelectorAll('#conditionBar .cond-btn').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.cond === pref);
+  });
+}
+syncPrefButtons(activeCondition);
+
+window.setDefaultPref = function(pref) {
+  syncPrefButtons(pref);
+  applyConditionAndRender();
+  const names = { time: '최소 시간', cost: '최소 금액', transfer: '최소 환승', taxi: '택시' };
+  toast(`기본 추천 조건이 [${names[pref] || pref}]으로 변경되었습니다.`);
+};
 
 document.querySelectorAll('#themeButtons [data-theme]').forEach(b => {
   b.addEventListener('click', () => {
@@ -616,35 +639,38 @@ function node(tag, text, cls) {
   return e;
 }
 function toast(t) {
-  $('toast').textContent = t;
-  $('toast').classList.remove('hidden');
+  const el = $('toast');
+  if (!el) return;
+  el.textContent = t;
+  el.classList.remove('hidden');
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => $('toast').classList.add('hidden'), 3800);
+  toast.timer = setTimeout(() => el.classList.add('hidden'), 3800);
 }
 
 function updateClock() {
-  $('clock').textContent = getNowTimeStr();
+  const el = $('clock');
+  if (el) el.textContent = getNowTimeStr();
 }
 setInterval(updateClock, 10000);
-$('depTime').value = getNowTimeStr();
+if ($('depTime')) $('depTime').value = getNowTimeStr();
 updateClock();
 
-$('btnNextSchedule').addEventListener('click', () => {
+$('btnNextSchedule')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
   toast(`현재 시각(${$('depTime').value}) 기준으로 재탐색합니다.`);
 });
-$('btnLastSubway').addEventListener('click', () => {
+$('btnLastSubway')?.addEventListener('click', () => {
   $('depTime').value = '23:38';
   runSeoulSearch();
   toast('막차 임박 시각(23:38) 기준으로 재탐색합니다.');
 });
-$('btnNightBusSchedule').addEventListener('click', () => {
+$('btnNightBusSchedule')?.addEventListener('click', () => {
   $('depTime').value = '00:15';
   runSeoulSearch();
   toast('자정 이후 심야(00:15) 기준으로 재탐색합니다.');
 });
-$('setNowBtn').addEventListener('click', () => {
+$('setNowBtn')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
   toast(`현재 시각(${$('depTime').value})으로 설정되었습니다.`);
@@ -652,11 +678,12 @@ $('setNowBtn').addEventListener('click', () => {
 
 /* ───────────── 카카오 로컬 장소 & 지하철역 검색 ───────────── */
 async function searchPlaces(id) {
-  const q = $(id).value.trim();
+  const q = $(id)?.value.trim();
   const box = $(id + 'Results'), resolved = $(id + 'Resolved');
+  if (!box) return;
   if (!q) {
     box.replaceChildren();
-    resolved.textContent = '';
+    if (resolved) resolved.textContent = '';
     if (id === 'via') places.via = null;
     return;
   }
@@ -680,7 +707,7 @@ async function searchPlaces(id) {
         btn.addEventListener('click', () => {
           places[id] = p;
           $(id).value = p.name;
-          resolved.textContent = `✓ ${p.name} 선택 완료`;
+          if (resolved) resolved.textContent = `✓ ${p.name} 선택 완료`;
           box.replaceChildren();
           if (id !== 'via') runSeoulSearch();
         });
@@ -759,20 +786,22 @@ async function getSeoulSubwayLive(stationName) {
 async function runSeoulSearch() {
   if (!places.start || !places.end) return;
 
-  const depTimeStr = $('depTime').value || getNowTimeStr();
+  const depTimeStr = $('depTime')?.value || getNowTimeStr();
   const [dh, dm] = depTimeStr.split(':').map(Number);
   const depServiceMin = (dh < 4 ? dh + 24 : dh) * 60 + dm;
-  const budget = Number($('budget').value);
+  const budget = Number($('budget')?.value || 30000);
   const sName = places.start.name;
   const eName = places.end.name;
 
-  $('budgetText').textContent = won(budget);
-  $('myBudget').textContent = won(budget);
+  if ($('budgetText')) $('budgetText').textContent = won(budget);
+  if ($('myBudget')) $('myBudget').textContent = won(budget);
 
   const statusEl = $('homeLookupStatus');
-  statusEl.style.color = 'var(--yellow)';
-  statusEl.textContent = '⚡ 서울시 전용 지하철 · 도로망 초고속 탐색 중...';
-  $('transitBadgeText').textContent = `${sName} ➔ ${eName} 탐색 완료`;
+  if (statusEl) {
+    statusEl.style.color = 'var(--yellow)';
+    statusEl.textContent = '⚡ 서울시 전용 지하철 · 도로망 초고속 탐색 중...';
+  }
+  if ($('transitBadgeText')) $('transitBadgeText').textContent = `${sName} ➔ ${eName} 탐색 완료`;
 
   try {
     const [taxiRes, startSubway, endSubway] = await Promise.all([
@@ -875,12 +904,16 @@ async function runSeoulSearch() {
     rawRoutes = builtRoutes;
     applyConditionAndRender();
 
-    statusEl.style.color = '#8fdb6e';
-    statusEl.textContent = `✓ 서울시 추천 경로 ${visible.length}개 산출 완료 (도로 ${kakaoDriveData.distanceKm}km)`;
+    if (statusEl) {
+      statusEl.style.color = '#8fdb6e';
+      statusEl.textContent = `✓ 서울시 추천 경로 ${visible.length}개 산출 완료 (도로 ${kakaoDriveData.distanceKm}km)`;
+    }
     updateQrCodes();
   } catch (e) {
-    statusEl.style.color = 'var(--red)';
-    statusEl.textContent = '⚠️ 서울시 탐색 완료: 직행 택시 및 지하철 중심으로 표시합니다.';
+    if (statusEl) {
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ 서울시 탐색 완료: 직행 택시 및 지하철 중심으로 표시합니다.';
+    }
   }
 }
 
@@ -910,22 +943,25 @@ function curateRecommendedRoutes(pool, cond) {
 }
 
 function renderStrategyCards() {
-  const depTimeStr = $('depTime').value || getNowTimeStr();
+  const depTimeStr = $('depTime')?.value || getNowTimeStr();
   const sName = places.start?.name || '출발지';
   const eName = places.end?.name || '도착지';
-  const budget = Number($('budget').value);
+  const budget = Number($('budget')?.value || 30000);
 
-  $('budgetText').textContent = won(budget);
-  $('myBudget').textContent = won(budget);
+  if ($('budgetText')) $('budgetText').textContent = won(budget);
+  if ($('myBudget')) $('myBudget').textContent = won(budget);
 
-  document.querySelectorAll('#conditionBar .cond-btn').forEach(btn => {
-    btn.classList.toggle('on', btn.dataset.cond === activeCondition);
-  });
+  syncPrefButtons(activeCondition);
 
-  $('strategyCards').replaceChildren();
+  const cardsEl = $('strategyCards');
+  if (!cardsEl) return;
+  cardsEl.replaceChildren();
+
   const noticeBox = $('algorithmNotice');
-  noticeBox.replaceChildren();
-  noticeBox.append(node('div', `✅ [서울시 전용 추천 ${visible.length}개] ${depTimeStr} 기준 최적 경로입니다.`, 'hintBox'));
+  if (noticeBox) {
+    noticeBox.replaceChildren();
+    noticeBox.append(node('div', `✅ [서울시 전용 추천 ${visible.length}개] ${depTimeStr} 기준 최적 경로입니다.`, 'hintBox'));
+  }
 
   visible.forEach(r => {
     const isSel = selected?.id === r.id;
@@ -944,40 +980,41 @@ function renderStrategyCards() {
     const transferText = r.transfers === 0 ? '환승 없음' : `환승 ${r.transfers}회`;
     b.append(top, middle, node('div', `예상 ${won(r.cost)} · ${transferText}`, 'fare'));
     b.addEventListener('click', () => { selected = r; renderStrategyCards(); });
-    $('strategyCards').append(b);
+    cardsEl.append(b);
   });
 
   if (selected) {
     const box = $('selectedDetail');
-    box.replaceChildren();
-    const head = node('div', undefined, 'between');
-    head.append(node('h3', '선택 경로 세부 순서 및 노선'), node('span', selected.tag, selected.tagClass));
-    box.append(head, node('div', `${selected.departure} 출발 · 약 ${selected.minutes}분 소요 · 총 ${won(selected.cost)}`), node('div', selected.note, 'micro'));
+    if (box) {
+      box.replaceChildren();
+      const head = node('div', undefined, 'between');
+      head.append(node('h3', '선택 경로 세부 순서 및 노선'), node('span', selected.tag, selected.tagClass));
+      box.append(head, node('div', `${selected.departure} 출발 · 약 ${selected.minutes}분 소요 · 총 ${won(selected.cost)}`), node('div', selected.note, 'micro'));
 
-    const line = node('div', undefined, 'timeline');
-    selected.steps.forEach(s => {
-      const stepDiv = node('div');
-      if (s.tag) stepDiv.append(node('span', s.tag, 'route-line-pill ' + (s.pill || 'pill-subway')));
-      stepDiv.append(document.createTextNode(s.label));
-      line.append(stepDiv);
-    });
-    box.append(line);
+      const line = node('div', undefined, 'timeline');
+      selected.steps.forEach(s => {
+        const stepDiv = node('div');
+        if (s.tag) stepDiv.append(node('span', s.tag, 'route-line-pill ' + (s.pill || 'pill-subway')));
+        stepDiv.append(document.createTextNode(s.label));
+        line.append(stepDiv);
+      });
+      box.append(line);
+    }
 
-    $('homeTime').replaceChildren(node('span', selected.departure));
-    $('homeRemain').textContent = `${selected.minutes}분 · ${won(selected.cost)}`;
-    $('homeBadge').textContent = selected.tag;
-    $('homeRec').textContent = selected.name;
-    $('homeRoute').textContent = selected.summary;
-    $('heroPlace').textContent = `${eName} · 귀가 알림`;
-    $('originLabel').textContent = `${depTimeStr} 출발`;
-    $('strategyLocation').innerHTML = `출발: ${sName} ➔ 도착: ${eName}<br>카카오 도로 주행 거리: <b>${kakaoDriveData.distanceKm}km</b>`;
+    if ($('homeTime')) $('homeTime').replaceChildren(node('span', selected.departure));
+    if ($('homeRemain')) $('homeRemain').textContent = `${selected.minutes}분 · ${won(selected.cost)}`;
+    if ($('homeBadge')) $('homeBadge').textContent = selected.tag;
+    if ($('homeRec')) $('homeRec').textContent = selected.name;
+    if ($('homeRoute')) $('homeRoute').textContent = selected.summary;
+    if ($('heroPlace')) $('heroPlace').textContent = `${eName} · 귀가 알림`;
+    if ($('originLabel')) $('originLabel').textContent = `${depTimeStr} 출발`;
+    if ($('strategyLocation')) $('strategyLocation').innerHTML = `출발: ${sName} ➔ 도착: ${eName}<br>카카오 도로 주행 거리: <b>${kakaoDriveData.distanceKm}km</b>`;
   }
 }
 
 document.querySelectorAll('#conditionBar .cond-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    activeCondition = btn.dataset.cond;
-    settings.pref = activeCondition;
+    syncPrefButtons(btn.dataset.cond);
     applyConditionAndRender();
   });
 });
@@ -1010,10 +1047,10 @@ async function askGeminiChatbot(userMessage) {
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
 
-  const depTime = $('depTime').value || getNowTimeStr();
+  const depTime = $('depTime')?.value || getNowTimeStr();
   const sName = places.start?.name || '출발지';
   const eName = places.end?.name || '도착지';
-  const budget = won($('budget').value);
+  const budget = won($('budget')?.value || 30000);
 
   const routeSummaryText = visible.map((r, idx) =>
     `${idx + 1}. ${r.name} | 소요시간: ${r.minutes}분 | 비용: ${won(r.cost)} | 환승: ${r.transfers}회 | 비고: ${r.remaining}`
@@ -1069,27 +1106,84 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
   }
 }
 
-$('chatSend').addEventListener('click', e => {
-  e.preventDefault();
-  e.stopPropagation();
-  askGeminiChatbot($('chatInput').value);
-});
-$('chatInput').addEventListener('keydown', e => {
+window.handleChatSend = function() {
+  askGeminiChatbot($('chatInput')?.value);
+};
+window.sendQuickChat = function(q) {
+  askGeminiChatbot(q);
+};
+
+$('chatInput')?.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.isComposing) {
     e.preventDefault();
-    askGeminiChatbot($('chatInput').value);
+    askGeminiChatbot($('chatInput')?.value);
   }
 });
-document.querySelectorAll('#chatQuickChips .chat-chip').forEach(chip => {
-  chip.addEventListener('click', e => {
-    e.preventDefault();
-    askGeminiChatbot(chip.dataset.q);
+
+/* ───────────── 마이탭 설정 저장 / 편집 / 초기화 ───────────── */
+$('saveSettings')?.addEventListener('click', () => {
+  settings.budget = Number($('budget')?.value || 30000);
+  settings.pref = activeCondition;
+  localStorage.setItem('homeway.app.v15', JSON.stringify(settings));
+  toast('✓ 귀가 설정이 기기에 저장되었습니다.');
+});
+
+$('editDestination')?.addEventListener('click', () => {
+  const wrap = $('destinationInputs');
+  if (!wrap) return;
+  wrap.replaceChildren();
+  settings.destinations.forEach((d, i) => {
+    const lbl = node('label', `루트 ${i + 1} (별칭 / 역명)`);
+    const row = node('div', undefined, 'fieldRow');
+    const inName = document.createElement('input');
+    inName.type = 'text';
+    inName.value = d.name;
+    inName.dataset.idx = i;
+    inName.dataset.field = 'name';
+    inName.style.flex = '1';
+
+    const inArea = document.createElement('input');
+    inArea.type = 'text';
+    inArea.value = d.area;
+    inArea.dataset.idx = i;
+    inArea.dataset.field = 'area';
+    inArea.style.flex = '2';
+
+    row.append(inName, inArea);
+    wrap.append(lbl, row);
   });
+  $('destinationDialog')?.showModal();
+});
+
+$('saveDestinations')?.addEventListener('click', () => {
+  const inputs = $('destinationInputs')?.querySelectorAll('input') || [];
+  inputs.forEach(inp => {
+    const idx = Number(inp.dataset.idx);
+    const field = inp.dataset.field;
+    if (settings.destinations[idx] && inp.value.trim()) {
+      settings.destinations[idx][field] = inp.value.trim();
+    }
+  });
+  localStorage.setItem('homeway.app.v15', JSON.stringify(settings));
+  renderSaved();
+  $('destinationDialog')?.close();
+  toast('✓ 저장 목적지가 업데이트되었습니다.');
+});
+
+$('reset')?.addEventListener('click', () => {
+  localStorage.removeItem('homeway.app.v15');
+  settings = structuredClone(defaults);
+  applyTheme(settings.theme);
+  syncPrefButtons(settings.pref);
+  if ($('budget')) $('budget').value = settings.budget;
+  renderSaved();
+  applyConditionAndRender();
+  toast('초기 설정으로 되돌아갔습니다.');
 });
 
 /* ───────────── 지도 및 기타 기능 ───────────── */
 function buildHomeMap() {
-  if (!homeLeaflet) {
+  if (!homeLeaflet && typeof L !== 'undefined') {
     homeLeaflet = L.map('homeMap', { zoomControl: false, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(homeLeaflet);
   }
@@ -1128,36 +1222,42 @@ function buildShareUrl() {
   url.searchParams.set('dn', places.end.name);
   url.searchParams.set('dx', places.end.x);
   url.searchParams.set('dy', places.end.y);
-  url.searchParams.set('t', $('depTime').value || getNowTimeStr());
+  url.searchParams.set('t', $('depTime')?.value || getNowTimeStr());
   return url.toString();
 }
 
 function updateQrCodes() {
   const shareUrl = buildShareUrl();
-  $('groupRouteLabel').textContent = `${places.start.name} ➔ ${places.end.name} (${$('depTime').value})`;
+  if ($('groupRouteLabel')) $('groupRouteLabel').textContent = `${places.start.name} ➔ ${places.end.name} (${$('depTime')?.value})`;
   const gBox = $('groupQrBox');
-  gBox.innerHTML = '';
-  if (typeof QRCode !== 'undefined') {
-    new QRCode(gBox, { text: shareUrl, width: 170, height: 170 });
+  if (gBox) {
+    gBox.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(gBox, { text: shareUrl, width: 170, height: 170 });
+    }
   }
 }
 
-$('btnShareQr').addEventListener('click', () => {
-  $('qrDialogDesc').textContent = `${places.start.name} ➔ ${places.end.name}`;
+$('btnShareQr')?.addEventListener('click', () => {
+  if ($('qrDialogDesc')) $('qrDialogDesc').textContent = `${places.start.name} ➔ ${places.end.name}`;
   const box = $('qrDialogBox');
-  box.innerHTML = '';
-  if (typeof QRCode !== 'undefined') new QRCode(box, { text: buildShareUrl(), width: 190, height: 190 });
-  $('qrDialog').showModal();
+  if (box) {
+    box.innerHTML = '';
+    if (typeof QRCode !== 'undefined') new QRCode(box, { text: buildShareUrl(), width: 190, height: 190 });
+  }
+  $('qrDialog')?.showModal();
 });
-$('btnCopyModalLink').addEventListener('click', () => navigator.clipboard.writeText(buildShareUrl()).then(() => toast('링크 복사 완료!')));
-$('btnCopyGroupLink').addEventListener('click', () => navigator.clipboard.writeText(buildShareUrl()).then(() => toast('링크 복사 완료!')));
-$('btnOpenKakaoMap').addEventListener('click', () => {
+$('btnCopyModalLink')?.addEventListener('click', () => navigator.clipboard.writeText(buildShareUrl()).then(() => toast('링크 복사 완료!')));
+$('btnCopyGroupLink')?.addEventListener('click', () => navigator.clipboard.writeText(buildShareUrl()).then(() => toast('링크 복사 완료!')));
+$('btnOpenKakaoMap')?.addEventListener('click', () => {
   window.open(`https://map.kakao.com/link/by/traffic/${encodeURIComponent(places.start.name)},${places.start.y},${places.start.x}/${encodeURIComponent(places.end.name)},${places.end.y},${places.end.x}`, '_blank');
 });
 
 function renderSaved() {
   ['savedRoutes', 'myRoutes'].forEach(target => {
-    $(target).replaceChildren();
+    const container = $(target);
+    if (!container) return;
+    container.replaceChildren();
     settings.destinations.forEach((d, i) => {
       const b = node('button', undefined, 'saved' + (i === activeDestination ? ' active' : ''));
       b.type = 'button';
@@ -1168,11 +1268,11 @@ function renderSaved() {
       b.addEventListener('click', () => {
         activeDestination = i;
         renderSaved();
-        $('end').value = d.area;
+        if ($('end')) $('end').value = d.area;
         searchPlaces('end');
         toast(`${d.name} (${d.area}) 후보를 불러왔습니다.`);
       });
-      $(target).append(b);
+      container.append(b);
     });
   });
 }
@@ -1186,43 +1286,43 @@ renderSaved();
 });
 document.querySelectorAll('[data-search]').forEach(b => b.addEventListener('click', () => searchPlaces(b.dataset.search)));
 
-$('homeFind').addEventListener('click', () => { runSeoulSearch(); tab('strategy'); });
-$('fetchRoutes').addEventListener('click', () => { $('searchDialog').close(); runSeoulSearch(); });
-$('openStrategy').addEventListener('click', () => tab('strategy'));
-$('settings').addEventListener('click', () => $('searchDialog').showModal());
-$('homeAdvanced').addEventListener('click', () => $('searchDialog').showModal());
-$('homeFit').addEventListener('click', () => updateHomeMap());
-document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => $(b.dataset.close).close()));
+$('homeFind')?.addEventListener('click', () => { runSeoulSearch(); tab('strategy'); });
+$('fetchRoutes')?.addEventListener('click', () => { $('searchDialog')?.close(); runSeoulSearch(); });
+$('openStrategy')?.addEventListener('click', () => tab('strategy'));
+$('settings')?.addEventListener('click', () => $('searchDialog')?.showModal());
+$('homeAdvanced')?.addEventListener('click', () => $('searchDialog')?.showModal());
+$('homeFit')?.addEventListener('click', () => updateHomeMap());
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => $(b.dataset.close)?.close()));
 
-$('depTime').addEventListener('change', () => runSeoulSearch());
-$('budget').addEventListener('input', () => {
+$('depTime')?.addEventListener('change', () => runSeoulSearch());
+$('budget')?.addEventListener('input', () => {
   const bVal = Number($('budget').value);
-  $('budgetText').textContent = won(bVal);
-  $('myBudget').textContent = won(bVal);
+  if ($('budgetText')) $('budgetText').textContent = won(bVal);
+  if ($('myBudget')) $('myBudget').textContent = won(bVal);
 });
 
-$('homeSwap').addEventListener('click', () => {
+$('homeSwap')?.addEventListener('click', () => {
   const a = places.start, b = places.end;
   places.start = b; places.end = a;
-  $('start').value = b.name;
-  $('end').value = a.name;
-  $('startResolved').textContent = `✓ ${b.name} 선택됨`;
-  $('endResolved').textContent = `✓ ${a.name} 선택됨`;
+  if ($('start')) $('start').value = b.name;
+  if ($('end')) $('end').value = a.name;
+  if ($('startResolved')) $('startResolved').textContent = `✓ ${b.name} 선택됨`;
+  if ($('endResolved')) $('endResolved').textContent = `✓ ${a.name} 선택됨`;
   runSeoulSearch();
 });
 
-$('navigate').addEventListener('click', () => {
+$('navigate')?.addEventListener('click', () => {
   if (!selected) return;
-  $('timerDialog').showModal();
+  $('timerDialog')?.showModal();
   const nowMin = timeToMin(getNowTimeStr());
   let depMin = timeToMin(selected.departure);
   if (depMin < nowMin && nowMin >= 21 * 60) depMin += 1440;
   const remaining = Math.max(0, depMin - nowMin);
-  $('timerDestLabel').textContent = `집 (${places?.end?.name || '도착지'})까지 출발`;
-  $('timerBottomRoute').textContent = `${selected.departure} 출발 · ${selected.summary}`;
-  $('timerBig').textContent = `${remaining}분`;
+  if ($('timerDestLabel')) $('timerDestLabel').textContent = `집 (${places?.end?.name || '도착지'})까지 출발`;
+  if ($('timerBottomRoute')) $('timerBottomRoute').textContent = `${selected.departure} 출발 · ${selected.summary}`;
+  if ($('timerBig')) $('timerBig').textContent = `${remaining}분`;
 });
-$('btnCloseTimer').addEventListener('click', () => $('timerDialog').close());
+$('btnCloseTimer')?.addEventListener('click', () => $('timerDialog')?.close());
 
 function tab(id) {
   document.querySelectorAll('.screen').forEach(e => e.classList.toggle('on', e.id === id));
@@ -1231,7 +1331,7 @@ function tab(id) {
     b.setAttribute('aria-current', b.dataset.tab === id ? 'page' : 'false');
   });
   const titles = { home: '⌂ 집에 못 갈 지도', strategy: '귀가 전략', group: '모임 · QR 공유', my: '마이', chat: '물어보기' };
-  $('pageTitle').textContent = titles[id] || '집에 못 갈 지도';
+  if ($('pageTitle')) $('pageTitle').textContent = titles[id] || '집에 못 갈 지도';
   window.scrollTo(0, 0);
   if (id === 'home' && homeLeaflet) { setTimeout(() => { homeLeaflet.invalidateSize(); updateHomeMap(); }, 150); }
   if (id === 'group') updateQrCodes();
@@ -1243,11 +1343,11 @@ window.addEventListener('load', () => {
   if (params.has('sx') && params.has('sy') && params.has('dx') && params.has('dy')) {
     places.start = { label: params.get('sn') || '출발지', name: params.get('sn') || '출발지', x: Number(params.get('sx')), y: Number(params.get('sy')) };
     places.end = { label: params.get('dn') || '도착지', name: params.get('dn') || '도착지', x: Number(params.get('dx')), y: Number(params.get('dy')) };
-    $('start').value = places.start.name;
-    $('end').value = places.end.name;
-    $('startResolved').textContent = `✓ ${places.start.name} 선택됨`;
-    $('endResolved').textContent = `✓ ${places.end.name} 선택됨`;
-    if (params.get('t')) $('depTime').value = params.get('t');
+    if ($('start')) $('start').value = places.start.name;
+    if ($('end')) $('end').value = places.end.name;
+    if ($('startResolved')) $('startResolved').textContent = `✓ ${places.start.name} 선택됨`;
+    if ($('endResolved')) $('endResolved').textContent = `✓ ${places.end.name} 선택됨`;
+    if (params.get('t') && $('depTime')) $('depTime').value = params.get('t');
   }
   buildHomeMap();
   runSeoulSearch();
