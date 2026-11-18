@@ -130,7 +130,7 @@ body.light-theme .alertBox{color:#b91c1c;border-color:#fca5a5;background:#fef2f2
 dialog{border:1px solid var(--line);border-radius:20px;padding:22px;background:var(--bg);color:var(--text);width:min(410px,94vw);max-height:85dvh;overflow:auto}
 dialog::backdrop{background:#000b}
 label{display:block;color:var(--muted);font-size:11px;margin:14px 0 7px}
-input[type=text],input[type=time],select{width:100%;border:1px solid var(--line);background:var(--input-bg);color:var(--text);padding:13px;border-radius:10px}
+input[type=text],input[type=password],input[type=time],select{width:100%;border:1px solid var(--line);background:var(--input-bg);color:var(--text);padding:13px;border-radius:10px}
 select{font-size:12px}
 .fieldRow{display:flex;gap:7px}
 .fieldRow input{min-width:0}
@@ -193,7 +193,7 @@ body.light-theme .transit-badge{background:#e0f2fe;border-color:#bae6fd;color:#0
 .quick-times button{flex:1;border:1px solid var(--line);background:var(--input-bg);color:var(--text-sub);padding:7px;border-radius:8px;font-size:11px}
 .quick-times button:hover{border-color:var(--yellow);color:var(--yellow)}
 
-/* 풀스크린 타이머 다이얼로그 (초록 / 노랑 / 빨강 상태 색상) */
+/* 풀스크린 타이머 다이얼로그 */
 #timerDialog {
 border: 0;
 padding: 0;
@@ -328,7 +328,7 @@ color: #000;
 <div id="savedRoutes" style="margin-top:8px"></div>
 </div>
 <button class="primary" id="openStrategy" type="button">추천 귀가 전략 및 탑승 노선 상세 보기 <span>→</span></button>
-<p class="footnote" id="homeFoot">서울특별시 열린데이터광장 · 카카오모빌리티 · Gemini 3.8 Flash (Google 검색 탑재)</p>
+<p class="footnote" id="homeFoot">서울특별시 열린데이터광장 · 카카오모빌리티 · Gemini AI</p>
 </section>
 
 <!-- 전략 탭 -->
@@ -366,25 +366,25 @@ color: #000;
 <!-- 물어보기 탭 -->
 <section class="screen" id="chat">
 <div class="between" style="flex-shrink:0;margin-bottom:6px">
-<span class="badge">✨ Gemini 3.8 Flash + 🌐 Google 실시간 검색</span>
-<span class="micro">Max Output: 8,192 Tokens</span>
+<span class="badge">✨ Gemini AI + 🚌 서울시 실시간 경로 엔진</span>
+<span class="micro" id="aiStatusBadge">연동 준비 완료</span>
 </div>
-<p class="desc">제미나이가 Google 실시간 웹 검색과 앱 내 경로 탐색을 직접 수행해 알려드립니다.</p>
+<p class="desc">경로 탐색, 탑승 노선, 막차·올빼미버스, 택시비를 바로 물어보세요.</p>
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
-<div class="msg bot">안녕하세요! <b>Google 실시간 검색</b>과 <b>앱 내 경로 탐색</b>이 연결된 Gemini 3.8 Flash입니다. ✨
+<div class="msg bot">안녕하세요! 서울시 심야 귀가 어시스턴트입니다. ✨
 • "서울역에서 건대입구역 가는 귀가 경로와 탑승 노선 알려줘"
-• "오늘 서울 지하철 막차 연장 운행이나 집회 통제 있어?"
-• "강남역에서 타는 올빼미버스 N버스 노선 검색해서 알려줘"
+• "현재 경로 중 가성비와 시간을 모두 잡는 최적 전략 분석해 줘"
+• "강남역에서 타는 올빼미버스 N버스 노선과 막차 알려줘"
 무엇이든 물어보세요!</div>
 </div>
 <div class="chat-chips" id="chatQuickChips">
-<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 심야 올빼미버스(N버스) 노선과 막차 시간 검색해서 알려줘">🌙 올빼미버스·막차 검색</button>
-<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="오늘 서울 시내 주요 교통 통제나 지하철 지연 이슈 있는지 검색해서 알려줘">🚨 실시간 교통 통제 검색</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 심야 올빼미버스(N버스) 노선과 막차 시간 알려줘">🌙 올빼미버스·막차 안내</button>
 <button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 경로 중 가성비와 시간을 모두 잡는 최적 전략 분석해 줘">⚡ 현재 경로 최적 분석</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="서울역에서 잠실역 가는 귀가 경로와 탑승 노선 알려줘">🚇 서울역➔잠실역 검색</button>
 </div>
 <div class="chat-input-area">
-<input type="text" id="chatInput" placeholder="예: 명동역에서 신림역 경로 검색해 줘 / 막차 시간 검색..." autocomplete="off"/>
+<input type="text" id="chatInput" placeholder="예: 명동역에서 신림역 경로 알려줘 / 막차 안내..." autocomplete="off"/>
 <button type="button" id="chatSend" onclick="handleChatSend()">전송</button>
 </div>
 </div>
@@ -430,6 +430,15 @@ color: #000;
 <div class="panel">
 <div class="between"><h3 style="margin:0">저장 귀가 루트 (원탭 목적지)</h3><button type="button" class="plain" id="editDestination" style="font-size:11px">편집</button></div>
 <div id="myRoutes"></div>
+</div>
+
+<div class="panel">
+<h3>🔑 Gemini API 키 설정 (할당량 초과 시 교체)</h3>
+<p class="micro" style="margin-bottom:8px">무료 할당량(Quota) 초과 시 Google AI Studio에서 발급받은 새 키를 입력하면 바로 적용됩니다.</p>
+<div class="fieldRow">
+<input id="customGeminiKey" type="password" placeholder="AIza... 또는 AQ.... 형식 API 키 입력" autocomplete="off"/>
+<button type="button" id="saveCustomKeyBtn">적용</button>
+</div>
 </div>
 
 <button type="button" class="primary" id="saveSettings">설정 저장하기 <span>✓</span></button>
@@ -546,10 +555,14 @@ color: #000;
 /* ───────────── 인증키 및 AI 모델 설정 ───────────── */
 const KAKAO_REST_KEY = '00635a15cd451240a8fd6e37cee0da22';
 const SEOUL_OPEN_KEY = '77484a55786e617939344567517158';
-const GEMINI_API_KEY = 'AQ.Ab8RN6K0XVIU9hJrBmHvYWLCOrC32PyCp4mXEBRuhxqlN_XsoQ';
-const GEMINI_MODEL = 'gemini-3.8-flash';
-const GEMINI_FALLBACK_MODEL = 'gemini-3.8-flash-lite';
+const DEFAULT_GEMINI_KEY = 'AQ.Ab8RN6K0XVIU9hJrBmHvYWLCOrC32PyCp4mXEBRuhxqlN_XsoQ';
+const GEMINI_CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.8-flash'];
 const GEMINI_MAX_TOKENS = 8192;
+
+function getActiveGeminiKey() {
+  const custom = localStorage.getItem('homeway.gemini.key');
+  return (custom && custom.trim()) ? custom.trim() : DEFAULT_GEMINI_KEY;
+}
 
 const $ = id => document.getElementById(id);
 const won = n => Number(n).toLocaleString('ko-KR') + '원';
@@ -587,9 +600,24 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v22'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v23'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
+
+if ($('customGeminiKey')) {
+  const savedKey = localStorage.getItem('homeway.gemini.key');
+  if (savedKey) $('customGeminiKey').value = savedKey;
+}
+$('saveCustomKeyBtn')?.addEventListener('click', () => {
+  const val = $('customGeminiKey')?.value.trim();
+  if (val) {
+    localStorage.setItem('homeway.gemini.key', val);
+    toast('✓ 새 Gemini API 키가 저장되었습니다.');
+  } else {
+    localStorage.removeItem('homeway.gemini.key');
+    toast('기본 API 키로 복원되었습니다.');
+  }
+});
 
 let activeCondition = settings.pref || 'time';
 
@@ -863,7 +891,6 @@ async function findNearestBusStopAndLines(lat, lng, isNightTime) {
     }
   } catch {}
 
-  // 서울 주요 권역별 간선·지선·심야 올빼미버스(N버스) 노선 매칭
   const isGangnamArea = lat < 37.525 && lng > 127.00;
   const isHongdaeArea = lat > 37.545 && lng < 126.95;
   const isJongnoArea = lat > 37.555 && lng >= 126.96 && lng <= 127.02;
@@ -1035,7 +1062,6 @@ async function runSeoulSearch() {
     const builtRoutes = [];
     let seoulSubwayLive = [];
 
-    // 1. 서울 지하철 경로 (몇 호선 · 어느 방면 열차인지 명시)
     if (startSubway && endSubway) {
       seoulSubwayLive = await getSeoulSubwayLive(startSubway.stationName);
       const walk1 = Math.max(1, Math.round(startSubway.distM / 67));
@@ -1093,7 +1119,6 @@ async function runSeoulSearch() {
       });
     }
 
-    // 2. 시내버스 / 심야 올빼미버스(N버스) + 환승 택시 (타야 할 버스 번호 명시)
     const midX = (places.start.x + places.end.x) / 2;
     const midY = (places.start.y + places.end.y) / 2;
     const subTaxi = await getKakaoTaxiRoute(midX, midY, places.end.x, places.end.y);
@@ -1147,7 +1172,6 @@ async function runSeoulSearch() {
       });
     }
 
-    // 3. 시내버스 단독 이동 경로 (대중교통만 이용 옵션)
     {
       const busOnlyArrival = computeVehicleArrivalTime({
         baseServiceMin,
@@ -1197,7 +1221,6 @@ async function runSeoulSearch() {
       });
     }
 
-    // 4. 카카오 직행 택시
     const taxiDispatchWait = isNightTime ? 6 : 3;
     const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
     const taxiPickupTimeStr = minToTime(taxiPickupServiceMin);
@@ -1311,7 +1334,6 @@ function renderStrategyCards() {
     const titleEl = node('h3'); titleEl.textContent = r.name;
     top.append(titleEl, node('span', r.tag, r.tagClass));
 
-    // 탑승 노선 배지 줄 (어떤 버스 번호 / 몇 호선 지하철을 타야 하는지 표시)
     const badgeRow = node('div', undefined, 'line-highlight-bar');
     (r.lineBadges || []).forEach(lb => badgeRow.append(createLineBadgeElement(lb)));
 
@@ -1337,7 +1359,6 @@ function renderStrategyCards() {
       const head = node('div', undefined, 'between');
       head.append(node('h3', '선택 경로 탑승 노선 및 세부 순서'), node('span', selected.tag, selected.tagClass));
 
-      // 선택된 경로의 핵심 탑승 노선 안내 배너
       const banner = node('div', undefined, 'selected-line-banner');
       const bTitle = node('b', '🚏 지금 타야 할 대중교통 노선');
       const bDesc = document.createElement('div');
@@ -1397,7 +1418,30 @@ function renderFormattedBotText(container, rawText) {
   container.innerHTML = formatted;
 }
 
-/* ───────────── Gemini 3.8 Flash (Google Search + 앱 내부 경로 검색 통합) ───────────── */
+/* ───────────── 내장 스마트 로컬 경로·막차 응답기 (API Quota 초과 시 자동 작동) ───────────── */
+async function generateLocalSmartReply(userText) {
+  // 출발지->도착지 패턴 감지 시 앱 내 경로 엔진 먼저 실행
+  const routeMatch = userText.match(/([가-힣A-Za-z0-9]+역?)\s*(?:에서|부터)\s*([가-힣A-Za-z0-9]+역?)\s*(?:까지|가는|행)/);
+  if (routeMatch) {
+    await executeAppRouteSearch({ start_place: routeMatch[1], end_place: routeMatch[2] });
+  }
+
+  const sName = places.start?.name || '출발지';
+  const eName = places.end?.name || '도착지';
+  const depTime = $('depTime')?.value || getNowTimeStr();
+
+  if (visible.length > 0) {
+    const lines = visible.map((r, idx) =>
+      `${idx + 1}. **${r.name}**\n   • 탑승 노선: ${r.transitGuideText}\n   • 정류장·역 도착: **${r.departure}** (${r.boardStation}) · 소요 ${r.minutes}분 · ${won(r.cost)}`
+    ).join('\n\n');
+
+    return `📍 **[${sName} ➔ ${eName}]** (${depTime} 기준 실시간 분석)\n\n${lines}\n\n💡 상세 시간표와 카운트다운 타이머는 하단 **[귀가 전략]** 탭에서 바로 확인하실 수 있습니다.`;
+  }
+
+  return `현재 **[${sName} ➔ ${eName}]** 기준으로 서울 시내 지하철(수도권 전철 막차 평균 23:40~00:30) 및 심야 올빼미버스(N버스 23:40~03:30 운행) 경로를 탐색할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
+}
+
+/* ───────────── Gemini AI 챗봇 (다중 모델 폴백 + Quota 초과 시 내장 엔진 전환) ───────────── */
 const chatHistory = [];
 let isChatSending = false;
 
@@ -1407,18 +1451,9 @@ const appRouteFunctionDeclaration = {
   parameters: {
     type: 'OBJECT',
     properties: {
-      start_place: {
-        type: 'STRING',
-        description: '출발지 장소명 또는 지하철역 이름 (예: 강남역, 서울역, 현재 위치)'
-      },
-      end_place: {
-        type: 'STRING',
-        description: '도착지 장소명 또는 지하철역 이름 (예: 홍대입구역, 잠실역, 사당역)'
-      },
-      departure_time: {
-        type: 'STRING',
-        description: '조회 기준 시각 HH:MM 형식 (선택 사항, 예: 23:40)'
-      }
+      start_place: { type: 'STRING', description: '출발지 장소명 또는 지하철역 이름' },
+      end_place: { type: 'STRING', description: '도착지 장소명 또는 지하철역 이름' },
+      departure_time: { type: 'STRING', description: '조회 기준 시각 HH:MM 형식 (선택)' }
     },
     required: ['start_place', 'end_place']
   }
@@ -1466,19 +1501,14 @@ async function executeAppRouteSearch({ start_place, end_place, departure_time })
       transitArrivalAtOriginStopOrStation: r.departure,
       originStopOrStation: r.boardStation,
       minutes: r.minutes,
-      costWon: r.cost,
-      transfers: r.transfers,
-      steps: r.steps.map(s => s.label)
+      costWon: r.cost
     }))
   };
 }
 
 function appendGroundingSources(msgEl, candidate) {
   const chunks = candidate?.groundingMetadata?.groundingChunks || [];
-  const webLinks = chunks
-    .map(c => c.web)
-    .filter(w => w && w.uri && w.title);
-
+  const webLinks = chunks.map(c => c.web).filter(w => w && w.uri && w.title);
   if (webLinks.length === 0) return;
 
   const uniqueLinks = [];
@@ -1523,7 +1553,7 @@ async function askGeminiChatbot(userMessage) {
   sendBtn.textContent = '전송중';
   box.scrollTop = box.scrollHeight;
 
-  const loadingMsg = node('div', '🌐 Google 실시간 검색 및 탑승 노선·도착 시각을 조회하고 있습니다...', 'msg bot');
+  const loadingMsg = node('div', '🔍 탑승 노선 및 실시간 경로를 분석하고 있습니다...', 'msg bot');
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
 
@@ -1531,29 +1561,23 @@ async function askGeminiChatbot(userMessage) {
   const sName = places.start?.name || '출발지';
   const eName = places.end?.name || '도착지';
   const budget = won($('budget')?.value || 30000);
+  const apiKey = getActiveGeminiKey();
 
   const routeSummaryText = visible.map((r, idx) =>
     `${idx + 1}. ${r.name} | 탑승 노선: ${r.transitGuideText} | 출발 정류장·역 도착 시각: ${r.departure} (${r.boardStation}) | 소요시간: ${r.minutes}분 | 비용: ${won(r.cost)}`
   ).join('\n');
 
   const systemPrompt = `당신은 서울특별시 심야 귀가 및 대중교통 길찾기 앱 '집에 못 갈 지도'의 전문 AI 어시스턴트입니다.
-현재 앱에 설정된 탐색 정보:
-- 출발지: ${sName}
-- 도착지: ${eName}
-- 조회 기준 시각: ${depTime}
-- 허용 택시비 예산: ${budget}
-- 현재 계산된 추천 경로 및 탑승 노선:
-${routeSummaryText || '아직 계산된 경로 없음'}
-
-도구 사용 지침:
-1. 사용자가 특정 서울 출발지/도착지의 경로를 새로 찾아달라고 하면 'search_seoul_route' 함수를 호출하여 앱의 경로와 타야 할 버스 번호·지하철 호선, 정류장·역 도착 시각을 검색해 알려주세요.
-2. 막차 시간, 올빼미버스(N버스) 노선, 실시간 서울 시내 집회·도로 통제, 지하철 지연·파업 등 최신 외부 정보가 필요하면 'google_search' 도구를 적극 활용해 정확한 최신 사실 기반으로 답변하세요.
-3. 안내할 때는 타야 할 버스 번호나 지하철 호선, 그리고 대중교통이 출발 정류장·역에 도착하는 시각을 명확하게 짚어주세요.`;
+현재 앱 탐색 정보:
+- 출발지: ${sName}, 도착지: ${eName}, 기준시각: ${depTime}, 택시예산: ${budget}
+- 현재 추천 경로 및 탑승 노선:
+${routeSummaryText || '없음'}
+사용자가 경로를 물어보면 'search_seoul_route' 함수를 호출하고, 타야 할 버스 번호·지하철 호선과 정류장·역 도착 시각을 간결하고 친절하게 안내하세요.`;
 
   chatHistory.push({ role: 'user', parts: [{ text }] });
 
   const callGeminiApi = async (modelName, contentsPayload, toolsPayload) => {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
     const body = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: contentsPayload,
@@ -1574,21 +1598,18 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
   };
 
   try {
-    const combinedTools = [
-      { google_search: {} },
-      { functionDeclarations: [appRouteFunctionDeclaration] }
-    ];
+    let data = null;
+    let activeModel = GEMINI_CANDIDATE_MODELS[0];
 
-    let activeModel = GEMINI_MODEL;
-    let data = await callGeminiApi(activeModel, chatHistory, combinedTools);
-
-    if (data?.error && /not found|not supported|no longer available/i.test(data.error.message || '')) {
-      activeModel = GEMINI_FALLBACK_MODEL;
-      data = await callGeminiApi(activeModel, chatHistory, combinedTools);
+    // 할당량 초과나 미지원 모델 에러 시 다음 후보 모델로 자동 순회
+    for (const candidateModel of GEMINI_CANDIDATE_MODELS) {
+      activeModel = candidateModel;
+      data = await callGeminiApi(candidateModel, chatHistory, [{ functionDeclarations: [appRouteFunctionDeclaration] }]);
+      if (!data?.error) break;
     }
 
-    if (data?.error && /tool|grounding|function/i.test(data.error.message || '')) {
-      data = await callGeminiApi(activeModel, chatHistory, [{ google_search: {} }]);
+    if (data?.error) {
+      throw new Error(data.error.message || 'API Quota Exceeded');
     }
 
     let candidate = data?.candidates?.[0];
@@ -1598,7 +1619,7 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
     if (fnCallPart) {
       const fnName = fnCallPart.functionCall.name;
       const fnArgs = fnCallPart.functionCall.args || {};
-      loadingMsg.textContent = `🔍 앱 내에서 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 탑승 노선과 정류장·역 도착 시각을 실시간 검색 중입니다...`;
+      loadingMsg.textContent = `🔍 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 탑승 노선과 도착 시각을 조회 중입니다...`;
 
       chatHistory.push(candidate.content);
 
@@ -1617,7 +1638,7 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
         }]
       });
 
-      data = await callGeminiApi(activeModel, chatHistory, [{ google_search: {} }]);
+      data = await callGeminiApi(activeModel, chatHistory, []);
       candidate = data?.candidates?.[0];
       modelParts = candidate?.content?.parts || [];
     }
@@ -1625,6 +1646,7 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
     const replyText = modelParts.filter(p => p.text).map(p => p.text).join('\n').trim();
 
     if (replyText) {
+      if ($('aiStatusBadge')) $('aiStatusBadge').textContent = `${activeModel} 연결됨`;
       renderFormattedBotText(loadingMsg, replyText);
       appendGroundingSources(loadingMsg, candidate);
       if (candidate?.content) {
@@ -1633,11 +1655,13 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
         chatHistory.push({ role: 'model', parts: [{ text: replyText }] });
       }
     } else {
-      throw new Error(data?.error?.message || '응답을 받지 못했습니다');
+      throw new Error('Empty response');
     }
   } catch (err) {
-    const fallbackRoute = visible[0];
-    loadingMsg.textContent = `제미나이 검색 응답 중 오류가 발생했습니다. (${err.message})\n\n대신 현재 분석된 [${sName} ➔ ${eName}] 추천 경로를 안내해 드릴게요:\n• 최우선 추천: ${fallbackRoute ? `${fallbackRoute.name} - ${fallbackRoute.transitGuideText}` : '경로 탐색 필요'}`;
+    // API 할당량 초과(Quota Exceeded) 시에도 멈추지 않고 내장 실시간 경로 엔진으로 즉시 답변 생성
+    if ($('aiStatusBadge')) $('aiStatusBadge').textContent = '내장 경로 엔진 모드';
+    const smartFallbackReply = await generateLocalSmartReply(text);
+    renderFormattedBotText(loadingMsg, smartFallbackReply);
   } finally {
     isChatSending = false;
     inputEl.disabled = false;
@@ -1666,7 +1690,7 @@ $('chatInput')?.addEventListener('keydown', e => {
 $('saveSettings')?.addEventListener('click', () => {
   settings.budget = Number($('budget')?.value || 30000);
   settings.pref = activeCondition;
-  localStorage.setItem('homeway.app.v22', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v23', JSON.stringify(settings));
   toast('✓ 귀가 설정이 기기에 저장되었습니다.');
 });
 
@@ -1706,18 +1730,20 @@ $('saveDestinations')?.addEventListener('click', () => {
       settings.destinations[idx][field] = inp.value.trim();
     }
   });
-  localStorage.setItem('homeway.app.v22', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v23', JSON.stringify(settings));
   renderSaved();
   $('destinationDialog')?.close();
   toast('✓ 저장 목적지가 업데이트되었습니다.');
 });
 
 $('reset')?.addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v22');
+  localStorage.removeItem('homeway.app.v23');
+  localStorage.removeItem('homeway.gemini.key');
   settings = structuredClone(defaults);
   applyTheme(settings.theme);
   syncPrefButtons(settings.pref);
   if ($('budget')) $('budget').value = settings.budget;
+  if ($('customGeminiKey')) $('customGeminiKey').value = '';
   renderSaved();
   applyConditionAndRender();
   toast('초기 설정으로 되돌아갔습니다.');
@@ -1850,7 +1876,7 @@ $('homeSwap')?.addEventListener('click', () => {
   runSeoulSearch();
 });
 
-/* ───────────── 풀스크린 귀가 타이머 (대중교통 출발 정류장·역 도착 시각 기준) ───────────── */
+/* ───────────── 풀스크린 귀가 타이머 ───────────── */
 let timerInterval = null;
 
 function refreshFullscreenTimer() {
