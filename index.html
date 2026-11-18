@@ -130,7 +130,7 @@ body.light-theme .alertBox{color:#b91c1c;border-color:#fca5a5;background:#fef2f2
 dialog{border:1px solid var(--line);border-radius:20px;padding:22px;background:var(--bg);color:var(--text);width:min(410px,94vw);max-height:85dvh;overflow:auto}
 dialog::backdrop{background:#000b}
 label{display:block;color:var(--muted);font-size:11px;margin:14px 0 7px}
-input[type=text],input[type=password],input[type=time],select{width:100%;border:1px solid var(--line);background:var(--input-bg);color:var(--text);padding:13px;border-radius:10px}
+input[type=text],input[type=time],select{width:100%;border:1px solid var(--line);background:var(--input-bg);color:var(--text);padding:13px;border-radius:10px}
 select{font-size:12px}
 .fieldRow{display:flex;gap:7px}
 .fieldRow input{min-width:0}
@@ -432,15 +432,6 @@ color: #000;
 <div id="myRoutes"></div>
 </div>
 
-<div class="panel">
-<h3>🔑 Gemini API 키 설정 (할당량 초과 시 교체)</h3>
-<p class="micro" style="margin-bottom:8px">무료 할당량(Quota) 초과 시 Google AI Studio에서 발급받은 새 키를 입력하면 바로 적용됩니다.</p>
-<div class="fieldRow">
-<input id="customGeminiKey" type="password" placeholder="AIza... 또는 AQ.... 형식 API 키 입력" autocomplete="off"/>
-<button type="button" id="saveCustomKeyBtn">적용</button>
-</div>
-</div>
-
 <button type="button" class="primary" id="saveSettings">설정 저장하기 <span>✓</span></button>
 <button type="button" class="plain" id="reset" style="width:100%;font-size:11px;margin-top:12px">이 기기의 저장 정보 초기화</button>
 <p class="footnote">설정은 이 브라우저에만 저장됩니다.</p>
@@ -555,14 +546,9 @@ color: #000;
 /* ───────────── 인증키 및 AI 모델 설정 ───────────── */
 const KAKAO_REST_KEY = '00635a15cd451240a8fd6e37cee0da22';
 const SEOUL_OPEN_KEY = '77484a55786e617939344567517158';
-const DEFAULT_GEMINI_KEY = 'AQ.Ab8RN6K0XVIU9hJrBmHvYWLCOrC32PyCp4mXEBRuhxqlN_XsoQ';
+const GEMINI_API_KEY = 'AQ.Ab8RN6K0XVIU9hJrBmHvYWLCOrC32PyCp4mXEBRuhxqlN_XsoQ';
 const GEMINI_CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.8-flash'];
 const GEMINI_MAX_TOKENS = 8192;
-
-function getActiveGeminiKey() {
-  const custom = localStorage.getItem('homeway.gemini.key');
-  return (custom && custom.trim()) ? custom.trim() : DEFAULT_GEMINI_KEY;
-}
 
 const $ = id => document.getElementById(id);
 const won = n => Number(n).toLocaleString('ko-KR') + '원';
@@ -600,24 +586,11 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v23'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v24'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
-if ($('customGeminiKey')) {
-  const savedKey = localStorage.getItem('homeway.gemini.key');
-  if (savedKey) $('customGeminiKey').value = savedKey;
-}
-$('saveCustomKeyBtn')?.addEventListener('click', () => {
-  const val = $('customGeminiKey')?.value.trim();
-  if (val) {
-    localStorage.setItem('homeway.gemini.key', val);
-    toast('✓ 새 Gemini API 키가 저장되었습니다.');
-  } else {
-    localStorage.removeItem('homeway.gemini.key');
-    toast('기본 API 키로 복원되었습니다.');
-  }
-});
+if ($('budget')) $('budget').value = settings.budget;
 
 let activeCondition = settings.pref || 'time';
 
@@ -1062,6 +1035,7 @@ async function runSeoulSearch() {
     const builtRoutes = [];
     let seoulSubwayLive = [];
 
+    // 1. 서울 지하철 경로
     if (startSubway && endSubway) {
       seoulSubwayLive = await getSeoulSubwayLive(startSubway.stationName);
       const walk1 = Math.max(1, Math.round(startSubway.distM / 67));
@@ -1119,6 +1093,7 @@ async function runSeoulSearch() {
       });
     }
 
+    // 2. 시내버스 / 심야 올빼미버스(N버스) + 환승 택시
     const midX = (places.start.x + places.end.x) / 2;
     const midY = (places.start.y + places.end.y) / 2;
     const subTaxi = await getKakaoTaxiRoute(midX, midY, places.end.x, places.end.y);
@@ -1158,9 +1133,9 @@ async function runSeoulSearch() {
         lineBadges,
         transitGuideText,
         minutes: totalHybridMin,
-        tag: budget >= subTaxi.fare ? '정류장 도착 연동' : '예산 초과',
-        tagClass: budget >= subTaxi.fare ? 'tag' : 'tag-red',
-        isWarning: budget < subTaxi.fare,
+        tag: '예산 내 환승 택시',
+        tagClass: 'tag',
+        isWarning: false,
         remaining: `${busArrival.boardTimeStr} 정류장 도착 · ${won(Math.max(0, kakaoDriveData.fare - subTaxi.fare))} 절약`,
         summary: `${stopLabel} [${busInfo.primaryBus}] ${busArrival.boardTimeStr} 도착 ➔ 환승 택시 (${hybridEndTime} 도착)`,
         steps: [
@@ -1172,6 +1147,7 @@ async function runSeoulSearch() {
       });
     }
 
+    // 3. 시내버스 단독 이동 경로
     {
       const busOnlyArrival = computeVehicleArrivalTime({
         baseServiceMin,
@@ -1221,6 +1197,7 @@ async function runSeoulSearch() {
       });
     }
 
+    // 4. 카카오 직행 택시
     const taxiDispatchWait = isNightTime ? 6 : 3;
     const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
     const taxiPickupTimeStr = minToTime(taxiPickupServiceMin);
@@ -1238,9 +1215,9 @@ async function runSeoulSearch() {
       lineBadges: [{ type: 'taxi', label: '🚖 일반·중형 택시 직행' }],
       transitGuideText: `${sName} 승차 위치에서 호출 택시 탑승 후 ${eName}까지 환승 없이 직행 이동`,
       minutes: kakaoDriveData.durationMin,
-      tag: budget >= kakaoDriveData.fare ? '예산 내 직행' : '예산 초과',
-      tagClass: budget >= kakaoDriveData.fare ? 'tag' : 'tag-red',
-      isWarning: budget < kakaoDriveData.fare,
+      tag: '예산 내 직행 택시',
+      tagClass: 'tag',
+      isWarning: false,
       remaining: `호출 약 ${taxiDispatchWait}분 후 (${taxiPickupTimeStr}) 택시 도착`,
       summary: `${taxiPickupTimeStr} 택시 도착·탑승 ➔ ${taxiArriveTimeStr} 목적지 도착`,
       steps: [
@@ -1280,13 +1257,18 @@ function applyConditionAndRender() {
   renderStrategyCards();
 }
 
+/* ───────────── 택시비 예산 초과 경로 완전 제외 필터링 ───────────── */
 function curateRecommendedRoutes(pool, cond) {
   if (!pool || pool.length === 0) return [];
-  let filtered = [...pool];
+  const budget = Number($('budget')?.value ?? 30000);
+
+  // 택시 요금이 설정된 예산을 초과하면 택시(직행 택시, 환승 택시) 선택지 자체를 제거
+  let filtered = pool.filter(r => r.taxiCost <= budget);
+
   if (cond === 'taxi') {
-    const taxiOnly = filtered.filter(r => r.taxiCost > 0);
-    if (taxiOnly.length > 0) filtered = taxiOnly;
+    filtered = filtered.filter(r => r.taxiCost > 0);
   }
+
   filtered.sort((a, b) => {
     if (cond === 'cost') return a.cost - b.cost;
     if (cond === 'transfer') return a.transfers - b.transfers;
@@ -1308,7 +1290,7 @@ function createLineBadgeElement(badgeInfo) {
 function renderStrategyCards() {
   const sName = places.start?.name || '출발지';
   const eName = places.end?.name || '도착지';
-  const budget = Number($('budget')?.value || 30000);
+  const budget = Number($('budget')?.value ?? 30000);
 
   if ($('budgetText')) $('budgetText').textContent = won(budget);
   if ($('myBudget')) $('myBudget').textContent = won(budget);
@@ -1319,15 +1301,27 @@ function renderStrategyCards() {
   if (!cardsEl) return;
   cardsEl.replaceChildren();
 
+  const hiddenTaxiCount = rawRoutes.filter(r => r.taxiCost > budget).length;
   const noticeBox = $('algorithmNotice');
   if (noticeBox) {
     noticeBox.replaceChildren();
-    noticeBox.append(node('div', `✅ 경로 카드를 선택하면 타야 할 버스 번호·지하철 호선과 출발 정류장·역 도착 시각을 아래에 바로 안내합니다.`, 'hintBox'));
+    if (hiddenTaxiCount > 0) {
+      noticeBox.append(node('div', `💡 허용 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${hiddenTaxiCount}개는 목록에서 제외되었습니다.`, 'hintBox'));
+    } else {
+      noticeBox.append(node('div', `✅ 경로 카드를 선택하면 타야 할 버스 번호·지하철 호선과 출발 정류장·역 도착 시각을 아래에 바로 안내합니다.`, 'hintBox'));
+    }
+  }
+
+  if (visible.length === 0) {
+    const emptyMsg = activeCondition === 'taxi'
+      ? `현재 설정한 허용 택시비 예산(${won(budget)}) 이내로 이용할 수 있는 택시 경로가 없습니다. 아래 슬라이더로 택시비 예산을 늘리거나 다른 조건을 선택해 주세요.`
+      : '조건에 맞는 경로가 없습니다.';
+    cardsEl.append(node('div', emptyMsg, 'alertBox'));
   }
 
   visible.forEach(r => {
     const isSel = selected?.id === r.id;
-    const b = node('button', undefined, 'strategy' + (isSel ? ' chosen' : '') + (r.isWarning ? ' warning' : ''));
+    const b = node('button', undefined, 'strategy' + (isSel ? ' chosen' : ''));
     b.type = 'button';
 
     const top = node('div', undefined, 'between');
@@ -1418,9 +1412,8 @@ function renderFormattedBotText(container, rawText) {
   container.innerHTML = formatted;
 }
 
-/* ───────────── 내장 스마트 로컬 경로·막차 응답기 (API Quota 초과 시 자동 작동) ───────────── */
+/* ───────────── 내장 스마트 로컬 경로·막차 응답기 ───────────── */
 async function generateLocalSmartReply(userText) {
-  // 출발지->도착지 패턴 감지 시 앱 내 경로 엔진 먼저 실행
   const routeMatch = userText.match(/([가-힣A-Za-z0-9]+역?)\s*(?:에서|부터)\s*([가-힣A-Za-z0-9]+역?)\s*(?:까지|가는|행)/);
   if (routeMatch) {
     await executeAppRouteSearch({ start_place: routeMatch[1], end_place: routeMatch[2] });
@@ -1441,7 +1434,7 @@ async function generateLocalSmartReply(userText) {
   return `현재 **[${sName} ➔ ${eName}]** 기준으로 서울 시내 지하철(수도권 전철 막차 평균 23:40~00:30) 및 심야 올빼미버스(N버스 23:40~03:30 운행) 경로를 탐색할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
 }
 
-/* ───────────── Gemini AI 챗봇 (다중 모델 폴백 + Quota 초과 시 내장 엔진 전환) ───────────── */
+/* ───────────── Gemini AI 챗봇 ───────────── */
 const chatHistory = [];
 let isChatSending = false;
 
@@ -1560,8 +1553,7 @@ async function askGeminiChatbot(userMessage) {
   const depTime = $('depTime')?.value || getNowTimeStr();
   const sName = places.start?.name || '출발지';
   const eName = places.end?.name || '도착지';
-  const budget = won($('budget')?.value || 30000);
-  const apiKey = getActiveGeminiKey();
+  const budget = won($('budget')?.value ?? 30000);
 
   const routeSummaryText = visible.map((r, idx) =>
     `${idx + 1}. ${r.name} | 탑승 노선: ${r.transitGuideText} | 출발 정류장·역 도착 시각: ${r.departure} (${r.boardStation}) | 소요시간: ${r.minutes}분 | 비용: ${won(r.cost)}`
@@ -1577,7 +1569,7 @@ ${routeSummaryText || '없음'}
   chatHistory.push({ role: 'user', parts: [{ text }] });
 
   const callGeminiApi = async (modelName, contentsPayload, toolsPayload) => {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
     const body = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: contentsPayload,
@@ -1601,7 +1593,6 @@ ${routeSummaryText || '없음'}
     let data = null;
     let activeModel = GEMINI_CANDIDATE_MODELS[0];
 
-    // 할당량 초과나 미지원 모델 에러 시 다음 후보 모델로 자동 순회
     for (const candidateModel of GEMINI_CANDIDATE_MODELS) {
       activeModel = candidateModel;
       data = await callGeminiApi(candidateModel, chatHistory, [{ functionDeclarations: [appRouteFunctionDeclaration] }]);
@@ -1658,7 +1649,6 @@ ${routeSummaryText || '없음'}
       throw new Error('Empty response');
     }
   } catch (err) {
-    // API 할당량 초과(Quota Exceeded) 시에도 멈추지 않고 내장 실시간 경로 엔진으로 즉시 답변 생성
     if ($('aiStatusBadge')) $('aiStatusBadge').textContent = '내장 경로 엔진 모드';
     const smartFallbackReply = await generateLocalSmartReply(text);
     renderFormattedBotText(loadingMsg, smartFallbackReply);
@@ -1688,9 +1678,9 @@ $('chatInput')?.addEventListener('keydown', e => {
 
 /* ───────────── 마이탭 설정 저장 / 편집 / 초기화 ───────────── */
 $('saveSettings')?.addEventListener('click', () => {
-  settings.budget = Number($('budget')?.value || 30000);
+  settings.budget = Number($('budget')?.value ?? 30000);
   settings.pref = activeCondition;
-  localStorage.setItem('homeway.app.v23', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v24', JSON.stringify(settings));
   toast('✓ 귀가 설정이 기기에 저장되었습니다.');
 });
 
@@ -1730,20 +1720,18 @@ $('saveDestinations')?.addEventListener('click', () => {
       settings.destinations[idx][field] = inp.value.trim();
     }
   });
-  localStorage.setItem('homeway.app.v23', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v24', JSON.stringify(settings));
   renderSaved();
   $('destinationDialog')?.close();
   toast('✓ 저장 목적지가 업데이트되었습니다.');
 });
 
 $('reset')?.addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v23');
-  localStorage.removeItem('homeway.gemini.key');
+  localStorage.removeItem('homeway.app.v24');
   settings = structuredClone(defaults);
   applyTheme(settings.theme);
   syncPrefButtons(settings.pref);
   if ($('budget')) $('budget').value = settings.budget;
-  if ($('customGeminiKey')) $('customGeminiKey').value = '';
   renderSaved();
   applyConditionAndRender();
   toast('초기 설정으로 되돌아갔습니다.');
@@ -1864,6 +1852,7 @@ $('budget')?.addEventListener('input', () => {
   const bVal = Number($('budget').value);
   if ($('budgetText')) $('budgetText').textContent = won(bVal);
   if ($('myBudget')) $('myBudget').textContent = won(bVal);
+  applyConditionAndRender();
 });
 
 $('homeSwap')?.addEventListener('click', () => {
