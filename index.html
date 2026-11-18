@@ -28,7 +28,7 @@ body{margin:0;background:var(--body-bg);color:var(--text);font:14px system-ui,'A
 button,input,select{font:inherit}
 button{cursor:pointer;color:inherit}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
-.app{max-width:440px;min-height:100dvh;margin:auto;background:var(--bg);padding:0 20px 110px;position:relative;box-shadow:0 0 25px rgba(0,0,0,0.1)}
+.app{max-width:440px;min-height:100dvh;margin:auto;background:var(--bg);padding:0 20px 120px;position:relative;box-shadow:0 0 25px rgba(0,0,0,0.1)}
 .statusbar{display:flex;justify-content:space-between;padding:16px 2px 23px;font-size:11px;font-weight:700}
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 header h1{font-size:21px;margin:0;letter-spacing:-.8px}
@@ -154,20 +154,21 @@ body.light-theme .leaflet-container{background:#f8f9fa}
 body.light-theme .toast{background:#1e293b;border-color:#334155;color:#f8fafc}
 .hidden{display:none!important}
 
-/* 채팅 */
-.chat-container{display:flex;flex-direction:column;height:56vh;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden;margin-top:12px}
+/* 채팅 (하단 내비게이션과 겹치지 않도록 높이 및 z-index 최적화) */
+.chat-container{position:relative;z-index:20;display:flex;flex-direction:column;height:calc(100dvh - 280px);min-height:320px;max-height:520px;border:1px solid var(--line);border-radius:14px;background:var(--bg);overflow:hidden;margin-top:12px;margin-bottom:20px}
 .chat-messages{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:12px}
 .msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.6;word-break:break-word;white-space:pre-line}
 .msg.bot{background:var(--card);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--line)}
 .msg.user{background:var(--yellow);color:#111;align-self:flex-end;border-bottom-right-radius:4px;font-weight:500}
 body.light-theme .msg.user{color:#fff}
-.chat-chips{display:flex;gap:6px;overflow-x:auto;padding:8px 10px 0;scrollbar-width:none}
+.chat-chips{display:flex;gap:6px;overflow-x:auto;padding:8px 10px;scrollbar-width:none;background:var(--bg);border-top:1px solid var(--line)}
 .chat-chips::-webkit-scrollbar{display:none}
-.chat-chip{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--text-sub);padding:6px 11px;border-radius:14px;font-size:11px;flex-shrink:0}
-.chat-chip:hover{border-color:var(--yellow);color:var(--yellow)}
-.chat-input-area{display:flex;padding:10px;background:var(--card);border-top:1px solid var(--line);gap:8px}
-.chat-input-area input{flex:1;border:1px solid var(--line);background:var(--input-bg);color:var(--text);padding:10px 15px;border-radius:20px;font-size:13px}
-.chat-input-area button{border:0;background:var(--yellow);color:#111;padding:0 16px;border-radius:20px;font-weight:bold;font-size:12px}
+.chat-chip{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--text-sub);padding:7px 12px;border-radius:14px;font-size:11px;flex-shrink:0;cursor:pointer}
+.chat-chip:hover,.chat-chip:active{border-color:var(--yellow);color:var(--yellow)}
+.chat-input-area{position:relative;z-index:25;display:flex;padding:10px;background:var(--card);border-top:1px solid var(--line);gap:8px;align-items:center}
+.chat-input-area input{flex:1;min-width:0;border:1px solid var(--line);background:var(--input-bg);color:var(--text);padding:11px 15px;border-radius:20px;font-size:13px}
+.chat-input-area button{flex-shrink:0;border:0;background:var(--yellow);color:#111;padding:11px 18px;border-radius:20px;font-weight:800;font-size:13px;cursor:pointer;touch-action:manipulation}
+.chat-input-area button:active{transform:scale(0.96);opacity:0.9}
 .chat-input-area button:disabled{opacity:0.5;cursor:default}
 
 .time-picker-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0}
@@ -232,7 +233,7 @@ color: #000;
 <div class="statusbar"><span id="clock">--:--</span><span aria-label="신호">▂▄▆ ▰</span></div>
 <header>
 <h1 id="pageTitle"><span class="icon">⌂</span>집에 못 갈 지도</h1>
-<button aria-label="귀가 조건 설정" class="plain" id="settings">☷</button>
+<button aria-label="귀가 조건 설정" class="plain" id="settings" type="button">☷</button>
 </header>
 
 <!-- 홈 탭 -->
@@ -241,7 +242,7 @@ color: #000;
 <div class="time-picker-box">
 <div class="between">
 <label for="depTime">⏱️ 출발 시각 기준</label>
-<button class="plain" id="setNowBtn" style="font-size:10px;color:var(--yellow)">현재 시각</button>
+<button class="plain" id="setNowBtn" type="button" style="font-size:10px;color:var(--yellow)">현재 시각</button>
 </div>
 <div class="transit-badge">
 <span class="transit-dot"></span>
@@ -274,7 +275,7 @@ color: #000;
 <label for="start">출발지 (서울 내 역, 건물명 또는 주소)</label>
 <div class="fieldRow">
 <input id="start" maxlength="200" placeholder="예: 강남역, 홍대입구역, 서울역" type="text" autocomplete="off" value="강남역"/>
-<button aria-label="출발지 검색" data-search="start">⌕</button>
+<button aria-label="출발지 검색" data-search="start" type="button">⌕</button>
 </div>
 <div class="resolved" id="startResolved">✓ 강남역 선택됨</div>
 <div class="results" id="startResults"></div>
@@ -282,7 +283,7 @@ color: #000;
 <label for="end">도착지 (서울 내 역, 건물명 또는 주소)</label>
 <div class="fieldRow">
 <input id="end" maxlength="200" placeholder="예: 홍대입구역, 신촌역, 잠실역" type="text" autocomplete="off" value="홍대입구역"/>
-<button aria-label="도착지 검색" data-search="end">⌕</button>
+<button aria-label="도착지 검색" data-search="end" type="button">⌕</button>
 </div>
 <div class="resolved" id="endResolved">✓ 홍대입구역 선택됨</div>
 <div class="results" id="endResults"></div>
@@ -309,7 +310,7 @@ color: #000;
 <h3>저장된 서울 귀가 루트</h3>
 <div id="savedRoutes"></div>
 </div>
-<button class="primary" id="openStrategy">추천 귀가 전략 (3~5개) 상세 보기 <span>→</span></button>
+<button class="primary" id="openStrategy" type="button">추천 귀가 전략 (3~5개) 상세 보기 <span>→</span></button>
 <p class="footnote" id="homeFoot">서울특별시 열린데이터광장 · 카카오모빌리티 · Gemini AI 통합</p>
 </section>
 
@@ -318,7 +319,6 @@ color: #000;
 <div class="location" id="strategyLocation">출발·도착지 분석 중</div>
 <div class="between micro"><span id="strategyMeta">추천 경로 조건 선택</span><span id="sortLabel">최소 시간순</span></div>
 
-<!-- 4가지 추천 경로 조건 탭 -->
 <div class="condition-bar" id="conditionBar">
 <button type="button" class="cond-btn on" data-cond="time">⚡ 최소 시간</button>
 <button type="button" class="cond-btn" data-cond="cost">💰 최소 금액</button>
@@ -339,7 +339,7 @@ color: #000;
 </div>
 
 <div class="panel detail" id="selectedDetail"></div>
-<button class="primary" id="navigate">이 전략으로 귀가하기 (타이머) <span>→</span></button>
+<button class="primary" id="navigate" type="button">이 전략으로 귀가하기 (타이머) <span>→</span></button>
 <div class="action-row">
 <button type="button" class="btn-sub" id="btnShareQr">📱 QR 코드 경로 공유</button>
 <button type="button" class="btn-sub" id="btnOpenKakaoMap">🗺️ 카카오맵 길찾기</button>
@@ -366,7 +366,7 @@ color: #000;
 </div>
 <div class="chat-input-area">
 <input type="text" id="chatInput" placeholder="제미나이에게 귀가 경로에 대해 물어보세요..." autocomplete="off"/>
-<button id="chatSend">전송</button>
+<button type="button" id="chatSend">전송</button>
 </div>
 </div>
 </section>
@@ -392,43 +392,43 @@ color: #000;
 <div class="panel">
 <h3>화면 테마</h3>
 <div class="row" id="themeButtons">
-<button class="chip on" data-theme="dark">🌙 다크 모드</button>
-<button class="chip" data-theme="light">☀️ 라이트 모드</button>
+<button type="button" class="chip on" data-theme="dark">🌙 다크 모드</button>
+<button type="button" class="chip" data-theme="light">☀️ 라이트 모드</button>
 </div>
 </div>
 
 <div class="panel">
 <h3>기본 추천 경로 조건</h3>
 <div class="row" id="preferences">
-<button class="chip on" data-pref="time">⚡ 최소 시간</button>
-<button class="chip" data-pref="cost">💰 최소 금액</button>
-<button class="chip" data-pref="transfer">🔄 최소 환승</button>
-<button class="chip" data-pref="taxi">🚖 택시</button>
+<button type="button" class="chip on" data-pref="time">⚡ 최소 시간</button>
+<button type="button" class="chip" data-pref="cost">💰 최소 금액</button>
+<button type="button" class="chip" data-pref="transfer">🔄 최소 환승</button>
+<button type="button" class="chip" data-pref="taxi">🚖 택시</button>
 </div>
 <div class="setting"><span>기본 택시비 예산</span><b id="myBudget">3만원</b></div>
 </div>
 
 <div class="panel">
-<div class="between"><h3 style="margin:0">저장 귀가 루트</h3><button class="plain" id="editDestination" style="font-size:11px">편집</button></div>
+<div class="between"><h3 style="margin:0">저장 귀가 루트</h3><button type="button" class="plain" id="editDestination" style="font-size:11px">편집</button></div>
 <div id="myRoutes"></div>
 </div>
 
-<button class="primary" id="saveSettings">설정 저장하기 <span>✓</span></button>
-<button class="plain" id="reset" style="width:100%;font-size:11px;margin-top:12px">이 기기의 저장 정보 초기화</button>
+<button type="button" class="primary" id="saveSettings">설정 저장하기 <span>✓</span></button>
+<button type="button" class="plain" id="reset" style="width:100%;font-size:11px;margin-top:12px">이 기기의 저장 정보 초기화</button>
 <p class="footnote">설정은 이 브라우저에만 저장됩니다.</p>
 </section>
 </main>
 
 <!-- 하단 5개 탭 네비게이션 -->
 <nav aria-label="주 메뉴" class="bottom">
-<button aria-current="page" class="on" data-tab="home">
+<button type="button" aria-current="page" class="on" data-tab="home">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M3 10.5L12 3l9 7.5V20.5a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/>
 <path d="M9.5 21.5v-7h5v7"/>
 </svg>
 홈
 </button>
-<button data-tab="strategy">
+<button type="button" data-tab="strategy">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <circle cx="5" cy="5.5" r="2.5"/>
 <circle cx="19" cy="18.5" r="2.5"/>
@@ -436,7 +436,7 @@ color: #000;
 </svg>
 귀가 전략
 </button>
-<button data-tab="chat">
+<button type="button" data-tab="chat">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M4 4.5h16a1.5 1.5 0 011.5 1.5v10a1.5 1.5 0 01-1.5 1.5H8l-4.5 4v-4H4a1.5 1.5 0 01-1.5-1.5V6A1.5 1.5 0 014 4.5z"/>
 <line x1="8" y1="9.5" x2="16" y2="9.5"/>
@@ -444,7 +444,7 @@ color: #000;
 </svg>
 물어보기
 </button>
-<button data-tab="group">
+<button type="button" data-tab="group">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <circle cx="8" cy="8" r="2.5"/>
 <circle cx="16" cy="8" r="2.5"/>
@@ -453,7 +453,7 @@ color: #000;
 </svg>
 모임·QR
 </button>
-<button data-tab="my">
+<button type="button" data-tab="my">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <circle cx="12" cy="7.5" r="3"/>
 <path d="M5 20a7 7 0 0114 0"/>
@@ -483,11 +483,11 @@ color: #000;
 
 <!-- 조건 설정 다이얼로그 -->
 <dialog id="searchDialog">
-<div class="between"><h2 style="margin:0">귀가 조건 설정</h2><button aria-label="닫기" class="plain" data-close="searchDialog">✕</button></div>
+<div class="between"><h2 style="margin:0">귀가 조건 설정</h2><button type="button" aria-label="닫기" class="plain" data-close="searchDialog">✕</button></div>
 <label for="via">택시 환승 지정 장소 (선택)</label>
 <div class="fieldRow">
 <input id="via" maxlength="200" placeholder="예: 사당역, 강남역 등" type="text" autocomplete="off"/>
-<button aria-label="환승지 검색" data-search="via">⌕</button>
+<button type="button" aria-label="환승지 검색" data-search="via">⌕</button>
 </div>
 <div class="resolved" id="viaResolved"></div>
 <div class="results" id="viaResults"></div>
@@ -499,22 +499,22 @@ color: #000;
 <option value="5000">5km</option>
 </select>
 <div class="hintBox">서울시 전용 초고속 탐색 엔진으로 핵심 경로 3~5개를 즉시 추천합니다.</div>
-<button class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
+<button type="button" class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
 </dialog>
 
 <!-- 목적지 편집 다이얼로그 -->
 <dialog id="destinationDialog">
-<div class="between"><h2 style="margin:0">저장 목적지 편집</h2><button aria-label="닫기" class="plain" data-close="destinationDialog">✕</button></div>
+<div class="between"><h2 style="margin:0">저장 목적지 편집</h2><button type="button" aria-label="닫기" class="plain" data-close="destinationDialog">✕</button></div>
 <div id="destinationInputs"></div>
-<button class="primary" id="saveDestinations" style="margin-top:15px">저장하기 <span>✓</span></button>
+<button type="button" class="primary" id="saveDestinations" style="margin-top:15px">저장하기 <span>✓</span></button>
 </dialog>
 
 <!-- QR 공유 모달 -->
 <dialog id="qrDialog" style="text-align:center;">
-<div class="between"><h2 style="margin:0">📱 경로 QR 공유</h2><button aria-label="닫기" class="plain" data-close="qrDialog">✕</button></div>
+<div class="between"><h2 style="margin:0">📱 경로 QR 공유</h2><button type="button" aria-label="닫기" class="plain" data-close="qrDialog">✕</button></div>
 <div class="micro" id="qrDialogDesc" style="margin-top:8px;"></div>
 <div class="qr-wrap" id="qrDialogBox"></div>
-<button class="primary" id="btnCopyModalLink" style="margin-top:8px">공유 링크 복사하기 <span>⎘</span></button>
+<button type="button" class="primary" id="btnCopyModalLink" style="margin-top:8px">공유 링크 복사하기 <span>⎘</span></button>
 </dialog>
 
 <div class="toast hidden" id="toast" role="status"></div>
@@ -571,7 +571,7 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v13'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v14'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
@@ -676,6 +676,7 @@ async function searchPlaces(id) {
     if (docs.length > 0) {
       docs.slice(0, 5).forEach(p => {
         const btn = node('button', p.label);
+        btn.type = 'button';
         btn.addEventListener('click', () => {
           places[id] = p;
           $(id).value = p.name;
@@ -929,6 +930,7 @@ function renderStrategyCards() {
   visible.forEach(r => {
     const isSel = selected?.id === r.id;
     const b = node('button', undefined, 'strategy' + (isSel ? ' chosen' : '') + (r.isWarning ? ' warning' : ''));
+    b.type = 'button';
 
     const top = node('div', undefined, 'between');
     const titleEl = node('h3'); titleEl.textContent = r.name;
@@ -982,16 +984,26 @@ document.querySelectorAll('#conditionBar .cond-btn').forEach(btn => {
 
 /* ───────────── Gemini AI 챗봇 로직 ───────────── */
 const chatHistory = [];
+let isChatSending = false;
 
 async function askGeminiChatbot(userMessage) {
+  if (isChatSending) return;
+  const text = String(userMessage || '').trim();
+  if (!text) {
+    toast('질문 내용을 먼저 입력해 주세요.');
+    return;
+  }
+
+  isChatSending = true;
   const sendBtn = $('chatSend');
   const inputEl = $('chatInput');
   const box = $('chatMessages');
 
-  box.append(node('div', userMessage, 'msg user'));
+  box.append(node('div', text, 'msg user'));
   inputEl.value = '';
   inputEl.disabled = true;
   sendBtn.disabled = true;
+  sendBtn.textContent = '전송중';
   box.scrollTop = box.scrollHeight;
 
   const loadingMsg = node('div', '✨ 제미나이가 경로와 막차 데이터를 분석 중입니다...', 'msg bot');
@@ -1018,7 +1030,7 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
 
 위 데이터를 바탕으로 사용자의 질문에 친절하고 명확하며 실용적으로 한국어로 답변하세요. 서울 시내버스/지하철 막차 특성, 올빼미버스(N버스), 심야 할증 택시 팁 등을 상황에 맞게 함께 안내해 주세요.`;
 
-  chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+  chatHistory.push({ role: 'user', parts: [{ text }] });
 
   try {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
@@ -1042,28 +1054,37 @@ ${routeSummaryText || '아직 계산된 경로 없음'}
       loadingMsg.textContent = replyText.trim();
       chatHistory.push({ role: 'model', parts: [{ text: replyText.trim() }] });
     } else {
-      throw new Error(data?.error?.message || '응답 없음');
+      throw new Error(data?.error?.message || '응답을 받지 못했습니다');
     }
   } catch (err) {
     const fallbackRoute = visible[0];
-    loadingMsg.textContent = `현재 제미나이 API 연결 상태 확인이 필요합니다. (${err.message})\n\n대신 현재 분석된 [${sName} ➔ ${eName}] 추천 경로를 안내해 드릴게요:\n• 최우선 추천: ${fallbackRoute ? `${fallbackRoute.name} (${fallbackRoute.minutes}분 · ${won(fallbackRoute.cost)})` : '경로 탐색 필요'}`;
+    loadingMsg.textContent = `제미나이 응답 중 오류가 발생했습니다. (${err.message})\n\n대신 현재 분석된 [${sName} ➔ ${eName}] 추천 경로를 안내해 드릴게요:\n• 최우선 추천: ${fallbackRoute ? `${fallbackRoute.name} (${fallbackRoute.minutes}분 · ${won(fallbackRoute.cost)})` : '경로 탐색 필요'}`;
   } finally {
+    isChatSending = false;
     inputEl.disabled = false;
     sendBtn.disabled = false;
+    sendBtn.textContent = '전송';
     inputEl.focus();
     box.scrollTop = box.scrollHeight;
   }
 }
 
-$('chatSend').addEventListener('click', () => {
-  const val = $('chatInput').value.trim();
-  if (val) askGeminiChatbot(val);
+$('chatSend').addEventListener('click', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  askGeminiChatbot($('chatInput').value);
 });
-$('chatInput').addEventListener('keypress', e => {
-  if (e.key === 'Enter') $('chatSend').click();
+$('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.isComposing) {
+    e.preventDefault();
+    askGeminiChatbot($('chatInput').value);
+  }
 });
 document.querySelectorAll('#chatQuickChips .chat-chip').forEach(chip => {
-  chip.addEventListener('click', () => askGeminiChatbot(chip.dataset.q));
+  chip.addEventListener('click', e => {
+    e.preventDefault();
+    askGeminiChatbot(chip.dataset.q);
+  });
 });
 
 /* ───────────── 지도 및 기타 기능 ───────────── */
@@ -1139,6 +1160,7 @@ function renderSaved() {
     $(target).replaceChildren();
     settings.destinations.forEach((d, i) => {
       const b = node('button', undefined, 'saved' + (i === activeDestination ? ' active' : ''));
+      b.type = 'button';
       b.append(node('span', '⌂', 'symbol'));
       const text = node('span');
       text.append(node('small', '도착지 · ' + d.name), node('b', d.area));
