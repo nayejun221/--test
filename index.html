@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>집에못갈지도 · 카카오 + TAGO + 서울버스 통합 테스트</title>
+  <title>집에못갈지도 · 카카오 + 서울 + 경기 + TAGO 통합 테스트</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -15,7 +15,7 @@
       padding: 16px 16px 48px;
       font-size: 14px;
     }
-    h1 { font-size: 18px; color: #fbbf24; margin-bottom: 12px; }
+    h1 { font-size: 17px; color: #fbbf24; margin-bottom: 12px; }
     .card {
       background: #1e293b;
       border: 1px solid #334155;
@@ -102,6 +102,7 @@
       margin-right: 4px;
     }
     .src-seoul { background: #1e3a8a; color: #93c5fd; }
+    .src-gg { background: #065f46; color: #6ee7b7; }
     .src-tago { background: #3b0764; color: #d8b4fe; }
     .ok { background: #14532d; color: #4ade80; }
     .fail { background: #7f1d1d; color: #fca5a5; }
@@ -117,41 +118,41 @@
   </style>
 </head>
 <body>
-  <h1>🌙 집에못갈지도 (카카오 + TAGO + 서울버스 테스트)</h1>
+  <h1>🌙 집에못갈지도 (카카오 + 서울 + 경기 + TAGO 통합)</h1>
 
   <div class="card">
-    <label>출발지 (예: 강남역, 홍대입구역, 수원역)</label>
+    <label>출발지 (예: 수원역, 강남역, 아주대학교)</label>
     <div class="row">
-      <input type="text" id="startInput" value="강남역">
+      <input type="text" id="startInput" value="수원역">
       <button onclick="searchPlace('start')">검색</button>
     </div>
-    <div class="selected" id="startInfo">✓ 강남역 (127.0276, 37.4979)</div>
+    <div class="selected" id="startInfo">✓ 수원역 (127.0000, 37.2659)</div>
     <div class="dropdown" id="startList" style="display:none;"></div>
 
-    <label>도착지 (예: 신촌역, 잠실역, 영통역)</label>
+    <label>도착지 (예: 영통역, 강남역, 신촌역)</label>
     <div class="row">
-      <input type="text" id="endInput" value="신촌역">
+      <input type="text" id="endInput" value="영통역">
       <button onclick="searchPlace('end')">검색</button>
     </div>
-    <div class="selected" id="endInfo">✓ 신촌역 (126.9368, 37.5551)</div>
+    <div class="selected" id="endInfo">✓ 영통역 (127.0713, 37.2515)</div>
     <div class="dropdown" id="endList" style="display:none;"></div>
 
-    <button class="btn-primary" onclick="runTestSearch()">경로 · 막차 · 하이브리드 택시 계산 실행</button>
+    <button class="btn-primary" onclick="runTestSearch()">경로 · 상/하행 막차 · 하이브리드 택시 계산</button>
   </div>
 
-  <div class="log-box" id="logBox">대기 중... 버튼을 누르면 권역(서울/전국)을 자동 판별해 API를 호출합니다.</div>
+  <div class="log-box" id="logBox">대기 중... 버튼을 누르면 권역별 API(서울/경기/TAGO)를 통합 조회합니다.</div>
   <div id="resultList"></div>
 
   <script>
     const KAKAO_REST_KEY = '00635a15cd451240a8fd6e37cee0da22';
     const DATA_GO_KEY = '47ea28e67f66fd4cdabbef04e11814c90f7b7b8200c30ab7fdb040e804c5b91a';
 
-    // 중복 호출 방지를 위한 세션 캐시
+    // 중복 호출 방지용 세션 캐시
     const routeDetailCache = new Map();
 
     let places = {
-      start: { name: '강남역', x: 127.0276, y: 37.4979 },
-      end: { name: '신촌역', x: 126.9368, y: 37.5551 }
+      start: { name: '수원역', x: 127.0000, y: 37.2659 },
+      end: { name: '영통역', x: 127.0713, y: 37.2515 }
     };
 
     function log(msg) {
@@ -229,34 +230,42 @@
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // ==================== [서울특별시 버스 API] ====================
+    // ==================== [1. 서울특별시 버스 API] ====================
     async function getSeoulNearbyStations(lat, lng) {
       if (!isSeoulArea(lat, lng)) return [];
-      const url = `https://ws.bus.go.kr/api/rest/stationinfo/getStationByPos?serviceKey=${DATA_GO_KEY}&tmX=${lng}&tmY=${lat}&radius=450&resultType=json`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const list = data.msgBody?.itemList || [];
-      return list.map(s => ({
-        source: 'SEOUL',
-        nodeid: String(s.stationId),
-        arsId: String(s.arsId || ''),
-        nodenm: s.stationNm,
-        lat: Number(s.gpsY),
-        lng: Number(s.gpsX)
-      }));
+      try {
+        const url = `https://ws.bus.go.kr/api/rest/stationinfo/getStationByPos?serviceKey=${DATA_GO_KEY}&tmX=${lng}&tmY=${lat}&radius=450&resultType=json`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const list = data.msgBody?.itemList || [];
+        return list.map(s => ({
+          source: 'SEOUL',
+          nodeid: String(s.stationId),
+          arsId: String(s.arsId || ''),
+          nodenm: s.stationNm,
+          lat: Number(s.gpsY),
+          lng: Number(s.gpsX)
+        }));
+      } catch (e) {
+        return [];
+      }
     }
 
     async function getSeoulStationRoutes(arsId) {
       if (!arsId || arsId === '0') return [];
-      const url = `https://ws.bus.go.kr/api/rest/stationinfo/getRouteByStation?serviceKey=${DATA_GO_KEY}&arsId=${arsId}&resultType=json`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const list = data.msgBody?.itemList || [];
-      return list.map(r => ({
-        source: 'SEOUL',
-        routeid: String(r.busRouteId),
-        routeno: String(r.busRouteNm)
-      }));
+      try {
+        const url = `https://ws.bus.go.kr/api/rest/stationinfo/getRouteByStation?serviceKey=${DATA_GO_KEY}&arsId=${arsId}&resultType=json`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const list = data.msgBody?.itemList || [];
+        return list.map(r => ({
+          source: 'SEOUL',
+          routeid: String(r.busRouteId),
+          routeno: String(r.busRouteNm)
+        }));
+      } catch (e) {
+        return [];
+      }
     }
 
     async function getSeoulRouteDetail(routeid) {
@@ -269,48 +278,97 @@
       const list = data.msgBody?.itemList || [];
 
       const result = {
-        stations: list.map(s => ({
+        source: 'SEOUL',
+        stations: list.map((s, idx) => ({
+          seq: idx + 1,
           nodeid: String(s.station),
           arsId: String(s.arsId || ''),
           nodenm: s.stationNm,
           lat: Number(s.gpsY),
           lng: Number(s.gpsX),
-          lastTm: s.lastTm || '' // 예: "20261118234000" 또는 "2340"
+          lastTm: s.lastTm || ''
         }))
       };
       routeDetailCache.set(cacheKey, result);
       return result;
     }
 
-    // ==================== [국토교통부 TAGO 버스 API] ====================
+    // ==================== [2. 경기도 버스노선 API (v2)] ====================
+    async function getGyeonggiRouteDetail(ggRouteId) {
+      const cacheKey = `GG_${ggRouteId}`;
+      if (routeDetailCache.has(cacheKey)) return routeDetailCache.get(cacheKey);
+
+      const infoUrl = `https://apis.data.go.kr/6410000/busrouteservice/v2/getBusRouteInfoItemv2?serviceKey=${DATA_GO_KEY}&routeId=${ggRouteId}&format=json`;
+      const sttnUrl = `https://apis.data.go.kr/6410000/busrouteservice/v2/getBusRouteStationListv2?serviceKey=${DATA_GO_KEY}&routeId=${ggRouteId}&format=json`;
+
+      const [infoRes, sttnRes] = await Promise.all([fetch(infoUrl), fetch(sttnUrl)]);
+      const [infoJson, sttnJson] = await Promise.all([infoRes.json(), sttnRes.json()]);
+
+      const info = infoJson.response?.msgBody?.busRouteInfoItem || null;
+      const rawSttns = sttnJson.response?.msgBody?.busRouteStationList;
+      const list = !rawSttns ? [] : (Array.isArray(rawSttns) ? rawSttns : [rawSttns]);
+
+      const result = {
+        source: 'GG',
+        upLastTime: info?.upLastTime || '',     // 기점 막차 (예: "23:40")
+        downLastTime: info?.downLastTime || '', // 종점(회차점) 막차 (예: "00:30")
+        turnSeq: Number(info?.turnSeq || 0),    // 회차 정류장 순번
+        startStationName: info?.startStationName || '',
+        endStationName: info?.endStationName || '',
+        stations: list.map(s => ({
+          seq: Number(s.stationSeq),
+          nodeid: `GGB${s.stationId}`, // TAGO 경기도 nodeid 형식(GGB + stationId) 호환
+          rawStationId: String(s.stationId),
+          nodenm: s.stationName,
+          lat: Number(s.y),
+          lng: Number(s.x),
+          turnYn: s.turnYn || 'N'
+        }))
+      };
+      routeDetailCache.set(cacheKey, result);
+      return result;
+    }
+
+    // ==================== [3. 국토교통부 TAGO API (정류장 + 전국 노선)] ====================
     async function getTagoNearbyStations(lat, lng) {
-      const url = `https://apis.data.go.kr/1613000/BusSttnInfoInqireService/getCrdntPrxmtSttnList?serviceKey=${DATA_GO_KEY}&gpsLati=${lat}&gpsLong=${lng}&numOfRows=5&pageNo=1&_type=json`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const raw = data.response?.body?.items?.item;
-      const list = !raw ? [] : (Array.isArray(raw) ? raw : [raw]);
-      return list.map(s => ({
-        source: 'TAGO',
-        citycode: String(s.citycode),
-        nodeid: String(s.nodeid),
-        nodenm: s.nodenm,
-        lat: Number(s.gpslati),
-        lng: Number(s.gpslong)
-      }));
+      try {
+        const url = `https://apis.data.go.kr/1613000/BusSttnInfoInqireService/getCrdntPrxmtSttnList?serviceKey=${DATA_GO_KEY}&gpsLati=${lat}&gpsLong=${lng}&numOfRows=5&pageNo=1&_type=json`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const raw = data.response?.body?.items?.item;
+        const list = !raw ? [] : (Array.isArray(raw) ? raw : [raw]);
+        return list.map(s => ({
+          source: 'TAGO',
+          citycode: String(s.citycode),
+          nodeid: String(s.nodeid),
+          nodenm: s.nodenm,
+          lat: Number(s.gpslati),
+          lng: Number(s.gpslong)
+        }));
+      } catch (e) {
+        return [];
+      }
     }
 
     async function getTagoStationRoutes(citycode, nodeid) {
-      const url = `https://apis.data.go.kr/1613000/BusSttnInfoInqireService/getSttnThrghRouteList?serviceKey=${DATA_GO_KEY}&cityCode=${citycode}&nodeid=${nodeid}&numOfRows=30&pageNo=1&_type=json`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const raw = data.response?.body?.items?.item;
-      const list = !raw ? [] : (Array.isArray(raw) ? raw : [raw]);
-      return list.map(r => ({
-        source: 'TAGO',
-        citycode: String(r.citycode),
-        routeid: String(r.routeid),
-        routeno: String(r.routeno)
-      }));
+      try {
+        const url = `https://apis.data.go.kr/1613000/BusSttnInfoInqireService/getSttnThrghRouteList?serviceKey=${DATA_GO_KEY}&cityCode=${citycode}&nodeid=${nodeid}&numOfRows=30&pageNo=1&_type=json`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const raw = data.response?.body?.items?.item;
+        const list = !raw ? [] : (Array.isArray(raw) ? raw : [raw]);
+        return list.map(r => {
+          const isGG = String(r.citycode).startsWith('31') || String(r.routeid).startsWith('GGB');
+          return {
+            source: isGG ? 'GG' : 'TAGO',
+            citycode: String(r.citycode),
+            routeid: String(r.routeid),
+            routeno: String(r.routeno)
+          };
+        });
+      } catch (e) {
+        return [];
+      }
     }
 
     async function getTagoRouteDetail(citycode, routeid) {
@@ -328,8 +386,10 @@
       const list = !rawSttns ? [] : (Array.isArray(rawSttns) ? rawSttns : [rawSttns]);
 
       const result = {
+        source: 'TAGO',
         endvehicletime: info?.endvehicletime || '',
-        stations: list.map(s => ({
+        stations: list.map((s, idx) => ({
+          seq: idx + 1,
           nodeid: String(s.nodeid),
           nodenm: s.nodenm,
           lat: Number(s.gpslati),
@@ -340,7 +400,7 @@
       return result;
     }
 
-    // ==================== [카카오 모빌리티 택시] ====================
+    // ==================== [4. 카카오 모빌리티 택시] ====================
     async function getKakaoTaxi(ox, oy, dx, dy) {
       try {
         const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${ox},${oy}&destination=${dx},${dy}&priority=RECOMMEND`;
@@ -358,8 +418,8 @@
       }
     }
 
-    // 막차 시각 파싱 ("20261118234000" 또는 "2340" 또는 "23:40" 모두 지원)
-    function checkLastBus(rawStr, boardDate) {
+    // 막차 시각 파싱 ("23:40", "2340", "20261118234000" 모두 지원)
+    function checkLastBus(rawStr, boardDate, dirLabel = '') {
       if (!rawStr) return null;
       const digits = String(rawStr).replace(/\D/g, '');
       let hhmm = '';
@@ -378,6 +438,7 @@
 
       return {
         formatted: `${String(lh).padStart(2, '0')}:${String(lm).padStart(2, '0')}`,
+        dirLabel,
         diff,
         isAvailable: diff >= 0
       };
@@ -391,7 +452,7 @@
     async function runTestSearch() {
       const resEl = document.getElementById('resultList');
       resEl.innerHTML = '';
-      clearLog('1. 출발지·도착지 주변 정류장 동시 조회 중 (서울버스 + TAGO)...');
+      clearLog('1. 출발지·도착지 주변 정류장 조회 중 (서울 + TAGO)...');
 
       try {
         const [
@@ -409,8 +470,8 @@
         const startSttns = [...seoulStart, ...tagoStart];
         const endSttns = [...seoulEnd, ...tagoEnd];
 
-        log(`   → 출발 정류장: 서울 ${seoulStart.length}개, 전국(TAGO) ${tagoStart.length}개`);
-        log(`   → 도착 정류장: 서울 ${seoulEnd.length}개, 전국(TAGO) ${tagoEnd.length}개`);
+        log(`   → 출발 정류장: 서울 ${seoulStart.length}개, 전국/경기 ${tagoStart.length}개`);
+        log(`   → 도착 정류장: 서울 ${seoulEnd.length}개, 전국/경기 ${tagoEnd.length}개`);
 
         if (directTaxi) {
           resEl.innerHTML += `
@@ -443,57 +504,88 @@
           });
         });
 
-        log(`3. 후보 노선 ${candidateMap.size}개 중 도착 정류장 경유 노선 매칭 중...`);
+        log(`3. 후보 노선 ${candidateMap.size}개 상세·막차 조회 중 (경기노선 v2 포함)...`);
         const candidates = Array.from(candidateMap.values()).slice(0, 15);
         const now = new Date();
         let foundCount = 0;
 
         for (const cand of candidates) {
-          const detail = cand.source === 'SEOUL'
-            ? await getSeoulRouteDetail(cand.routeid)
-            : await getTagoRouteDetail(cand.citycode, cand.routeid);
+          let detail = null;
+
+          if (cand.source === 'SEOUL') {
+            detail = await getSeoulRouteDetail(cand.routeid);
+          } else if (cand.source === 'GG') {
+            // TAGO의 GGB200000123 에서 숫자 ID만 추출해 경기도 API v2 호출, 실패 시 TAGO로 폴백
+            const numericRouteId = cand.routeid.replace(/\D/g, '');
+            try {
+              detail = await getGyeonggiRouteDetail(numericRouteId);
+              if (!detail.stations || detail.stations.length === 0) {
+                detail = await getTagoRouteDetail(cand.citycode, cand.routeid);
+              }
+            } catch (e) {
+              detail = await getTagoRouteDetail(cand.citycode, cand.routeid);
+            }
+          } else {
+            detail = await getTagoRouteDetail(cand.citycode, cand.routeid);
+          }
 
           const stations = detail.stations || [];
           if (stations.length === 0) continue;
 
-          // 출발 정류장 인덱스 찾기 (nodeid 또는 arsId 매칭)
           const startIdx = stations.findIndex(s =>
-            s.nodeid === cand.startSttn.nodeid || (cand.startSttn.arsId && s.arsId === cand.startSttn.arsId)
+            s.nodeid === cand.startSttn.nodeid ||
+            (cand.startSttn.arsId && s.arsId === cand.startSttn.arsId) ||
+            calcDistM(cand.startSttn.lat, cand.startSttn.lng, s.lat, s.lng) < 40
           );
           if (startIdx === -1) continue;
 
-          // 도착지 주변 정류장(반경 450m 이내)과 매칭되는 하차 정류장 찾기
           const endIdx = stations.findIndex((s, idx) =>
             idx > startIdx && endSttns.some(es =>
-              es.nodeid === s.nodeid || (es.arsId && s.arsId === es.arsId) || calcDistM(es.lat, es.lng, s.lat, s.lng) < 80
+              es.nodeid === s.nodeid ||
+              (es.arsId && s.arsId === es.arsId) ||
+              calcDistM(es.lat, es.lng, s.lat, s.lng) < 80
             )
           );
 
           if (endIdx !== -1) {
             foundCount++;
             const stopCount = endIdx - startIdx;
-            const endSttn = stations[endIdx];
+            const startSttnObj = stations[startIdx];
+            const endSttnObj = stations[endIdx];
+
             const walkToStartMin = Math.max(1, Math.round((calcDistM(places.start.y, places.start.x, cand.startSttn.lat, cand.startSttn.lng) * 1.25) / 67));
-            const walkFromEndMin = Math.max(1, Math.round((calcDistM(endSttn.lat, endSttn.lng, places.end.y, places.end.x) * 1.25) / 67));
+            const walkFromEndMin = Math.max(1, Math.round((calcDistM(endSttnObj.lat, endSttnObj.lng, places.end.y, places.end.x) * 1.25) / 67));
 
             const busRideMin = stopCount * 2;
             const totalMin = walkToStartMin + busRideMin + walkFromEndMin;
             const arriveDest = new Date(now.getTime() + totalMin * 60000);
             const boardTime = new Date(now.getTime() + walkToStartMin * 60000);
 
-            // 서울버스는 정류장별 lastTm, TAGO는 노선 기점 endvehicletime 사용
-            const rawLastTm = cand.source === 'SEOUL' ? stations[startIdx].lastTm : detail.endvehicletime;
-            const lastCheck = checkLastBus(rawLastTm, boardTime);
+            // 권역별 막차 판별
+            let lastCheck = null;
+            if (detail.source === 'SEOUL') {
+              lastCheck = checkLastBus(startSttnObj.lastTm, boardTime, '정류장막차');
+            } else if (detail.source === 'GG') {
+              // 회차 정류장 순번(turnSeq) 이전이면 상행(기점막차), 이후면 하행(종점막차) 적용
+              const isDownward = detail.turnSeq > 0 && startSttnObj.seq >= detail.turnSeq;
+              const rawTime = isDownward ? detail.downLastTime : detail.upLastTime;
+              const dirText = isDownward ? `하행(${detail.startStationName}방면)` : `상행(${detail.endStationName}방면)`;
+              lastCheck = checkLastBus(rawTime, boardTime, dirText);
+            } else {
+              lastCheck = checkLastBus(detail.endvehicletime, boardTime, '기점막차');
+            }
 
-            const srcBadge = cand.source === 'SEOUL'
+            const srcBadge = detail.source === 'SEOUL'
               ? `<span class="badge src-seoul">서울버스</span>`
-              : `<span class="badge src-tago">전국TAGO</span>`;
+              : detail.source === 'GG'
+                ? `<span class="badge src-gg">경기버스</span>`
+                : `<span class="badge src-tago">전국TAGO</span>`;
 
             const badgeHtml = !lastCheck
               ? `<span class="badge">막차정보 없음</span>`
               : lastCheck.isAvailable
-                ? `<span class="badge ok">막차 ${lastCheck.formatted} (${lastCheck.diff}분 여유)</span>`
-                : `<span class="badge fail">막차 ${lastCheck.formatted} 종료</span>`;
+                ? `<span class="badge ok">${lastCheck.dirLabel} ${lastCheck.formatted} (${lastCheck.diff}분 여유)</span>`
+                : `<span class="badge fail">${lastCheck.dirLabel} ${lastCheck.formatted} 종료</span>`;
 
             let hybridHtml = '';
             if (lastCheck && !lastCheck.isAvailable) {
@@ -510,13 +602,13 @@
 
             resEl.innerHTML += `
               <div class="route-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
                   <div>${srcBadge}<b style="font-size:16px; color:#4ade80;">🚌 ${cand.routeno}번</b> ${badgeHtml}</div>
                   <b style="font-size:17px;">약 ${totalMin}분</b>
                 </div>
                 <div style="font-size:12px; color:#cbd5e1; line-height:1.5;">
                   도착 예정 <b>${fmtTime(arriveDest)}</b> (${stopCount}개 정류장 이동)<br>
-                  승차: ${cand.startSttn.nodenm} (도보 ${walkToStartMin}분) → 하차: ${endSttn.nodenm} (도보 ${walkFromEndMin}분)
+                  승차: ${cand.startSttn.nodenm} (도보 ${walkToStartMin}분) → 하차: ${endSttnObj.nodenm} (도보 ${walkFromEndMin}분)
                 </div>
                 ${hybridHtml}
               </div>
