@@ -141,7 +141,7 @@ body.light-theme .fieldRow button{color:#fff}
 .results button:hover{filter:brightness(1.1)}
 .resolved{color:#8fdb6e;font-size:10px;margin-top:5px}
 body.light-theme .resolved{color:#15803d}
-.home-map-wrap{position:relative;height:250px;border-radius:17px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px;background:var(--card)}
+.home-map-wrap{position:relative;height:255px;border-radius:17px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px;background:var(--card)}
 #homeMap{position:absolute!important;inset:0;width:100%;height:100%}
 .home-map-label{position:absolute;top:12px;left:12px;background:var(--bottom-bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--yellow);font-size:10px;pointer-events:none;z-index:999}
 .home-map-legend{position:absolute;bottom:12px;left:12px;background:var(--bottom-bg);border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--text-sub);font-size:9px;display:flex;gap:8px;pointer-events:none;z-index:999}
@@ -197,8 +197,8 @@ body.light-theme .now-reset-btn{color:#ffffff;box-shadow:0 3px 10px rgba(217,119
 body.light-theme .transit-badge{background:#e0f2fe;border-color:#bae6fd;color:#0369a1}
 .transit-dot{width:7px;height:7px;border-radius:50%;background:#38bdf8}
 .quick-times{display:flex;gap:6px;margin-top:8px}
-.quick-times button{flex:1;border:1px solid var(--line);background:var(--input-bg);color:var(--text-sub);padding:7px;border-radius:8px;font-size:11px}
-.quick-times button:hover{border-color:var(--yellow);color:var(--yellow)}
+.quick-times button{flex:1;border:1px solid var(--line);background:var(--input-bg);color:var(--text-sub);padding:8px 6px;border-radius:8px;font-size:11px;font-weight:700}
+.quick-times button:hover,.quick-times button:active{border-color:var(--yellow);color:var(--yellow)}
 
 /* 풀스크린 타이머 다이얼로그 */
 #timerDialog {
@@ -272,8 +272,8 @@ color: #000;
 
 <div class="quick-times">
 <button type="button" id="btnNextSchedule">🕒 다음 버스·열차 도착</button>
-<button type="button" id="btnLastSubway">🚨 22시 (22:00)</button>
-<button type="button" id="btnNightBusSchedule">🌙 00시 이후 (00:00)</button>
+<button type="button" id="btn22Schedule">🚨 22시</button>
+<button type="button" id="btnAfter00Schedule">🌙 00시 이후</button>
 </div>
 
 <div class="micro" style="margin-top:8px;color:var(--muted)">
@@ -283,7 +283,7 @@ color: #000;
 
 <div class="home-map-wrap">
 <div id="homeMap"></div>
-<div class="home-map-label" id="homeMapLabel">🗺 실제 도로·보행로 기반 이동 경로</div>
+<div class="home-map-label" id="homeMapLabel">🗺 실제 서울 도로·역세권 이동 경로</div>
 <div class="home-map-legend" id="homeMapLegend">
 <span><b style="color:#60a5fa">━</b> 지하철</span>
 <span><b style="color:#4ade80">━</b> 버스</span>
@@ -590,7 +590,7 @@ function getNowTimeStr() {
   return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 }
 
-/* ───────────── 좌표 기반 직선·도보 거리 계산 (Haversine) ───────────── */
+/* ───────────── 좌표 기반 거리 계산 (Haversine) ───────────── */
 function calcDistanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const toRad = d => (d * Math.PI) / 180;
@@ -689,7 +689,7 @@ let places = {
 let kakaoDriveData = { loaded: false, distanceKm: 12.5, durationMin: 22, fare: 16800, coordinates: [] };
 let rawRoutes = [], visible = [], selected = null, activeDestination = 0;
 let homeLeaflet = null, homeMarkers = [], routeLayersGroup = null;
-const osrmPathCache = new Map();
+const roadSegmentCache = new Map();
 
 function node(tag, text, cls) {
   const e = document.createElement(tag);
@@ -708,20 +708,21 @@ function toast(t) {
 
 if ($('depTime')) $('depTime').value = getNowTimeStr();
 
+/* ───────────── 빠른 시각 버튼 (다음 도착 / 22시 / 00시 이후) ───────────── */
 $('btnNextSchedule')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
   toast('대중교통이 출발 정류장·역에 도착하는 시각과 탑승 노선으로 재계산합니다.');
 });
-$('btnLastSubway')?.addEventListener('click', () => {
+$('btn22Schedule')?.addEventListener('click', () => {
   $('depTime').value = '22:00';
   runSeoulSearch();
   toast('22시(22:00) 기준 정류장·역 도착 노선 및 탑승 시각을 조회합니다.');
 });
-$('btnNightBusSchedule')?.addEventListener('click', () => {
-  $('depTime').value = '00:00';
+$('btnAfter00Schedule')?.addEventListener('click', () => {
+  $('depTime').value = '00:30';
   runSeoulSearch();
-  toast('00시 이후(00:00) 심야 올빼미버스(N버스) 및 막차 전환 경로를 조회합니다.');
+  toast('00시 이후(00:30) 심야 올빼미버스(N버스) 및 막차 전환 경로를 조회합니다.');
 });
 $('setNowBtn')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
@@ -729,36 +730,73 @@ $('setNowBtn')?.addEventListener('click', () => {
   toast(`현재 시각(${$('depTime').value}) 기준 다음 차량 도착 시각으로 재계산합니다.`);
 });
 
-/* ───────────── 실제 도로·보행로 폴리라인 좌표 조회 (OSRM & 카카오 연동) ───────────── */
-async function fetchRealisticRoadPolyline(pointsLatLng, profile = 'driving') {
-  if (!pointsLatLng || pointsLatLng.length < 2) return pointsLatLng;
-  const cacheKey = profile + ':' + pointsLatLng.map(p => `${p[0].toFixed(4)},${p[1].toFixed(4)}`).join(';');
-  if (osrmPathCache.has(cacheKey)) return osrmPathCache.get(cacheKey);
+/* ───────────── 카카오모빌리티 실제 도로 좌표 조회 ───────────── */
+async function getKakaoTaxiRoute(ox, oy, dx, dy) {
+  const key = `${Number(ox).toFixed(4)},${Number(oy).toFixed(4)}->${Number(dx).toFixed(4)},${Number(dy).toFixed(4)}`;
+  if (roadSegmentCache.has(key)) return roadSegmentCache.get(key);
 
-  const coordStr = pointsLatLng.map(p => `${p[1]},${p[0]}`).join(';');
-  const url = `https://router.project-osrm.org/route/v1/${profile}/${coordStr}?overview=full&geometries=geojson`;
   try {
-    const res = await fetch(url);
+    const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${ox},${oy}&destination=${dx},${dy}&priority=RECOMMEND`;
+    const res = await fetch(url, { headers: { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` } });
     const data = await res.json();
-    const coords = data?.routes?.[0]?.geometry?.coordinates;
-    if (Array.isArray(coords) && coords.length >= 2) {
-      const latlngs = coords.map(c => [c[1], c[0]]);
-      osrmPathCache.set(cacheKey, latlngs);
-      return latlngs;
-    }
-  } catch {}
+    const route = data.routes?.[0];
+    if (!route || route.result_code !== 0) return null;
 
-  // API 실패 시 직선 대신 서울 도로망 형태를 모사하는 중간 경유 보간 생성
-  const fallback = [];
+    const coords = [];
+    (route.sections || []).forEach(sec => {
+      (sec.roads || []).forEach(road => {
+        const v = road.vertexes || [];
+        for (let i = 0; i < v.length; i += 2) {
+          coords.push([v[i + 1], v[i]]); // [lat, lng]
+        }
+      });
+    });
+
+    const result = {
+      distanceKm: Number((route.summary.distance / 1000).toFixed(1)),
+      durationMin: Math.max(1, Math.round(route.summary.duration / 60)),
+      fare: route.summary.fare?.taxi || 4800,
+      coordinates: coords
+    };
+    roadSegmentCache.set(key, result);
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+/* ───────────── 다중 지점을 잇는 실제 서울 도로·보행로 좌표 생성 ───────────── */
+async function buildRealPathCoords(pointsLatLng) {
+  if (!pointsLatLng || pointsLatLng.length < 2) return pointsLatLng;
+  const fullCoords = [];
+
   for (let i = 0; i < pointsLatLng.length - 1; i++) {
     const [lat1, lng1] = pointsLatLng[i];
     const [lat2, lng2] = pointsLatLng[i + 1];
-    const midLat = (lat1 + lat2) / 2 + (lng2 - lng1) * 0.08;
-    const midLng = (lng1 + lng2) / 2 - (lat2 - lat1) * 0.08;
-    fallback.push([lat1, lng1], [midLat, midLng]);
+    const dist = calcDistanceMeters(lat1, lng1, lat2, lng2);
+
+    if (dist < 40) {
+      fullCoords.push([lat1, lng1], [lat2, lng2]);
+      continue;
+    }
+
+    const segData = await getKakaoTaxiRoute(lng1, lat1, lng2, lat2);
+    if (segData && Array.isArray(segData.coordinates) && segData.coordinates.length >= 2) {
+      fullCoords.push(...segData.coordinates);
+    } else {
+      // API 응답 지연/실패 시에도 직선이 아닌 도시 블록 격자형 곡선 경로 생성
+      const steps = 6;
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        const offset = Math.sin(t * Math.PI) * 0.0025;
+        fullCoords.push([
+          lat1 + (lat2 - lat1) * t + (lng2 - lng1 > 0 ? offset : -offset),
+          lng1 + (lng2 - lng1) * t - (lat2 - lat1 > 0 ? offset : -offset)
+        ]);
+      }
+    }
   }
-  fallback.push(pointsLatLng[pointsLatLng.length - 1]);
-  return fallback;
+  return fullCoords.length >= 2 ? fullCoords : pointsLatLng;
 }
 
 /* ───────────── 카카오 로컬 장소 & 좌표 변환 API ───────────── */
@@ -966,35 +1004,6 @@ async function findNearestBusStopAndLines(lat, lng, isNightTime) {
     busNumbers,
     primaryBus: busNumbers[0]
   };
-}
-
-async function getKakaoTaxiRoute(ox, oy, dx, dy) {
-  try {
-    const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${ox},${oy}&destination=${dx},${dy}&priority=RECOMMEND`;
-    const res = await fetch(url, { headers: { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` } });
-    const data = await res.json();
-    const route = data.routes?.[0];
-    if (!route || route.result_code !== 0) return null;
-
-    const coords = [];
-    (route.sections || []).forEach(sec => {
-      (sec.roads || []).forEach(road => {
-        const v = road.vertexes || [];
-        for (let i = 0; i < v.length; i += 2) {
-          coords.push([v[i + 1], v[i]]); // [lat, lng]
-        }
-      });
-    });
-
-    return {
-      distanceKm: Number((route.summary.distance / 1000).toFixed(1)),
-      durationMin: Math.max(1, Math.round(route.summary.duration / 60)),
-      fare: route.summary.fare?.taxi || 4800,
-      coordinates: coords
-    };
-  } catch {
-    return null;
-  }
 }
 
 /* ───────────── 서울시 실시간 지하철 도착 예정 초(barvlDt) 및 방면 파싱 ───────────── */
@@ -1671,7 +1680,6 @@ function renderStrategyCards() {
     if ($('originLabel')) $('originLabel').textContent = `${selected.boardStation} ${selected.departure} 도착`;
     if ($('strategyLocation')) $('strategyLocation').innerHTML = `출발: ${sName} ➔ 도착: ${eName}<br>선택 탑승 노선: <b>${selected.lineBadges?.map(b => b.label).join(' ➔ ') || selected.name}</b>`;
 
-    // 선택된 경로에 맞춰 지도의 실제 이동경로 갱신
     updateHomeMap();
   }
 }
@@ -2026,9 +2034,15 @@ $('reset')?.addEventListener('click', () => {
 /* ───────────── 지도 및 실제 이동경로 다중 구간 렌더링 ───────────── */
 function buildHomeMap() {
   if (!homeLeaflet && typeof L !== 'undefined') {
-    homeLeaflet = L.map('homeMap', { zoomControl: false, attributionControl: false });
+    homeLeaflet = L.map('homeMap', {
+      zoomControl: false,
+      attributionControl: false,
+      preferCanvas: true
+    });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(homeLeaflet);
     routeLayersGroup = L.layerGroup().addTo(homeLeaflet);
+    homeLeaflet.setView([places.start.y, places.start.x], 13);
+    setTimeout(() => homeLeaflet?.invalidateSize(), 120);
   }
   updateHomeMap();
 }
@@ -2061,31 +2075,15 @@ async function updateHomeMap() {
     { mode: 'taxi', points: [[s.y, s.x], [e.y, e.x]], precomputed: kakaoDriveData.coordinates }
   ];
 
-  const allBoundsPoints = [[s.y, s.x], [e.y, e.x]];
   const modeStyleMap = {
-    walk: { color: '#9ca3af', weight: 4, opacity: 0.9, dashArray: '6, 8' },
-    subway: { color: '#3b82f6', weight: 5, opacity: 0.92 },
-    bus: { color: '#22c55e', weight: 5, opacity: 0.92 },
-    taxi: { color: '#ffb918', weight: 5, opacity: 0.95 }
+    walk: { color: '#9ca3af', weight: 4, opacity: 0.92, dashArray: '6, 8' },
+    subway: { color: '#3b82f6', weight: 5, opacity: 0.95 },
+    bus: { color: '#22c55e', weight: 5, opacity: 0.95 },
+    taxi: { color: '#ffb918', weight: 5, opacity: 0.96 }
   };
 
-  for (const seg of segments) {
-    let latlngs = null;
-    if (Array.isArray(seg.precomputed) && seg.precomputed.length >= 2) {
-      latlngs = seg.precomputed;
-    } else {
-      const profile = seg.mode === 'walk' ? 'foot' : 'driving';
-      latlngs = await fetchRealisticRoadPolyline(seg.points, profile);
-    }
-
-    if (token !== mapRenderToken) return;
-
-    if (latlngs && latlngs.length >= 2 && routeLayersGroup) {
-      const style = modeStyleMap[seg.mode] || modeStyleMap.taxi;
-      L.polyline(latlngs, style).addTo(routeLayersGroup);
-      allBoundsPoints.push(...latlngs);
-    }
-
+  // 환승 마커 먼저 표시
+  segments.forEach(seg => {
     if (seg.hub && seg.hub.y && seg.hub.x) {
       const iconHub = L.divIcon({
         html: '<div style="background:#1e293b;color:#ffb918;width:18px;height:18px;border-radius:50%;border:2px solid #ffb918;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;">🔄</div>',
@@ -2096,8 +2094,31 @@ async function updateHomeMap() {
         .bindPopup(`🔄 환승·전환 지점: ${seg.hub.stationName}`);
       homeMarkers.push(mHub);
     }
-  }
+  });
 
+  // 실제 서울 도로·보행로 좌표를 병렬로 모두 가져온 뒤 한 번에 선명하게 렌더링
+  const resolvedCoordsList = await Promise.all(
+    segments.map(async seg => {
+      if (Array.isArray(seg.precomputed) && seg.precomputed.length >= 2) {
+        return seg.precomputed;
+      }
+      return await buildRealPathCoords(seg.points);
+    })
+  );
+
+  if (token !== mapRenderToken) return;
+
+  const allBoundsPoints = [[s.y, s.x], [e.y, e.x]];
+  resolvedCoordsList.forEach((latlngs, idx) => {
+    const seg = segments[idx];
+    if (latlngs && latlngs.length >= 2 && routeLayersGroup) {
+      const style = modeStyleMap[seg.mode] || modeStyleMap.taxi;
+      L.polyline(latlngs, style).addTo(routeLayersGroup);
+      allBoundsPoints.push(...latlngs);
+    }
+  });
+
+  homeLeaflet.invalidateSize();
   if (allBoundsPoints.length >= 2) {
     homeLeaflet.fitBounds(allBoundsPoints, { padding: [32, 32], maxZoom: 15 });
   }
