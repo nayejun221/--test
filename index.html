@@ -91,6 +91,8 @@ body.light-theme .tag{background:#fef3c7;color:#b45309}
 body.light-theme .tag-red{color:#dc2626;background:#fee2e2}
 .tag-blue{color:#7bd3ff;background:#1e354a}
 body.light-theme .tag-blue{color:#2563eb;background:#dbeafe}
+.tag-green{color:#6ee7b7;background:#064e3b}
+body.light-theme .tag-green{color:#059669;background:#d1fae5}
 .slider{accent-color:var(--yellow);width:100%;margin:14px 0 8px}
 .detail{font-size:12px;line-height:1.9}
 .timeline{border-left:2px solid #576331;padding-left:17px;margin:16px 5px}
@@ -132,7 +134,7 @@ body.light-theme .fieldRow button{color:#fff}
 .resolved{color:#8fdb6e;font-size:10px;margin-top:5px}
 body.light-theme .resolved{color:#15803d}
 .wideLink{display:block;color:var(--yellow);font-size:12px;text-align:center;margin:16px 0;text-decoration:none}
-.home-map-wrap{position:relative;height:220px;border-radius:17px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px;background:var(--card)}
+.home-map-wrap{position:relative;height:230px;border-radius:17px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px;background:var(--card)}
 #homeMap{position:absolute!important;inset:0;width:100%;height:100%}
 .home-map-label{position:absolute;top:12px;left:12px;background:var(--bottom-bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--yellow);font-size:10px;pointer-events:none;z-index:999}
 .home-map-controls{position:absolute;bottom:12px;right:12px;display:flex;gap:7px;z-index:999}
@@ -237,7 +239,7 @@ color: #000;
 </div>
 <div class="transit-badge">
 <span class="transit-dot"></span>
-<span id="transitBadgeText">실시간 노선 데이터 연동 준비 완료</span>
+<span id="transitBadgeText">실시간 노선 · 경기 버스위치 API 연동 준비</span>
 </div>
 <input id="depTime" type="time"/>
 
@@ -248,20 +250,20 @@ color: #000;
 </div>
 
 <div class="micro" style="margin-top:8px;color:var(--muted)">
-💡 서울·경기·전국(TAGO) 실제 버스 노선과 카카오 도로·택시 데이터를 결합합니다.
+💡 서울·경기·TAGO 실제 버스 노선과 <b>경기도 실시간 버스위치(잔여 차량·좌석)</b>를 결합합니다.
 </div>
 </div>
 
 <div class="home-map-wrap">
 <div id="homeMap"></div>
-<div class="home-map-label" id="homeMapLabel">🗺 카카오 도로망 &amp; 환승 지도</div>
+<div class="home-map-label" id="homeMapLabel">🗺 카카오 도로망 &amp; 실시간 🚌 위치</div>
 <div class="home-map-controls">
 <button id="homeFit" type="button">전체 보기</button>
 </div>
 </div>
 
 <div class="panel home-search" id="homeSearch">
-<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">실시간 노선 분석</span></div>
+<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">실시간 위치 추적</span></div>
 <div id="homeAddressFields">
 <label for="start">출발지 (역, 건물명 또는 주소)</label>
 <div class="fieldRow">
@@ -292,7 +294,7 @@ color: #000;
 <div class="heroInner">
 <div class="between"><span class="badge" id="homeBadge">실시간</span><span class="count" id="homeRemain">분석 완료</span></div>
 <div class="time" id="homeTime">--<small> 탑승</small></div>
-<b id="homeRec">노선 데이터를 조회하고 있습니다...</b>
+<b id="homeRec">노선 및 실시간 버스 위치를 조회 중입니다...</b>
 <p id="homeRoute"></p>
 </div>
 </div>
@@ -302,13 +304,13 @@ color: #000;
 <div id="savedRoutes"></div>
 </div>
 <button class="primary" id="openStrategy">실시간 분석 전략 상세 보기 <span>→</span></button>
-<p class="footnote" id="homeFoot">카카오 모빌리티 · 서울 · 경기 · TAGO 실시간 API 연동 중</p>
+<p class="footnote" id="homeFoot">카카오 모빌리티 · 서울 · 경기(노선·실시간위치) · TAGO 연동 중</p>
 </section>
 
 <!-- 전략 탭 -->
 <section class="screen" id="strategy">
 <div class="location" id="strategyLocation">출발·도착지 분석 중</div>
-<div class="between micro"><span id="strategyMeta">실시간 실제 노선 번호 분석</span><span id="sortLabel">추천순</span></div>
+<div class="between micro"><span id="strategyMeta">실시간 노선 &amp; 차량 위치 분석</span><span id="sortLabel">추천순</span></div>
 <div id="algorithmNotice"></div>
 <div id="strategyCards"></div>
 
@@ -333,13 +335,13 @@ color: #000;
 <section class="screen" id="chat">
 <span class="badge">AI 귀가 어시스턴트</span>
 <h2 style="margin-top:8px;">막차 경로 물어보기</h2>
-<p class="desc">도착지나 예산을 말씀해 주시면 현재 조회된 실시간 노선과 택시비를 바탕으로 안내해 드릴게요.</p>
+<p class="desc">도착지나 예산을 말씀해 주시면 현재 조회된 실시간 버스 위치와 택시비를 바탕으로 안내해 드릴게요.</p>
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
-<div class="msg bot">안녕하세요! 출발지와 도착지를 설정하시면 실제 버스 막차 시각과 하이브리드 택시 환승 지점을 바로 계산해 드립니다. 무엇이 궁금하신가요?</div>
+<div class="msg bot">안녕하세요! 출발지와 도착지를 설정하시면 경기도 실시간 버스 위치(잔여 접근 차량)와 막차 시각, 하이브리드 택시 환승 지점을 바로 계산해 드립니다.</div>
 </div>
 <div class="chat-input-area">
-<input type="text" id="chatInput" placeholder="예: 막차 끊기면 어디서 택시 타는 게 싸요?" autocomplete="off"/>
+<input type="text" id="chatInput" placeholder="예: 지금 타면 막차 탈 수 있어요? 택시비 얼마나 나와요?" autocomplete="off"/>
 <button id="chatSend">전송</button>
 </div>
 </div>
@@ -472,7 +474,7 @@ color: #000;
 <option selected="" value="2000">2km</option>
 <option value="5000">5km</option>
 </select>
-<div class="hintBox">출발 시각, 환승역 막차 시간, 택시 예산을 실시간으로 종합 계산합니다.</div>
+<div class="hintBox">출발 시각, 실시간 버스 차량 위치, 택시 예산을 종합 계산합니다.</div>
 <button class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
 </dialog>
 
@@ -538,7 +540,7 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v6'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v7'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
@@ -572,7 +574,7 @@ let places = {
 
 let kakaoDriveData = { loaded: false, distanceKm: 28.5, durationMin: 36, fare: 38000, coordinates: [] };
 let allRoutes = [], visible = [], selected = null, activeDestination = 0;
-let homeLeaflet = null, homeMarkers = { start: null, end: null, via: null }, routeLineLayer = null;
+let homeLeaflet = null, homeMarkers = { start: null, end: null, buses: [] }, routeLineLayer = null;
 
 function node(tag, text, cls) {
   const e = document.createElement(tag);
@@ -731,7 +733,7 @@ async function getKakaoTaxiRoute(ox, oy, dx, dy) {
   }
 }
 
-/* ───────────── 서울 / 경기 / TAGO 통합 버스 API ───────────── */
+/* ───────────── 서울 / 경기(노선+실시간위치) / TAGO 통합 버스 API ───────────── */
 async function getSeoulNearbyStations(lat, lng) {
   if (!isSeoulArea(lat, lng)) return [];
   try {
@@ -774,6 +776,7 @@ async function getSeoulRouteDetail(routeid, routeno) {
   return result;
 }
 
+// 경기도 버스노선 정보(v2) + 실시간 버스위치 정보(v2: getBusLocationListv2)
 async function getGyeonggiRouteDetail(ggRouteId, routeno) {
   const key = `GG_${ggRouteId}`;
   if (routeDetailCache.has(key)) return routeDetailCache.get(key);
@@ -797,6 +800,27 @@ async function getGyeonggiRouteDetail(ggRouteId, routeno) {
   };
   routeDetailCache.set(key, result);
   return result;
+}
+
+// 경기도 실시간 버스위치 조회 (getBusLocationListv2)
+async function getGyeonggiBusLocations(ggRouteId) {
+  try {
+    const url = `https://apis.data.go.kr/6410000/buslocationservice/v2/getBusLocationListv2?serviceKey=${DATA_GO_KEY}&routeId=${ggRouteId}&format=json`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const raw = data.response?.msgBody?.busLocationList;
+    if (!raw) return [];
+    const list = Array.isArray(raw) ? raw : [raw];
+    return list.map(b => ({
+      stationSeq: Number(b.stationSeq),
+      stationId: String(b.stationId),
+      plateNo: b.plateNo || '',
+      remainSeatCnt: Number(b.remainSeatCnt ?? -1),
+      endBus: String(b.endBus || '0')
+    }));
+  } catch (e) {
+    return [];
+  }
 }
 
 async function getTagoNearbyStations(lat, lng) {
@@ -861,14 +885,17 @@ async function fetchRouteDetailUnified(r) {
   return getTagoRouteDetail(r.citycode, r.routeid, r.routeno);
 }
 
-function evaluateRouteLastBus(detail, boardIdx, boardServiceMin) {
+/* ───────────── 막차 + 실시간 경기도 버스위치 통합 판별 ───────────── */
+function evaluateRouteLastBus(detail, boardIdx, boardServiceMin, liveBuses = []) {
   let rawStr = '', dirLabel = '', offsetMin = 0;
+  const sttn = detail.stations[boardIdx];
+  const boardSeq = sttn?.seq || (boardIdx + 1);
+  const isDown = detail.turnSeq > 0 && boardSeq >= detail.turnSeq;
+
   if (detail.source === 'SEOUL') {
-    rawStr = detail.stations[boardIdx]?.lastTm || '';
+    rawStr = sttn?.lastTm || '';
     dirLabel = '정류장막차';
   } else if (detail.source === 'GG') {
-    const sttn = detail.stations[boardIdx];
-    const isDown = detail.turnSeq > 0 && sttn.seq >= detail.turnSeq;
     rawStr = isDown ? detail.downLastTime : detail.upLastTime;
     dirLabel = isDown ? '하행막차' : '상행막차';
     const originIdx = isDown ? Math.max(0, detail.stations.findIndex(s => s.seq >= detail.turnSeq)) : 0;
@@ -879,31 +906,110 @@ function evaluateRouteLastBus(detail, boardIdx, boardServiceMin) {
     offsetMin = calcSegmentRideMin(detail.stations, 0, boardIdx, detail.routeno);
   }
 
-  if (!rawStr) return null;
-  const digits = String(rawStr).replace(/\D/g, '');
-  const hhmm = digits.length === 14 ? digits.slice(8, 12) : digits.slice(0, 4);
-  if (hhmm.length < 4) return null;
+  // 경기도 실시간 버스위치(getBusLocationListv2)로 현재 내 정류장으로 접근 중인 차량 탐색
+  let liveInfo = null;
+  if (detail.source === 'GG' && liveBuses.length > 0) {
+    const minSeq = isDown ? detail.turnSeq : 1;
+    const approaching = liveBuses
+      .filter(b => b.stationSeq >= minSeq && b.stationSeq <= boardSeq)
+      .sort((a, b) => b.stationSeq - a.stationSeq);
 
-  const lh = Number(hhmm.slice(0, 2)), lm = Number(hhmm.slice(2, 4));
-  if (isNaN(lh) || isNaN(lm)) return null;
+    if (approaching.length > 0) {
+      const nearest = approaching[0];
+      const stopsAway = boardSeq - nearest.stationSeq;
+      const etaMin = Math.max(1, Math.round(stopsAway * 1.8));
+      const seatText = nearest.remainSeatCnt >= 0 ? ` · 잔여 ${nearest.remainSeatCnt}석` : '';
+      liveInfo = {
+        hasApproaching: true,
+        stopsAway,
+        etaMin,
+        plateNo: nearest.plateNo,
+        seatText,
+        summary: `실시간 ${stopsAway === 0 ? '곧 도착' : stopsAway + '정류장 전'} (${etaMin}분 후${seatText})`,
+        activeVehicles: liveBuses
+      };
+    } else {
+      liveInfo = {
+        hasApproaching: false,
+        summary: '접근 중인 실시간 차량 없음',
+        activeVehicles: liveBuses
+      };
+    }
+  }
 
-  const lastStopMin = (lh < 4 ? lh + 24 : lh) * 60 + lm + offsetMin;
-  const diff = lastStopMin - boardServiceMin;
-  return {
-    formatted: minToTime(lastStopMin),
-    dirLabel,
-    diff,
-    isAvailable: diff >= 0
-  };
+  let timeResult = null;
+  if (rawStr) {
+    const digits = String(rawStr).replace(/\D/g, '');
+    const hhmm = digits.length === 14 ? digits.slice(8, 12) : digits.slice(0, 4);
+    if (hhmm.length >= 4) {
+      const lh = Number(hhmm.slice(0, 2)), lm = Number(hhmm.slice(2, 4));
+      if (!isNaN(lh) && !isNaN(lm)) {
+        const lastStopMin = (lh < 4 ? lh + 24 : lh) * 60 + lm + offsetMin;
+        const diff = lastStopMin - boardServiceMin;
+        timeResult = {
+          formatted: minToTime(lastStopMin),
+          dirLabel,
+          diff,
+          isAvailable: diff >= 0
+        };
+      }
+    }
+  }
+
+  // 현재 시각 기준 실시간 조회일 때, 접근 중인 실제 차량이 있으면 막차 시간표가 지났어도 탑승 가능으로 판정
+  const isNowSearch = Math.abs(boardServiceMin - ((new Date().getHours() < 4 ? new Date().getHours() + 24 : new Date().getHours()) * 60 + new Date().getMinutes())) <= 15;
+  if (isNowSearch && liveInfo) {
+    if (liveInfo.hasApproaching) {
+      return {
+        formatted: timeResult?.formatted || '운행중',
+        dirLabel,
+        diff: timeResult ? Math.max(timeResult.diff, liveInfo.etaMin) : liveInfo.etaMin,
+        isAvailable: true,
+        liveInfo
+      };
+    } else if (timeResult && !timeResult.isAvailable) {
+      return { ...timeResult, isAvailable: false, liveInfo };
+    }
+  }
+
+  return timeResult ? { ...timeResult, liveInfo } : (liveInfo ? { formatted: '실시간', dirLabel, diff: 10, isAvailable: liveInfo.hasApproaching, liveInfo } : null);
 }
 
-/* ───────────── Leaflet 지도 갱신 ───────────── */
+/* ───────────── Leaflet 지도 갱신 (실시간 🚌 위치 마커 포함) ───────────── */
 function buildHomeMap() {
   if (!homeLeaflet) {
     homeLeaflet = L.map('homeMap', { zoomControl: false, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(homeLeaflet);
   }
   updateHomeMap();
+}
+
+function clearBusMarkers() {
+  if (!homeLeaflet) return;
+  homeMarkers.buses.forEach(m => homeLeaflet.removeLayer(m));
+  homeMarkers.buses = [];
+}
+
+function renderBusMarkersOnMap(detail, liveVehicles) {
+  clearBusMarkers();
+  if (!homeLeaflet || !detail || !liveVehicles || liveVehicles.length === 0) return;
+
+  const busIcon = L.divIcon({
+    html: '<div style="background:#10b981;color:#fff;border:2px solid #fff;border-radius:8px;padding:1px 4px;font-size:10px;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,0.4);">🚌</div>',
+    iconSize: [24, 20],
+    iconAnchor: [12, 10]
+  });
+
+  liveVehicles.forEach(v => {
+    const st = detail.stations.find(s => s.seq === v.stationSeq);
+    if (st && st.lat && st.lng) {
+      const seatInfo = v.remainSeatCnt >= 0 ? ` (잔여 ${v.remainSeatCnt}석)` : '';
+      const m = L.marker([st.lat, st.lng], { icon: busIcon })
+        .addTo(homeLeaflet)
+        .bindPopup(`🚌 <b>${detail.routeno}번</b> [${v.plateNo}]<br>현재 위치: ${st.nodenm}${seatInfo}`);
+      homeMarkers.buses.push(m);
+    }
+  });
 }
 
 function updateHomeMap() {
@@ -946,8 +1052,9 @@ async function runUnifiedSearch() {
 
   const statusEl = $('homeLookupStatus');
   statusEl.style.color = 'var(--yellow)';
-  statusEl.textContent = '⏳ 카카오 도로망 · 서울 · 경기 · TAGO 실시간 노선 분석 중...';
-  $('transitBadgeText').textContent = `${sName} ➔ ${eName} 실시간 노선 조회 중...`;
+  statusEl.textContent = '⏳ 카카오 도로망 · 서울 · 경기(실시간 위치) · TAGO 분석 중...';
+  $('transitBadgeText').textContent = `${sName} ➔ ${eName} 실시간 노선·버스위치 조회 중...`;
+  clearBusMarkers();
 
   try {
     const [taxiRes, seoulStart, tagoStart, seoulEnd, tagoEnd] = await Promise.all([
@@ -966,6 +1073,7 @@ async function runUnifiedSearch() {
     const startSttns = [...seoulStart, ...tagoStart];
     const endSttns = [...seoulEnd, ...tagoEnd];
     const builtRoutes = [];
+    let mapBusTarget = null;
 
     if (startSttns.length > 0 && endSttns.length > 0) {
       const [startRouteLists, endRouteLists] = await Promise.all([
@@ -1003,7 +1111,7 @@ async function runUnifiedSearch() {
       const validStart = startDetails.filter(x => x && x.detail?.stations?.length > 0);
       const validEnd = endDetails.filter(x => x && x.detail?.stations?.length > 0);
 
-      // [A] 직통 노선 탐색
+      // [A] 직통 노선 탐색 (경기도 버스는 실시간 위치 getBusLocationListv2 동시 조회)
       for (const { cand, detail } of validStart) {
         const sttns = detail.stations;
         const sIdx = sttns.findIndex(s =>
@@ -1019,12 +1127,38 @@ async function runUnifiedSearch() {
         );
 
         if (eIdx !== -1) {
+          const liveBuses = detail.source === 'GG' ? await getGyeonggiBusLocations(detail.routeid) : [];
           const walk1 = calcWalkMin(places.start.y, places.start.x, sttns[sIdx].lat, sttns[sIdx].lng);
           const ride1 = calcSegmentRideMin(sttns, sIdx, eIdx, detail.routeno);
           const walk2 = calcWalkMin(sttns[eIdx].lat, sttns[eIdx].lng, places.end.y, places.end.x);
-          const totalMin = walk1 + ride1 + walk2;
-          const last1 = evaluateRouteLastBus(detail, sIdx, depServiceMin + walk1);
+
+          const last1 = evaluateRouteLastBus(detail, sIdx, depServiceMin + walk1, liveBuses);
+          const waitMin = last1?.liveInfo?.hasApproaching ? Math.max(0, last1.liveInfo.etaMin - walk1) : 0;
+          const totalMin = walk1 + waitMin + ride1 + walk2;
           const isCutoff = last1 && !last1.isAvailable;
+
+          if (!mapBusTarget && liveBuses.length > 0) {
+            mapBusTarget = { detail, liveVehicles: liveBuses };
+          }
+
+          const liveBadgeText = last1?.liveInfo?.hasApproaching
+            ? `실시간 ${last1.liveInfo.stopsAway}정류장 전`
+            : (!last1 ? '정규 노선' : isCutoff ? `막차 ${last1.formatted} 종료` : `막차 ${last1.diff}분 여유`);
+
+          const steps = [
+            { pill: 'pill-walk', tag: `도보 ${walk1}분`, label: `${depTimeStr} 출발 ➔ ${sttns[sIdx].nodenm} 정류장 이동` }
+          ];
+          if (last1?.liveInfo) {
+            steps.push({
+              pill: 'pill-bus',
+              tag: last1.liveInfo.hasApproaching ? '실시간 접근' : '운행 종료',
+              label: `${detail.routeno}번 실시간 위치: ${last1.liveInfo.summary}`
+            });
+          }
+          steps.push(
+            { pill: 'pill-bus', tag: `${detail.routeno}번`, label: `${sttns[sIdx].nodenm} 승차 (${eIdx - sIdx}정류장 · 약 ${ride1}분)` },
+            { pill: 'pill-walk', tag: `도착 ${minToTime(depServiceMin + totalMin)}`, label: `${sttns[eIdx].nodenm} 하차 후 도보 ${walk2}분` }
+          );
 
           builtRoutes.push({
             id: `direct_${detail.routeid}`,
@@ -1033,17 +1167,17 @@ async function runUnifiedSearch() {
             taxiCost: 0,
             departure: depTimeStr,
             minutes: totalMin,
-            tag: !last1 ? '정규 노선' : isCutoff ? `막차 ${last1.formatted} 종료` : `막차 ${last1.diff}분 여유`,
-            tagClass: isCutoff ? 'tag-red' : 'tag-blue',
+            tag: liveBadgeText,
+            tagClass: isCutoff ? 'tag-red' : (last1?.liveInfo?.hasApproaching ? 'tag-green' : 'tag-blue'),
             isWarning: Boolean(isCutoff),
-            remaining: !last1 ? '정규 운행 노선' : isCutoff ? `${last1.dirLabel} ${last1.formatted} 종료` : `${last1.dirLabel} ${last1.formatted}`,
+            remaining: last1?.liveInfo?.hasApproaching
+              ? `${last1.liveInfo.summary}`
+              : (!last1 ? '정규 운행 노선' : isCutoff ? `${last1.dirLabel} ${last1.formatted} 종료` : `${last1.dirLabel} ${last1.formatted}`),
             summary: `${sttns[sIdx].nodenm} ➔ ${detail.routeno}번 ➔ ${sttns[eIdx].nodenm}`,
-            steps: [
-              { pill: 'pill-walk', tag: `도보 ${walk1}분`, label: `${depTimeStr} 출발 ➔ ${sttns[sIdx].nodenm} 정류장 이동` },
-              { pill: 'pill-bus', tag: `${detail.routeno}번`, label: `${sttns[sIdx].nodenm} 승차 (${eIdx - sIdx}정류장 · 약 ${ride1}분)` },
-              { pill: 'pill-walk', tag: `도착 ${minToTime(depServiceMin + totalMin)}`, label: `${sttns[eIdx].nodenm} 하차 후 도보 ${walk2}분` }
-            ],
-            note: `${detail.source === 'SEOUL' ? '서울시' : detail.source === 'GG' ? '경기도' : 'TAGO'} 실제 노선 좌표 기반 정밀 계산 결과입니다.`
+            steps,
+            note: detail.source === 'GG'
+              ? `경기도 버스노선 및 실시간 차량 위치(getBusLocationListv2)를 반영한 결과입니다.`
+              : `${detail.source === 'SEOUL' ? '서울시' : 'TAGO'} 실제 노선 좌표 기반 계산 결과입니다.`
           });
         }
       }
@@ -1081,6 +1215,14 @@ async function runUnifiedSearch() {
 
           if (bestXfer) {
             seenPairs.add(pairKey);
+            const [live1, live2] = await Promise.all([
+              sItem.detail.source === 'GG' ? getGyeonggiBusLocations(sItem.detail.routeid) : Promise.resolve([]),
+              eItem.detail.source === 'GG' ? getGyeonggiBusLocations(eItem.detail.routeid) : Promise.resolve([])
+            ]);
+
+            if (!mapBusTarget && live1.length > 0) mapBusTarget = { detail: sItem.detail, liveVehicles: live1 };
+            else if (!mapBusTarget && live2.length > 0) mapBusTarget = { detail: eItem.detail, liveVehicles: live2 };
+
             const walk1 = calcWalkMin(places.start.y, places.start.x, sttns1[sIdx1].lat, sttns1[sIdx1].lng);
             const ride1 = calcSegmentRideMin(sttns1, sIdx1, bestXfer.eIdx1, sItem.detail.routeno);
             const xferWalk = Math.max(2, Math.round((bestXfer.xferDist * 1.25) / 67));
@@ -1088,8 +1230,8 @@ async function runUnifiedSearch() {
             const walk2 = calcWalkMin(sttns2[eIdx2].lat, sttns2[eIdx2].lng, places.end.y, places.end.x);
             const totalMin = walk1 + ride1 + xferWalk + ride2 + walk2;
 
-            const last1 = evaluateRouteLastBus(sItem.detail, sIdx1, depServiceMin + walk1);
-            const last2 = evaluateRouteLastBus(eItem.detail, bestXfer.sIdx2, depServiceMin + walk1 + ride1 + xferWalk);
+            const last1 = evaluateRouteLastBus(sItem.detail, sIdx1, depServiceMin + walk1, live1);
+            const last2 = evaluateRouteLastBus(eItem.detail, bestXfer.sIdx2, depServiceMin + walk1 + ride1 + xferWalk, live2);
             const cutoff2 = last2 && !last2.isAvailable;
 
             builtRoutes.push({
@@ -1109,13 +1251,17 @@ async function runUnifiedSearch() {
                 { pill: 'pill-walk', tag: `환승 ${xferWalk}분`, label: `${sttns1[bestXfer.eIdx1].nodenm} 하차 ➔ ${sttns2[bestXfer.sIdx2].nodenm} 이동` },
                 { pill: 'pill-bus', tag: `${eItem.detail.routeno}번`, label: `${eItem.detail.routeno}번 탑승 (${ride2}분) ➔ ${sttns2[eIdx2].nodenm} 하차` }
               ],
-              note: `환승 정류장 반경 150m 이내 매칭 기반 1회 환승 경로입니다.`,
+              note: `환승 정류장 반경 150m 이내 매칭 및 실시간 차량 위치 검증 기반 1회 환승 경로입니다.`,
               _hybridCandidate: (!last1 || last1.isAvailable) && cutoff2 ? sttns1[bestXfer.eIdx1] : null,
               _busPartMin: walk1 + ride1
             });
           }
         }
       }
+    }
+
+    if (mapBusTarget) {
+      renderBusMarkersOnMap(mapBusTarget.detail, mapBusTarget.liveVehicles);
     }
 
     // [C] 하이브리드 택시 경로 추가 (환승역 막차 끊김 지점 또는 사용자 지정 환승지)
@@ -1177,9 +1323,10 @@ async function runUnifiedSearch() {
     visible = builtRoutes;
     selected = visible[0];
 
+    const liveBusMsg = mapBusTarget ? ` · 실시간 🚌 ${mapBusTarget.liveVehicles.length}대 운행 중` : '';
     statusEl.style.color = '#8fdb6e';
-    statusEl.textContent = `✓ 실시간 분석 완료 · 도로 ${kakaoDriveData.distanceKm}km · 추천 전략 ${visible.length}개`;
-    $('transitBadgeText').textContent = `분석 완료: ${visible.length}개 경로 (${depTimeStr} 기준)`;
+    statusEl.textContent = `✓ 분석 완료 · 도로 ${kakaoDriveData.distanceKm}km${liveBusMsg}`;
+    $('transitBadgeText').textContent = `분석 완료: ${visible.length}개 경로${liveBusMsg}`;
 
     renderStrategyCards();
     updateQrCodes();
@@ -1205,8 +1352,8 @@ function renderStrategyCards() {
   const hasAvailableBus = visible.some(r => r.taxiCost === 0 && !r.isWarning);
   noticeBox.append(node('div',
     hasAvailableBus
-      ? `✅ [탑승 가능 노선 확인] ${depTimeStr} 출발 기준 막차 이전 탑승 가능한 대중교통 노선이 있습니다.`
-      : `🚨 [막차 종료/환승 주의] ${depTimeStr} 기준 일부 대중교통 막차가 종료되었습니다. 하이브리드 택시 환승을 확인하세요.`,
+      ? `✅ [탑승 가능 노선 확인] ${depTimeStr} 출발 기준 실시간 접근 차량 또는 막차 이전 대중교통 노선이 있습니다.`
+      : `🚨 [막차 종료/환승 주의] ${depTimeStr} 기준 접근 중인 막차 차량이 종료되었습니다. 하이브리드 택시 환승을 확인하세요.`,
     hasAvailableBus ? 'hintBox' : 'alertBox'
   ));
 
@@ -1328,11 +1475,11 @@ document.querySelectorAll('[data-pref]').forEach(b => {
 });
 
 $('saveSettings').addEventListener('click', () => {
-  try { localStorage.setItem('homeway.app.v6', JSON.stringify(settings)); toast('설정을 저장했어요.'); }
+  try { localStorage.setItem('homeway.app.v7', JSON.stringify(settings)); toast('설정을 저장했어요.'); }
   catch { toast('저장할 수 없습니다.'); }
 });
 $('reset').addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v6');
+  localStorage.removeItem('homeway.app.v7');
   settings = structuredClone(defaults);
   applyTheme(defaults.theme);
   $('budget').value = 30000;
@@ -1352,7 +1499,7 @@ $('editDestination').addEventListener('click', () => {
 $('saveDestinations').addEventListener('click', () => {
   if (settings.destinations.some((_, i) => !$('dest' + i).value.trim())) return toast('목적지를 모두 입력하세요.');
   settings.destinations.forEach((_, i) => settings.destinations[i].area = $('dest' + i).value.trim());
-  try { localStorage.setItem('homeway.app.v6', JSON.stringify(settings)); } catch {}
+  try { localStorage.setItem('homeway.app.v7', JSON.stringify(settings)); } catch {}
   $('destinationDialog').close();
   renderSaved();
   toast('목적지를 저장했어요.');
@@ -1462,7 +1609,7 @@ $('chatSend').addEventListener('click', () => {
   const directTaxi = visible.find(r => r.id === 'kakao_direct_taxi');
 
   setTimeout(() => {
-    let reply = `${sName} ➔ ${eName} (${depTime} 기준) 가장 빠른 추천 경로는 [${selected?.name}]이며, 총 ${selected?.minutes}분 소요 · 예상 비용 ${won(selected?.cost || 0)}입니다.`;
+    let reply = `${sName} ➔ ${eName} (${depTime} 기준) 가장 빠른 추천 경로는 [${selected?.name}]이며, 총 ${selected?.minutes}분 소요 · 예상 비용 ${won(selected?.cost || 0)}입니다. (${selected?.remaining || ''})`;
     if (hybrid && (val.includes('택시') || val.includes('막차') || val.includes('싸') || val.includes('절약'))) {
       reply = `막차 끊김 대비 최적 전략은 [${hybrid.name}]입니다. ${hybrid.summary} 방식으로 이동하시면 직행 택시(${won(directTaxi?.cost || 0)})보다 훨씬 경제적으로 귀가하실 수 있습니다.`;
     }
