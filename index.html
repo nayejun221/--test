@@ -141,11 +141,12 @@ body.light-theme .fieldRow button{color:#fff}
 .results button:hover{filter:brightness(1.1)}
 .resolved{color:#8fdb6e;font-size:10px;margin-top:5px}
 body.light-theme .resolved{color:#15803d}
-.home-map-wrap{position:relative;height:230px;border-radius:17px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px;background:var(--card)}
+.home-map-wrap{position:relative;height:250px;border-radius:17px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px;background:var(--card)}
 #homeMap{position:absolute!important;inset:0;width:100%;height:100%}
 .home-map-label{position:absolute;top:12px;left:12px;background:var(--bottom-bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--yellow);font-size:10px;pointer-events:none;z-index:999}
+.home-map-legend{position:absolute;bottom:12px;left:12px;background:var(--bottom-bg);border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--text-sub);font-size:9px;display:flex;gap:8px;pointer-events:none;z-index:999}
 .home-map-controls{position:absolute;bottom:12px;right:12px;display:flex;gap:7px;z-index:999}
-.home-map-controls button{border:1px solid var(--line);border-radius:8px;background:var(--bottom-bg);color:var(--text);font-size:11px;padding:9px}
+.home-map-controls button{border:1px solid var(--line);border-radius:8px;background:var(--bottom-bg);color:var(--text);font-size:11px;padding:8px 10px}
 .home-search{padding:16px;margin-bottom:16px}
 .home-search .primary{margin-top:15px}
 .home-search .results{max-height:145px;overflow:auto}
@@ -271,8 +272,8 @@ color: #000;
 
 <div class="quick-times">
 <button type="button" id="btnNextSchedule">🕒 다음 버스·열차 도착</button>
-<button type="button" id="btnLastSubway">🚨 막차 임박 (23:38)</button>
-<button type="button" id="btnNightBusSchedule">🌙 자정 이후 (00:15)</button>
+<button type="button" id="btnLastSubway">🚨 22시 (22:00)</button>
+<button type="button" id="btnNightBusSchedule">🌙 00시 이후 (00:00)</button>
 </div>
 
 <div class="micro" style="margin-top:8px;color:var(--muted)">
@@ -282,7 +283,13 @@ color: #000;
 
 <div class="home-map-wrap">
 <div id="homeMap"></div>
-<div class="home-map-label" id="homeMapLabel">🗺 서울특별시 도로망 &amp; 실시간 위치</div>
+<div class="home-map-label" id="homeMapLabel">🗺 실제 도로·보행로 기반 이동 경로</div>
+<div class="home-map-legend" id="homeMapLegend">
+<span><b style="color:#60a5fa">━</b> 지하철</span>
+<span><b style="color:#4ade80">━</b> 버스</span>
+<span><b style="color:#ffb918">━</b> 택시</span>
+<span><b style="color:#9ca3af">┄</b> 도보</span>
+</div>
 <div class="home-map-controls">
 <button id="homeFit" type="button">전체 보기</button>
 </div>
@@ -339,7 +346,7 @@ color: #000;
 <!-- 전략 탭 -->
 <section class="screen" id="strategy">
 <div class="location" id="strategyLocation">출발·도착지 분석 중</div>
-<div class="between micro"><span id="strategyMeta">경로를 누르면 탑승 노선을 안내합니다</span><span id="sortLabel">최소 시간순</span></div>
+<div class="between micro"><span id="strategyMeta">경로를 누르면 탑승 노선과 지도가 갱신됩니다</span><span id="sortLabel">최소 시간순</span></div>
 
 <div class="condition-bar" id="conditionBar">
 <button type="button" class="cond-btn on" data-cond="time">⚡ 최소 시간</button>
@@ -681,7 +688,8 @@ let places = {
 
 let kakaoDriveData = { loaded: false, distanceKm: 12.5, durationMin: 22, fare: 16800, coordinates: [] };
 let rawRoutes = [], visible = [], selected = null, activeDestination = 0;
-let homeLeaflet = null, homeMarkers = { start: null, end: null }, routeLineLayer = null;
+let homeLeaflet = null, homeMarkers = [], routeLayersGroup = null;
+const osrmPathCache = new Map();
 
 function node(tag, text, cls) {
   const e = document.createElement(tag);
@@ -706,20 +714,52 @@ $('btnNextSchedule')?.addEventListener('click', () => {
   toast('대중교통이 출발 정류장·역에 도착하는 시각과 탑승 노선으로 재계산합니다.');
 });
 $('btnLastSubway')?.addEventListener('click', () => {
-  $('depTime').value = '23:38';
+  $('depTime').value = '22:00';
   runSeoulSearch();
-  toast('막차 임박(23:38) 기준: 환승역 도착 시 2구간 막차 종료 여부를 판별합니다.');
+  toast('22시(22:00) 기준 정류장·역 도착 노선 및 탑승 시각을 조회합니다.');
 });
 $('btnNightBusSchedule')?.addEventListener('click', () => {
-  $('depTime').value = '00:15';
+  $('depTime').value = '00:00';
   runSeoulSearch();
-  toast('자정 이후(00:15) 심야 올빼미버스(N버스) 노선 기준으로 탐색합니다.');
+  toast('00시 이후(00:00) 심야 올빼미버스(N버스) 및 막차 전환 경로를 조회합니다.');
 });
 $('setNowBtn')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
   toast(`현재 시각(${$('depTime').value}) 기준 다음 차량 도착 시각으로 재계산합니다.`);
 });
+
+/* ───────────── 실제 도로·보행로 폴리라인 좌표 조회 (OSRM & 카카오 연동) ───────────── */
+async function fetchRealisticRoadPolyline(pointsLatLng, profile = 'driving') {
+  if (!pointsLatLng || pointsLatLng.length < 2) return pointsLatLng;
+  const cacheKey = profile + ':' + pointsLatLng.map(p => `${p[0].toFixed(4)},${p[1].toFixed(4)}`).join(';');
+  if (osrmPathCache.has(cacheKey)) return osrmPathCache.get(cacheKey);
+
+  const coordStr = pointsLatLng.map(p => `${p[1]},${p[0]}`).join(';');
+  const url = `https://router.project-osrm.org/route/v1/${profile}/${coordStr}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const coords = data?.routes?.[0]?.geometry?.coordinates;
+    if (Array.isArray(coords) && coords.length >= 2) {
+      const latlngs = coords.map(c => [c[1], c[0]]);
+      osrmPathCache.set(cacheKey, latlngs);
+      return latlngs;
+    }
+  } catch {}
+
+  // API 실패 시 직선 대신 서울 도로망 형태를 모사하는 중간 경유 보간 생성
+  const fallback = [];
+  for (let i = 0; i < pointsLatLng.length - 1; i++) {
+    const [lat1, lng1] = pointsLatLng[i];
+    const [lat2, lng2] = pointsLatLng[i + 1];
+    const midLat = (lat1 + lat2) / 2 + (lng2 - lng1) * 0.08;
+    const midLng = (lng1 + lng2) / 2 - (lat2 - lat1) * 0.08;
+    fallback.push([lat1, lng1], [midLat, midLng]);
+  }
+  fallback.push(pointsLatLng[pointsLatLng.length - 1]);
+  return fallback;
+}
 
 /* ───────────── 카카오 로컬 장소 & 좌표 변환 API ───────────── */
 async function resolveSinglePlace(query) {
@@ -886,6 +926,8 @@ async function findNearestSubwayStation(lat, lng, radius = 1500) {
 async function findNearestBusStopAndLines(lat, lng, isNightTime) {
   let stopName = `${cleanPlaceName(places.start?.name || '출발지')} 정류장`;
   let walkMin = 3;
+  let stopX = lng;
+  let stopY = lat;
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
     const res = await fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('버스정류장')}&x=${lng}&y=${lat}&radius=600&sort=distance&size=2`, { headers });
@@ -894,6 +936,8 @@ async function findNearestBusStopAndLines(lat, lng, isNightTime) {
     if (doc) {
       stopName = cleanPlaceName(doc.place_name.replace(/\[.*?\]/g, '').trim());
       walkMin = Math.max(1, Math.round(Number(doc.distance) / 67));
+      stopX = Number(doc.x);
+      stopY = Number(doc.y);
     }
   } catch {}
 
@@ -917,6 +961,8 @@ async function findNearestBusStopAndLines(lat, lng, isNightTime) {
   return {
     stopName,
     walkMin,
+    stopX,
+    stopY,
     busNumbers,
     primaryBus: busNumbers[0]
   };
@@ -935,7 +981,7 @@ async function getKakaoTaxiRoute(ox, oy, dx, dy) {
       (sec.roads || []).forEach(road => {
         const v = road.vertexes || [];
         for (let i = 0; i < v.length; i += 2) {
-          coords.push([v[i], v[i + 1]]);
+          coords.push([v[i + 1], v[i]]); // [lat, lng]
         }
       });
     });
@@ -1025,7 +1071,7 @@ function computeVehicleArrivalTime({ baseServiceMin, nowServiceMin, isNowQuery, 
   };
 }
 
-/* ───────────── 핵심: 2구간 막차 끊김 판별 및 택시·도보 전환 알고리즘 ───────────── */
+/* ───────────── 2구간 막차 끊김 판별 및 택시·도보 전환 알고리즘 ───────────── */
 async function evaluateMidRouteCutoffFallback({
   depTimeStr,
   sName,
@@ -1033,40 +1079,32 @@ async function evaluateMidRouteCutoffFallback({
   walk1Min,
   board1ServiceMin,
   board1TimeStr,
-  leg1Label,
+  startSubway,
   leg1OriginName,
   leg1LineName,
   leg1Cost,
   leg2LineName,
-  endStationLabel,
   transferHub,
   maxWalkMeters
 }) {
-  // 1) 1구간 주행 시간 계산 (출발지 -> 환승 거점)
   const leg1DistKm = Math.max(2.0, calcDistanceMeters(places.start.y, places.start.x, transferHub.y, transferHub.x) / 1000 * 1.25);
   const leg1RideMin = Math.max(6, Math.round(leg1DistKm * 1.9));
-  const transferWalkMin = 4; // 환승 통로 도보 이동 버퍼
+  const transferWalkMin = 4;
 
-  // 2) 환승 거점에서 2구간 탑승 준비 완료 시각
   const transferArriveServiceMin = board1ServiceMin + leg1RideMin;
   const transferReadyServiceMin = transferArriveServiceMin + transferWalkMin;
   const transferArriveStr = minToTime(transferArriveServiceMin);
   const transferReadyStr = minToTime(transferReadyServiceMin);
 
-  // 3) 2구간 막차 종료 기준 시각 (지하철 평균 00:05 = 1445분, 일반 시내버스 23:50 = 1430분)
   const leg2LastServiceMin = leg2LineName.includes('버스') ? (23 * 60 + 50) : (24 * 60 + 5);
   const leg2LastStr = minToTime(leg2LastServiceMin);
 
-  // 1구간 막차 자체는 이미 종료된 새벽 심야(00:35 이후)인 경우 제외
   const leg1LastServiceMin = 24 * 60 + 30;
   if (board1ServiceMin > leg1LastServiceMin) return [];
-
-  // 2구간 막차 전에 도착한다면 일반 환승 가능하므로 Fallback 미발동
   if (transferReadyServiceMin <= leg2LastServiceMin) return [];
 
   const fallbackRoutes = [];
 
-  // 4-A) 환승 거점 -> 최종 목적지 도보 거리 및 시간 계산
   const straightRemainM = calcDistanceMeters(transferHub.y, transferHub.x, places.end.y, places.end.x);
   const walkRemainM = Math.round(straightRemainM * 1.3);
   const walkRemainMin = Math.max(3, Math.round(walkRemainM / 67));
@@ -1085,6 +1123,11 @@ async function evaluateMidRouteCutoffFallback({
       isCutoffFallback: true,
       departure: board1TimeStr,
       boardStation: leg1OriginName,
+      mapSegments: [
+        { mode: 'walk', points: [[places.start.y, places.start.x], [startSubway.y, startSubway.x]] },
+        { mode: 'subway', points: [[startSubway.y, startSubway.x], [transferHub.y, transferHub.x]], hub: transferHub },
+        { mode: 'walk', points: [[transferHub.y, transferHub.x], [places.end.y, places.end.x]] }
+      ],
       lineBadges: [
         { type: 'subway', label: `🚇 ${leg1LineName} (1구간 막차)` },
         { type: 'walk', label: `🚶 ${transferHub.stationName} 이후 도보 ${walkRemainMin}분` }
@@ -1106,7 +1149,6 @@ async function evaluateMidRouteCutoffFallback({
     });
   }
 
-  // 4-B) 환승 거점 -> 최종 목적지 카카오 택시 전환 계산
   const remainTaxi = await getKakaoTaxiRoute(transferHub.x, transferHub.y, places.end.x, places.end.y);
   if (remainTaxi) {
     const totalFallbackMin = walk1Min + leg1RideMin + 3 + remainTaxi.durationMin;
@@ -1125,6 +1167,11 @@ async function evaluateMidRouteCutoffFallback({
       isCutoffFallback: true,
       departure: board1TimeStr,
       boardStation: leg1OriginName,
+      mapSegments: [
+        { mode: 'walk', points: [[places.start.y, places.start.x], [startSubway.y, startSubway.x]] },
+        { mode: 'subway', points: [[startSubway.y, startSubway.x], [transferHub.y, transferHub.x]], hub: transferHub },
+        { mode: 'taxi', points: [[transferHub.y, transferHub.x], [places.end.y, places.end.x]], precomputed: remainTaxi.coordinates }
+      ],
       lineBadges: [
         { type: 'subway', label: `🚇 ${leg1LineName} (1구간 막차)` },
         { type: 'taxi', label: `🚖 ${transferHub.stationName} 이후 택시 (${remainTaxi.distanceKm}km)` }
@@ -1172,7 +1219,7 @@ async function runSeoulSearch() {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = '⚡ 탑승 노선, 정류장·역 도착 시각 및 환승 막차 끊김 여부를 분석 중...';
+    statusEl.textContent = '⚡ 탑승 노선, 정류장·역 도착 시각 및 실제 이동 경로를 분석 중...';
   }
 
   try {
@@ -1189,7 +1236,6 @@ async function runSeoulSearch() {
 
     if (taxiRes) {
       kakaoDriveData = { loaded: true, ...taxiRes };
-      updateHomeMap();
     }
 
     const builtRoutes = [];
@@ -1220,7 +1266,6 @@ async function runSeoulSearch() {
         ? { stationName: formatStationName(places.via.name), x: places.via.x, y: places.via.y }
         : (midSubway || { stationName: '중간 환승역', x: midX, y: midY });
 
-      // 환승이 필요한 경우 2구간 막차 끊김 여부 체크
       let cutoffFallbacks = [];
       if (!sameLine || places.via) {
         cutoffFallbacks = await evaluateMidRouteCutoffFallback({
@@ -1230,21 +1275,19 @@ async function runSeoulSearch() {
           walk1Min: walk1,
           board1ServiceMin: subwayArrival.boardServiceMin,
           board1TimeStr: subwayArrival.boardTimeStr,
+          startSubway,
           leg1OriginName: stationLabel,
           leg1LineName: startSubway.lineName,
           leg1Cost: 1400,
           leg2LineName: endSubway.lineName,
-          endStationLabel,
           transferHub,
           maxWalkMeters
         });
       }
 
       if (cutoffFallbacks.length > 0) {
-        // 2구간 막차가 끊긴 경우: 전환된 택시/도보 경로를 우선 등록
         builtRoutes.push(...cutoffFallbacks);
       } else {
-        // 정상 대중교통 환승(또는 직통) 가능한 경우
         const finalArriveTimeStr = minToTime(subwayArrival.boardServiceMin + rideMin + walk2);
         const directionText = subwayArrival.trainDirection ? ` (${subwayArrival.trainDirection})` : '';
         const lineBadges = sameLine
@@ -1254,6 +1297,10 @@ async function runSeoulSearch() {
         const transitGuideText = sameLine
           ? `${stationLabel}에서 [${startSubway.lineName}]${directionText} 열차 탑승 ➔ ${endStationLabel} 하차`
           : `${stationLabel}에서 [${startSubway.lineName}]${directionText} 탑승 ➔ ${transferHub.stationName}에서 [${endSubway.lineName}] 갈아타기 ➔ ${endStationLabel} 하차`;
+
+        const subwayPoints = sameLine
+          ? [[startSubway.y, startSubway.x], [endSubway.y, endSubway.x]]
+          : [[startSubway.y, startSubway.x], [transferHub.y, transferHub.x], [endSubway.y, endSubway.x]];
 
         builtRoutes.push({
           id: `subway_${stationLabel}_${endStationLabel}`,
@@ -1265,6 +1312,11 @@ async function runSeoulSearch() {
           isHybrid: false,
           departure: subwayArrival.boardTimeStr,
           boardStation: stationLabel,
+          mapSegments: [
+            { mode: 'walk', points: [[places.start.y, places.start.x], [startSubway.y, startSubway.x]] },
+            { mode: 'subway', points: subwayPoints, hub: sameLine ? null : transferHub },
+            { mode: 'walk', points: [[endSubway.y, endSubway.x], [places.end.y, places.end.x]] }
+          ],
           lineBadges,
           transitGuideText,
           minutes: totalSubwayMin,
@@ -1285,7 +1337,10 @@ async function runSeoulSearch() {
     }
 
     // 2. 시내버스 / 심야 올빼미버스(N버스) + 중간 거점 환승 택시
-    const subTaxi = await getKakaoTaxiRoute(midX, midY, places.end.x, places.end.y);
+    const hubPoint = places.via
+      ? { stationName: formatStationName(places.via.name), x: places.via.x, y: places.via.y }
+      : (midSubway || { stationName: '중간 환승 거점', x: midX, y: midY });
+    const subTaxi = await getKakaoTaxiRoute(hubPoint.x, hubPoint.y, places.end.x, places.end.y);
     if (subTaxi) {
       const busArrival = computeVehicleArrivalTime({
         baseServiceMin,
@@ -1308,7 +1363,7 @@ async function runSeoulSearch() {
         { type: isNightTime ? 'nightbus' : 'bus', label: `🚌 ${busInfo.primaryBus} (${busCategory})` },
         { type: 'taxi', label: '🚖 중간 환승 택시' }
       ];
-      const transitGuideText = `[${stopLabel}] 정류장에서 ${busCategory} [${busListStr}] 중 먼저 오는 버스 탑승 ➔ 중간 거점 하차 후 택시 환승`;
+      const transitGuideText = `[${stopLabel}] 정류장에서 ${busCategory} [${busListStr}] 중 먼저 오는 버스 탑승 ➔ ${hubPoint.stationName} 하차 후 택시 환승`;
 
       builtRoutes.push({
         id: 'hybrid_bus_taxi_route',
@@ -1320,6 +1375,11 @@ async function runSeoulSearch() {
         isHybrid: true,
         departure: busArrival.boardTimeStr,
         boardStation: stopLabel,
+        mapSegments: [
+          { mode: 'walk', points: [[places.start.y, places.start.x], [busInfo.stopY, busInfo.stopX]] },
+          { mode: 'bus', points: [[busInfo.stopY, busInfo.stopX], [hubPoint.y, hubPoint.x]], hub: hubPoint },
+          { mode: 'taxi', points: [[hubPoint.y, hubPoint.x], [places.end.y, places.end.x]], precomputed: subTaxi.coordinates }
+        ],
         lineBadges,
         transitGuideText,
         minutes: totalHybridMin,
@@ -1330,8 +1390,8 @@ async function runSeoulSearch() {
         summary: `${stopLabel} [${busInfo.primaryBus}] ${busArrival.boardTimeStr} 도착 ➔ 환승 택시 (${hybridEndTime} 도착)`,
         steps: [
           { pill: 'pill-walk', tag: `도보 ${busInfo.walkMin}분`, label: `${depTimeStr} ${sName} 출발 ➔ [${stopLabel}] 정류장 이동` },
-          { pill: 'pill-bus', tag: `${busInfo.primaryBus} · ${busArrival.boardTimeStr}`, label: `[${stopLabel}]에서 ${busCategory} [${busListStr}] 탑승 ➔ 중간 거점 이동` },
-          { pill: 'pill-taxi', tag: `택시 ${won(subTaxi.fare)}`, label: `거점 하차 후 택시 환승 (${subTaxi.distanceKm}km · ${subTaxi.durationMin}분) ➔ ${hybridEndTime} ${eName} 도착` }
+          { pill: 'pill-bus', tag: `${busInfo.primaryBus} · ${busArrival.boardTimeStr}`, label: `[${stopLabel}]에서 ${busCategory} [${busListStr}] 탑승 ➔ ${hubPoint.stationName} 이동` },
+          { pill: 'pill-taxi', tag: `택시 ${won(subTaxi.fare)}`, label: `${hubPoint.stationName} 하차 후 택시 환승 (${subTaxi.distanceKm}km · ${subTaxi.durationMin}분) ➔ ${hybridEndTime} ${eName} 도착` }
         ],
         note: transitGuideText
       });
@@ -1358,7 +1418,7 @@ async function runSeoulSearch() {
         { type: isNightTime ? 'nightbus' : 'bus', label: `🚌 ${busInfo.primaryBus}` },
         { type: isNightTime ? 'nightbus' : 'bus', label: `환승 ➔ ${secondBus}` }
       ];
-      const transitGuideText = `[${stopLabel}] 정류장에서 [${busInfo.primaryBus}] 탑승 ➔ 환승 정류장에서 [${secondBus}] 갈아타기 ➔ ${eName} 하차`;
+      const transitGuideText = `[${stopLabel}] 정류장에서 [${busInfo.primaryBus}] 탑승 ➔ ${hubPoint.stationName} 정류장에서 [${secondBus}] 갈아타기 ➔ ${eName} 하차`;
 
       builtRoutes.push({
         id: 'bus_only_route',
@@ -1370,6 +1430,10 @@ async function runSeoulSearch() {
         isHybrid: false,
         departure: busOnlyArrival.boardTimeStr,
         boardStation: stopLabel,
+        mapSegments: [
+          { mode: 'walk', points: [[places.start.y, places.start.x], [busInfo.stopY, busInfo.stopX]] },
+          { mode: 'bus', points: [[busInfo.stopY, busInfo.stopX], [hubPoint.y, hubPoint.x], [places.end.y, places.end.x]], hub: hubPoint }
+        ],
         lineBadges,
         transitGuideText,
         minutes: busOnlyMin,
@@ -1381,7 +1445,7 @@ async function runSeoulSearch() {
         steps: [
           { pill: 'pill-walk', tag: `도보 ${busInfo.walkMin}분`, label: `${depTimeStr} ${sName} 출발 ➔ [${stopLabel}] 정류장 이동` },
           { pill: 'pill-bus', tag: `${busInfo.primaryBus} 탑승`, label: `${busOnlyArrival.boardTimeStr} [${stopLabel}] 도착 [${busInfo.primaryBus}] 탑승` },
-          { pill: 'pill-bus', tag: `${secondBus} 환승`, label: `중간 환승 정류장에서 [${secondBus}] 노선으로 환승 후 ${eName} 방면 이동` },
+          { pill: 'pill-bus', tag: `${secondBus} 환승`, label: `${hubPoint.stationName} 환승 정류장에서 [${secondBus}] 노선으로 환승 후 ${eName} 방면 이동` },
           { pill: 'pill-walk', tag: `도착 ${busOnlyEndTime}`, label: `${eName} 인근 정류장 하차 후 도착` }
         ],
         note: transitGuideText
@@ -1404,6 +1468,9 @@ async function runSeoulSearch() {
       isHybrid: false,
       departure: taxiPickupTimeStr,
       boardStation: `${sName} 승차 위치`,
+      mapSegments: [
+        { mode: 'taxi', points: [[places.start.y, places.start.x], [places.end.y, places.end.x]], precomputed: kakaoDriveData.coordinates }
+      ],
       lineBadges: [{ type: 'taxi', label: '🚖 일반·중형 택시 직행' }],
       transitGuideText: `${sName} 승차 위치에서 호출 택시 탑승 후 ${eName}까지 환승 없이 직행 이동`,
       minutes: kakaoDriveData.durationMin,
@@ -1521,7 +1588,7 @@ function renderStrategyCards() {
     if (removedTaxiRoutes.length > 0) {
       noticeBox.append(node('div', `🚫 설정한 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${removedTaxiRoutes.length}개가 제외되었습니다.`, 'hintBox'));
     } else if (!hasCutoffFallback) {
-      noticeBox.append(node('div', `✅ 경로 카드를 선택하면 타야 할 버스 번호·지하철 호선과 출발 정류장·역 도착 시각을 아래에 바로 안내합니다.`, 'hintBox'));
+      noticeBox.append(node('div', `✅ 경로 카드를 선택하면 타야 할 버스 번호·지하철 호선과 출발 정류장·역 도착 시각, 지도의 이동 경로가 갱신됩니다.`, 'hintBox'));
     }
   }
 
@@ -1603,6 +1670,9 @@ function renderStrategyCards() {
     if ($('heroPlace')) $('heroPlace').textContent = `${eName} · 귀가 알림`;
     if ($('originLabel')) $('originLabel').textContent = `${selected.boardStation} ${selected.departure} 도착`;
     if ($('strategyLocation')) $('strategyLocation').innerHTML = `출발: ${sName} ➔ 도착: ${eName}<br>선택 탑승 노선: <b>${selected.lineBadges?.map(b => b.label).join(' ➔ ') || selected.name}</b>`;
+
+    // 선택된 경로에 맞춰 지도의 실제 이동경로 갱신
+    updateHomeMap();
   }
 }
 
@@ -1953,36 +2023,83 @@ $('reset')?.addEventListener('click', () => {
   toast('초기 설정으로 되돌아갔습니다.');
 });
 
-/* ───────────── 지도 및 기타 기능 ───────────── */
+/* ───────────── 지도 및 실제 이동경로 다중 구간 렌더링 ───────────── */
 function buildHomeMap() {
   if (!homeLeaflet && typeof L !== 'undefined') {
     homeLeaflet = L.map('homeMap', { zoomControl: false, attributionControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(homeLeaflet);
+    routeLayersGroup = L.layerGroup().addTo(homeLeaflet);
   }
   updateHomeMap();
 }
 
-function updateHomeMap() {
+let mapRenderToken = 0;
+
+async function updateHomeMap() {
   if (!homeLeaflet || !places.start || !places.end) return;
+  const token = ++mapRenderToken;
   const s = places.start, e = places.end;
 
-  if (homeMarkers.start) homeLeaflet.removeLayer(homeMarkers.start);
-  if (homeMarkers.end) homeLeaflet.removeLayer(homeMarkers.end);
-  if (routeLineLayer) homeLeaflet.removeLayer(routeLineLayer);
+  homeMarkers.forEach(m => homeLeaflet.removeLayer(m));
+  homeMarkers = [];
+  if (routeLayersGroup) routeLayersGroup.clearLayers();
 
-  const iconS = L.divIcon({ html: '<div style="background:#ffb918;width:14px;height:14px;border-radius:50%;border:2px solid #fff;"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
-  const iconE = L.divIcon({ html: '<div style="background:#ef4444;width:18px;height:18px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:10px">🏠</div>', iconSize: [18, 18], iconAnchor: [9, 9] });
+  const iconS = L.divIcon({
+    html: '<div style="background:#ffb918;width:15px;height:15px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px #000;"></div>',
+    iconSize: [15, 15], iconAnchor: [7.5, 7.5]
+  });
+  const iconE = L.divIcon({
+    html: '<div style="background:#ef4444;width:20px;height:20px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 0 6px #000;">🏠</div>',
+    iconSize: [20, 20], iconAnchor: [10, 10]
+  });
 
-  homeMarkers.start = L.marker([s.y, s.x], { icon: iconS }).addTo(homeLeaflet).bindPopup(`📍 출발: ${cleanPlaceName(s.name)}`);
-  homeMarkers.end = L.marker([e.y, e.x], { icon: iconE }).addTo(homeLeaflet).bindPopup(`🏠 도착: ${cleanPlaceName(e.name)}`);
+  const mStart = L.marker([s.y, s.x], { icon: iconS }).addTo(homeLeaflet).bindPopup(`📍 출발: ${cleanPlaceName(s.name)}`);
+  const mEnd = L.marker([e.y, e.x], { icon: iconE }).addTo(homeLeaflet).bindPopup(`🏠 도착: ${cleanPlaceName(e.name)}`);
+  homeMarkers.push(mStart, mEnd);
 
-  if (kakaoDriveData.coordinates && kakaoDriveData.coordinates.length > 0) {
-    const latlngs = kakaoDriveData.coordinates.map(c => [c[1], c[0]]);
-    routeLineLayer = L.polyline(latlngs, { color: '#ffb918', weight: 4, opacity: 0.85 }).addTo(homeLeaflet);
-    homeLeaflet.fitBounds(routeLineLayer.getBounds(), { padding: [30, 30], maxZoom: 14 });
-  } else {
-    routeLineLayer = L.polyline([[s.y, s.x], [e.y, e.x]], { color: '#ffb918', weight: 3, dashArray: '6,6' }).addTo(homeLeaflet);
-    homeLeaflet.fitBounds([[s.y, s.x], [e.y, e.x]], { padding: [35, 35], maxZoom: 14 });
+  const segments = selected?.mapSegments || [
+    { mode: 'taxi', points: [[s.y, s.x], [e.y, e.x]], precomputed: kakaoDriveData.coordinates }
+  ];
+
+  const allBoundsPoints = [[s.y, s.x], [e.y, e.x]];
+  const modeStyleMap = {
+    walk: { color: '#9ca3af', weight: 4, opacity: 0.9, dashArray: '6, 8' },
+    subway: { color: '#3b82f6', weight: 5, opacity: 0.92 },
+    bus: { color: '#22c55e', weight: 5, opacity: 0.92 },
+    taxi: { color: '#ffb918', weight: 5, opacity: 0.95 }
+  };
+
+  for (const seg of segments) {
+    let latlngs = null;
+    if (Array.isArray(seg.precomputed) && seg.precomputed.length >= 2) {
+      latlngs = seg.precomputed;
+    } else {
+      const profile = seg.mode === 'walk' ? 'foot' : 'driving';
+      latlngs = await fetchRealisticRoadPolyline(seg.points, profile);
+    }
+
+    if (token !== mapRenderToken) return;
+
+    if (latlngs && latlngs.length >= 2 && routeLayersGroup) {
+      const style = modeStyleMap[seg.mode] || modeStyleMap.taxi;
+      L.polyline(latlngs, style).addTo(routeLayersGroup);
+      allBoundsPoints.push(...latlngs);
+    }
+
+    if (seg.hub && seg.hub.y && seg.hub.x) {
+      const iconHub = L.divIcon({
+        html: '<div style="background:#1e293b;color:#ffb918;width:18px;height:18px;border-radius:50%;border:2px solid #ffb918;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;">🔄</div>',
+        iconSize: [18, 18], iconAnchor: [9, 9]
+      });
+      const mHub = L.marker([seg.hub.y, seg.hub.x], { icon: iconHub })
+        .addTo(homeLeaflet)
+        .bindPopup(`🔄 환승·전환 지점: ${seg.hub.stationName}`);
+      homeMarkers.push(mHub);
+    }
+  }
+
+  if (allBoundsPoints.length >= 2) {
+    homeLeaflet.fitBounds(allBoundsPoints, { padding: [32, 32], maxZoom: 15 });
   }
 }
 
