@@ -12,6 +12,7 @@
 <!-- Leaflet CSS & QRCode -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <style>
 :root{
 --bg:#0b1117;--body-bg:#070c11;--card:#171f29;--text:#f2f4f5;--text-sub:#c2cad0;
@@ -244,10 +245,12 @@ color: #000;
 .screen-middle-big.compact { font-size: 58px; letter-spacing: -2px; }
 .screen-middle-line3 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
 .timer-rule-hint { font-size: 12px; font-weight: 700; opacity: 0.85; margin-top: 8px; padding: 5px 12px; border-radius: 12px; background: rgba(0,0,0,0.12); }
+.timer-badge-stack { display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .timer-wakelock-badge { font-size: 11px; font-weight: 800; padding: 5px 12px; border-radius: 999px; background: rgba(0,0,0,0.18); display: inline-flex; align-items: center; gap: 5px; }
-.timer-bottom-bar { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
+.timer-bottom-bar { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; }
 .screen-bottom-route { font-size: 14px; font-weight: 700; opacity: 0.95; text-align: center; }
-.btn-timer-back { width: 100%; max-width: 320px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.3); color: inherit; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800; cursor: pointer; backdrop-filter: blur(5px); }
+.timer-btn-row { display: flex; gap: 8px; width: 100%; max-width: 340px; }
+.btn-timer-back { flex: 1; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.3); color: inherit; border-radius: 14px; padding: 15px 10px; font-size: 14px; font-weight: 800; cursor: pointer; backdrop-filter: blur(5px); }
 .btn-timer-back:active { background: rgba(0, 0, 0, 0.4); }
 
 /* QR 코드 박스 */
@@ -374,7 +377,7 @@ color: #000;
 </div>
 
 <div class="panel detail" id="selectedDetail"></div>
-<button class="primary" id="navigate" type="button">이 전략으로 마지노선 알림 켜기 (타이머) <span>→</span></button>
+<button class="primary" id="navigate" type="button">이 전략으로 마지노선 알림 켜기 (타이머 + 백그라운드 푸시) <span>→</span></button>
 <div class="action-row">
 <button type="button" class="btn-sub" id="btnShareQr">📱 QR 코드 경로 공유</button>
 <button type="button" class="btn-sub" id="btnOpenKakaoMap">🗺️ 카카오맵 길찾기</button>
@@ -426,6 +429,21 @@ color: #000;
 <section class="screen" id="my">
 <h2>나에게 맞는 귀가 설정</h2>
 <p class="desc">저장한 목적지와 선호 조건으로<br/>나에게 맞는 귀가 전략을 찾아요.</p>
+
+<div class="panel">
+<div class="between">
+<h3 style="margin:0">🔔 잠금화면 백그라운드 푸시 (FCM)</h3>
+<span class="badge" id="fcmStatusBadge">연결 중...</span>
+</div>
+<p class="micro" style="margin:8px 0 10px">
+마지노선 알림을 켜면 화면을 잠그거나 브라우저를 닫아도 <b>15분 전(주의) · 5분 전(긴급) · 탑승 시각</b>에 잠금화면 알림과 진동이 울립니다.
+</p>
+<div class="action-row" style="margin-top:0">
+<button type="button" class="btn-sub" id="btnEnableFcm">🔔 푸시 권한 &amp; FCM 토큰 등록</button>
+<button type="button" class="btn-sub" id="btnTestPushLocal">📳 진동·알림 테스트</button>
+</div>
+</div>
+
 <div class="panel">
 <h3>화면 테마</h3>
 <div class="row" id="themeButtons">
@@ -525,12 +543,18 @@ color: #000;
 <div class="screen-middle-line1" id="timerLine1">지금 시각 기준 출발까지</div>
 <div class="screen-middle-big" id="timerBig">1시간</div>
 <div class="screen-middle-line3" id="timerLine3">아직 괜찮아요</div>
-<div class="timer-rule-hint" id="timerRuleHint">⏱️ 실제 현재 시각 기준 · 🟢 16분 이상 · 🟡 6~15분 · 🔴 5분 이하</div>
+<div class="timer-rule-hint" id="timerRuleHint">⏱️ 색 변경 시 진동·알림 · 🟢 16분 이상 · 🟡 6~15분 · 🔴 5분 이하</div>
 </div>
 <div class="timer-bottom-bar">
+<div class="timer-badge-stack">
 <div class="timer-wakelock-badge" id="timerWakeLockStatus">🔆 화면 꺼짐 방지 준비 중</div>
+<div class="timer-wakelock-badge" id="timerFcmStatus">🔔 잠금화면 백그라운드 푸시 확인 중</div>
+</div>
 <div class="screen-bottom-route" id="timerBottomRoute">출발 · 대중교통 ➔ 택시</div>
-<button type="button" class="btn-timer-back" id="btnCloseTimer">돌아가기 ✕</button>
+<div class="timer-btn-row">
+<button type="button" class="btn-timer-back" id="btnCloseTimer">창 닫기 (백그라운드 유지)</button>
+<button type="button" class="btn-timer-back" id="btnCancelAlarm">알림 예약 해제 ✕</button>
+</div>
 </div>
 </div>
 </dialog>
@@ -574,6 +598,81 @@ color: #000;
 <div class="toast hidden" id="toast" role="status"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Firebase v13.4.0 모듈형 SDK (FCM 웹 푸시 & Firestore 예약 브릿지) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-analytics.js";
+  import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-messaging.js";
+  import { getFirestore, collection, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCqBWipiz9MKWXmrejVdqwlXqSUhHzqtKE",
+    authDomain: "gotohome-4b94a.firebaseapp.com",
+    projectId: "gotohome-4b94a",
+    storageBucket: "gotohome-4b94a.firebasestorage.app",
+    messagingSenderId: "638485182070",
+    appId: "1:638485182070:web:d40b8d3c48ff25edff9157",
+    measurementId: "G-K6RXPH7MZF"
+  };
+  const VAPID_KEY = "BCUDc5Bzbf7HrPhrYTi52T_RfT5aUMOJkqHxKIftHJQ1JW3TmG2PmieQRzBtqAY2Frl2MiqolCUVY7rjsd1m1yM";
+
+  const app = initializeApp(firebaseConfig);
+  let analytics = null;
+  try { analytics = getAnalytics(app); } catch {}
+  const db = getFirestore(app);
+
+  let messaging = null;
+  isSupported().then(ok => {
+    if (ok) {
+      messaging = getMessaging(app);
+      onMessage(messaging, payload => {
+        const title = payload?.notification?.title || payload?.data?.title || '🚨 집에 못 갈 지도 마지노선 알림';
+        const body = payload?.notification?.body || payload?.data?.body || '출발 시각을 확인하세요!';
+        const stage = payload?.data?.stage || 'yellow';
+        if (window.triggerStageFeedback) {
+          window.triggerStageFeedback(stage, title, body);
+        }
+      });
+    }
+  }).catch(() => {});
+
+  window.FirebasePushBridge = {
+    async requestFcmToken(swRegistration) {
+      if (!messaging) {
+        const ok = await isSupported().catch(() => false);
+        if (ok) messaging = getMessaging(app);
+      }
+      if (!messaging) return null;
+      return await getToken(messaging, {
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: swRegistration
+      });
+    },
+    async saveScheduledAlert(existingAlertId, payloadData) {
+      if (existingAlertId) {
+        await setDoc(doc(db, 'scheduled_alerts', existingAlertId), {
+          status: 'cancelled',
+          updatedAt: serverTimestamp()
+        }, { merge: true }).catch(() => {});
+      }
+      const newDocRef = doc(collection(db, 'scheduled_alerts'));
+      await setDoc(newDocRef, {
+        ...payloadData,
+        createdAt: serverTimestamp()
+      });
+      return newDocRef.id;
+    },
+    async cancelScheduledAlert(alertId) {
+      if (!alertId) return;
+      await setDoc(doc(db, 'scheduled_alerts', alertId), {
+        status: 'cancelled',
+        cancelledAt: serverTimestamp()
+      }, { merge: true });
+    }
+  };
+</script>
+
 <script>
 'use strict';
 
@@ -588,6 +687,204 @@ const GEMINI_MAX_TOKENS = 8192;
 
 const $ = id => document.getElementById(id);
 const won = n => Number(n).toLocaleString('ko-KR') + '원';
+
+/* ───────────── Firebase FCM + Service Worker 초기화 및 백그라운드 알람 예약 엔진 ───────────── */
+let swRegistration = null;
+let currentFcmToken = localStorage.getItem('homeway.fcm.token') || '';
+let activeScheduledAlertId = localStorage.getItem('homeway.fcm.alertId') || '';
+
+function updateFcmUiBadges(text, isReady = false) {
+  const myBadge = $('fcmStatusBadge');
+  const timerBadge = $('timerFcmStatus');
+  if (myBadge) {
+    myBadge.textContent = text;
+    myBadge.style.color = isReady ? '#6ee7b7' : 'var(--yellow)';
+  }
+  if (timerBadge) {
+    timerBadge.textContent = `🔔 ${text}`;
+  }
+}
+
+async function initFirebaseWebPush() {
+  if ('serviceWorker' in navigator) {
+    try {
+      swRegistration = await navigator.serviceWorker.register('./sw.js');
+    } catch (e) {
+      console.warn('Service Worker 등록 실패:', e);
+    }
+  }
+  if (currentFcmToken) {
+    updateFcmUiBadges('FCM 잠금화면 푸시 연결됨', true);
+  } else {
+    updateFcmUiBadges('푸시 권한 허용 필요', false);
+  }
+}
+
+async function ensureFcmPushToken(interactive = true) {
+  if (!('Notification' in window)) {
+    toast('이 브라우저는 푸시 알림을 지원하지 않습니다.');
+    return null;
+  }
+
+  let perm = Notification.permission;
+  if (perm === 'default' && interactive) {
+    perm = await Notification.requestPermission();
+  }
+  if (perm !== 'granted') {
+    updateFcmUiBadges('알림 권한 차단됨', false);
+    if (interactive) toast('⚠️ 브라우저 설정에서 알림 권한을 [허용]으로 변경해 주세요.');
+    return null;
+  }
+
+  try {
+    if (!swRegistration && 'serviceWorker' in navigator) {
+      swRegistration = await navigator.serviceWorker.register('./sw.js');
+    }
+    if (window.FirebasePushBridge) {
+      const token = await window.FirebasePushBridge.requestFcmToken(swRegistration);
+      if (token) {
+        currentFcmToken = token;
+        localStorage.setItem('homeway.fcm.token', token);
+        updateFcmUiBadges('FCM 잠금화면 푸시 예약 준비 완료', true);
+        return token;
+      }
+    }
+  } catch (err) {
+    console.warn('FCM 토큰 발급 실패:', err);
+    updateFcmUiBadges('FCM 토큰 발급 확인 (HTTPS/로컬호스트 필요)', false);
+  }
+  return null;
+}
+
+function getTargetEpochMs(targetTimeStr) {
+  const now = new Date();
+  const [dh, dm] = String(targetTimeStr || getNowTimeStr()).split(':').map(Number);
+  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dh, dm, 0, 0);
+  if (target.getTime() < now.getTime() - 12 * 3600 * 1000) {
+    target.setDate(target.getDate() + 1);
+  }
+  return target.getTime();
+}
+
+async function scheduleBackgroundFcmAlerts(routeObj) {
+  if (!routeObj) return;
+  const token = await ensureFcmPushToken(true);
+  const targetMs = getTargetEpochMs(routeObj.departure);
+  const nowMs = Date.now();
+
+  if (!window.FirebasePushBridge || !token) {
+    updateFcmUiBadges('화면 켜짐 중 진동·알림 작동', Boolean(token));
+    return;
+  }
+
+  try {
+    const min15Ms = targetMs - 15 * 60 * 1000;
+    const min5Ms = targetMs - 5 * 60 * 1000;
+
+    const newId = await window.FirebasePushBridge.saveScheduledAlert(activeScheduledAlertId, {
+      token,
+      status: 'active',
+      boardStation: routeObj.boardStation,
+      departureTimeStr: routeObj.departure,
+      routeName: routeObj.name,
+      routeSummary: routeObj.transitGuideText || routeObj.summary,
+      targetTimestampMs: targetMs,
+      trigger15mMs: min15Ms,
+      trigger5mMs: min5Ms,
+      sent15m: nowMs >= min15Ms,
+      sent5m: nowMs >= min5Ms,
+      sent0m: nowMs >= targetMs
+    });
+
+    activeScheduledAlertId = newId;
+    localStorage.setItem('homeway.fcm.alertId', activeScheduledAlertId);
+    updateFcmUiBadges('잠금화면 15분·5분·정시 푸시 예약됨 ✓', true);
+    toast('🔔 잠금화면 백그라운드 푸시(15분 전 · 5분 전 · 탑승 시각)가 예약되었습니다!');
+  } catch (err) {
+    console.warn('Firestore 알림 예약 실패:', err);
+    updateFcmUiBadges('Firestore 예약 오류 (보안 규칙 확인)', false);
+  }
+}
+
+async function cancelBackgroundFcmAlerts() {
+  if (window.FirebasePushBridge && activeScheduledAlertId) {
+    try {
+      await window.FirebasePushBridge.cancelScheduledAlert(activeScheduledAlertId);
+    } catch {}
+  }
+  activeScheduledAlertId = '';
+  localStorage.removeItem('homeway.fcm.alertId');
+  updateFcmUiBadges('백그라운드 푸시 예약 해제됨', false);
+}
+
+/* ───────────── 상태 전환(초록→노랑→빨강→탑승) 진동·알림음·배너 실행기 ───────────── */
+function playAlertBeep(stage) {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const pulses = stage === 'red' || stage === 'board' ? [0, 0.22, 0.44] : [0, 0.25];
+    const freq = stage === 'red' || stage === 'board' ? 880 : 660;
+
+    pulses.forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + offset);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.16);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + offset);
+      osc.stop(ctx.currentTime + offset + 0.17);
+    });
+  } catch {}
+}
+
+window.triggerStageFeedback = function(stage, title, body) {
+  const vibratePatterns = {
+    yellow: [300, 150, 300],
+    red: [500, 200, 500, 200, 500],
+    board: [800, 200, 800, 200, 800]
+  };
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate(vibratePatterns[stage] || [300, 150, 300]);
+    } catch {}
+  }
+
+  playAlertBeep(stage);
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const options = {
+      body,
+      tag: 'homeway-last-train-alert',
+      renotify: true,
+      requireInteraction: true,
+      vibrate: vibratePatterns[stage] || [300, 150, 300],
+      data: { stage }
+    };
+    if (swRegistration && swRegistration.showNotification) {
+      swRegistration.showNotification(title, options).catch(() => {});
+    } else {
+      try {
+        new Notification(title, options);
+      } catch {}
+    }
+  }
+};
+
+$('btnEnableFcm')?.addEventListener('click', () => ensureFcmPushToken(true));
+$('btnTestPushLocal')?.addEventListener('click', () => {
+  ensureFcmPushToken(true).then(() => {
+    window.triggerStageFeedback(
+      'yellow',
+      '🟡 [테스트] 출발 15분 전 주의 알림',
+      `${selected?.boardStation || '출발역'} (${selected?.departure || '23:50'}) 슬슬 이동할 준비를 하세요!`
+    );
+    toast('📳 진동·알림음 및 알림 배너 테스트가 실행되었습니다.');
+  });
+});
 
 async function fetchSafeJson(url) {
   try {
@@ -3423,8 +3720,9 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-/* ───────────── 풀스크린 마지노선 알림 타이머 (실제 현재 시각 new Date() 기준) ───────────── */
+/* ───────────── 풀스크린 마지노선 알림 타이머 (실제 현재 시각 new Date() 기준 + 상태 전환 진동·알림) ───────────── */
 let timerInterval = null;
+let lastTimerStage = null;
 
 function refreshFullscreenTimer() {
   if (!selected) return;
@@ -3439,6 +3737,34 @@ function refreshFullscreenTimer() {
   if (bigEl) {
     bigEl.classList.toggle('compact', formattedDuration.length >= 5);
   }
+
+  let currentStage = 'green';
+  if (remainingMin === 0) currentStage = 'board';
+  else if (remainingMin <= 5) currentStage = 'red';
+  else if (remainingMin <= 15) currentStage = 'yellow';
+
+  if (lastTimerStage !== null && lastTimerStage !== currentStage) {
+    if (currentStage === 'yellow') {
+      window.triggerStageFeedback(
+        'yellow',
+        '🟡 출발 15분 전 (주의)',
+        `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다. 이동할 준비를 하세요!`
+      );
+    } else if (currentStage === 'red') {
+      window.triggerStageFeedback(
+        'red',
+        '🔴 출발 5분 전 (긴급)',
+        `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다! 지금 바로 이동하세요!`
+      );
+    } else if (currentStage === 'board') {
+      window.triggerStageFeedback(
+        'board',
+        '🚨 정류장·역 도착! 지금 탑승하세요',
+        `${selected.boardStation} (${selected.departure}) 탑승 시각입니다!`
+      );
+    }
+  }
+  lastTimerStage = currentStage;
 
   if (remainingMin <= 5) {
     screenEl.classList.add('state-red');
@@ -3464,22 +3790,38 @@ function refreshFullscreenTimer() {
   if ($('timerBottomRoute')) $('timerBottomRoute').textContent = `${selected.transitGuideText || selected.summary}`;
 }
 
-function closeFullscreenTimer() {
+function closeFullscreenTimerWindowOnly() {
   clearInterval(timerInterval);
   timerInterval = null;
   releaseScreenWakeLock();
   $('timerDialog')?.close();
+  if (activeScheduledAlertId) {
+    toast('🔔 창을 닫아도 잠금화면 백그라운드 푸시 예약은 유지됩니다.');
+  }
+}
+
+async function cancelAllAlertsAndCloseTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  lastTimerStage = null;
+  releaseScreenWakeLock();
+  await cancelBackgroundFcmAlerts();
+  $('timerDialog')?.close();
+  toast('마지노선 알림 및 잠금화면 푸시 예약이 해제되었습니다.');
 }
 
 $('navigate')?.addEventListener('click', () => {
   if (!selected) return;
+  lastTimerStage = null;
   refreshFullscreenTimer();
   $('timerDialog')?.showModal();
   requestScreenWakeLock();
+  scheduleBackgroundFcmAlerts(selected);
   clearInterval(timerInterval);
   timerInterval = setInterval(refreshFullscreenTimer, 1000);
 });
-$('btnCloseTimer')?.addEventListener('click', closeFullscreenTimer);
+$('btnCloseTimer')?.addEventListener('click', closeFullscreenTimerWindowOnly);
+$('btnCancelAlarm')?.addEventListener('click', cancelAllAlertsAndCloseTimer);
 $('timerDialog')?.addEventListener('close', () => {
   clearInterval(timerInterval);
   timerInterval = null;
@@ -3518,6 +3860,7 @@ window.addEventListener('load', () => {
     if ($('endResolved')) $('endResolved').textContent = `✓ ${places.end.name} 선택됨`;
     if (params.get('t') && $('depTime')) $('depTime').value = params.get('t');
   }
+  initFirebaseWebPush();
   buildHomeMap();
   runSeoulSearch();
 });
