@@ -244,7 +244,8 @@ color: #000;
 .screen-middle-big.compact { font-size: 58px; letter-spacing: -2px; }
 .screen-middle-line3 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
 .timer-rule-hint { font-size: 12px; font-weight: 700; opacity: 0.85; margin-top: 8px; padding: 5px 12px; border-radius: 12px; background: rgba(0,0,0,0.12); }
-.timer-bottom-bar { display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%; }
+.timer-wakelock-badge { font-size: 11px; font-weight: 800; padding: 5px 12px; border-radius: 999px; background: rgba(0,0,0,0.18); display: inline-flex; align-items: center; gap: 5px; }
+.timer-bottom-bar { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
 .screen-bottom-route { font-size: 14px; font-weight: 700; opacity: 0.95; text-align: center; }
 .btn-timer-back { width: 100%; max-width: 320px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.3); color: inherit; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 800; cursor: pointer; backdrop-filter: blur(5px); }
 .btn-timer-back:active { background: rgba(0, 0, 0, 0.4); }
@@ -527,6 +528,7 @@ color: #000;
 <div class="timer-rule-hint" id="timerRuleHint">⏱️ 실제 현재 시각 기준 · 🟢 16분 이상 · 🟡 6~15분 · 🔴 5분 이하</div>
 </div>
 <div class="timer-bottom-bar">
+<div class="timer-wakelock-badge" id="timerWakeLockStatus">🔆 화면 꺼짐 방지 준비 중</div>
 <div class="screen-bottom-route" id="timerBottomRoute">출발 · 대중교통 ➔ 택시</div>
 <button type="button" class="btn-timer-back" id="btnCloseTimer">돌아가기 ✕</button>
 </div>
@@ -3377,6 +3379,50 @@ $('homeSwap')?.addEventListener('click', () => {
   runSeoulSearch();
 });
 
+/* ───────────── Screen Wake Lock API (타이머 작동 중 화면 자동 꺼짐 방지) ───────────── */
+let wakeLockSentinel = null;
+
+function updateWakeLockBadge(text) {
+  const badge = $('timerWakeLockStatus');
+  if (badge) badge.textContent = text;
+}
+
+async function requestScreenWakeLock() {
+  if (!('wakeLock' in navigator)) {
+    updateWakeLockBadge('ℹ️ 이 브라우저는 화면 꺼짐 방지를 지원하지 않습니다');
+    return;
+  }
+  try {
+    if (wakeLockSentinel && !wakeLockSentinel.released) return;
+    wakeLockSentinel = await navigator.wakeLock.request('screen');
+    updateWakeLockBadge('🔆 화면 꺼짐 방지 작동 중 (자동 잠금 해제)');
+    wakeLockSentinel.addEventListener('release', () => {
+      if (!$('timerDialog')?.open) {
+        updateWakeLockBadge('🔆 화면 꺼짐 방지 해제됨');
+      }
+    });
+  } catch (err) {
+    updateWakeLockBadge('⚠️ 배터리 절전 모드 등으로 화면 꺼짐 방지가 제한되었습니다');
+  }
+}
+
+async function releaseScreenWakeLock() {
+  if (wakeLockSentinel) {
+    try {
+      await wakeLockSentinel.release();
+    } catch {}
+    wakeLockSentinel = null;
+  }
+  updateWakeLockBadge('🔆 화면 꺼짐 방지 해제됨');
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && $('timerDialog')?.open) {
+    requestScreenWakeLock();
+    refreshFullscreenTimer();
+  }
+});
+
 /* ───────────── 풀스크린 마지노선 알림 타이머 (실제 현재 시각 new Date() 기준) ───────────── */
 let timerInterval = null;
 
@@ -3421,6 +3467,7 @@ function refreshFullscreenTimer() {
 function closeFullscreenTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
+  releaseScreenWakeLock();
   $('timerDialog')?.close();
 }
 
@@ -3428,6 +3475,7 @@ $('navigate')?.addEventListener('click', () => {
   if (!selected) return;
   refreshFullscreenTimer();
   $('timerDialog')?.showModal();
+  requestScreenWakeLock();
   clearInterval(timerInterval);
   timerInterval = setInterval(refreshFullscreenTimer, 1000);
 });
@@ -3435,6 +3483,7 @@ $('btnCloseTimer')?.addEventListener('click', closeFullscreenTimer);
 $('timerDialog')?.addEventListener('close', () => {
   clearInterval(timerInterval);
   timerInterval = null;
+  releaseScreenWakeLock();
 });
 
 setInterval(updateHomeHeroCountdown, 5000);
