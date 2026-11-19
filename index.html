@@ -431,19 +431,6 @@ color: #000;
 <p class="desc">저장한 목적지와 선호 조건으로<br/>나에게 맞는 귀가 전략을 찾아요.</p>
 
 <div class="panel">
-<div class="between">
-<h3 style="margin:0">🔔 잠금화면 백그라운드 푸시 &amp; 강제 진동</h3>
-<span class="badge" id="fcmStatusBadge">연결 중...</span>
-</div>
-<p class="micro" style="margin:8px 0 10px">
-마지노선 알림을 켜면 <b>🟡 15분 전(주의) 진동 3번 · 🔴 5분 전(긴급) &amp; 정시 진동 5번</b>이 화면 상태와 관계없이 무조건 울립니다.
-</p>
-<div class="action-row" style="margin-top:0">
-<button type="button" class="btn-sub" id="btnEnableFcm">🔔 푸시 권한 &amp; FCM 토큰 등록</button>
-</div>
-</div>
-
-<div class="panel">
 <h3>화면 테마</h3>
 <div class="row" id="themeButtons">
 <button type="button" class="chip on" data-theme="dark">🌙 다크 모드</button>
@@ -693,12 +680,7 @@ let currentFcmToken = localStorage.getItem('homeway.fcm.token') || '';
 let activeScheduledAlertId = localStorage.getItem('homeway.fcm.alertId') || '';
 
 function updateFcmUiBadges(text, isReady = false) {
-  const myBadge = $('fcmStatusBadge');
   const timerBadge = $('timerFcmStatus');
-  if (myBadge) {
-    myBadge.textContent = text;
-    myBadge.style.color = isReady ? '#6ee7b7' : 'var(--yellow)';
-  }
   if (timerBadge) {
     timerBadge.textContent = `🔔 ${text}`;
   }
@@ -918,11 +900,6 @@ window.triggerStageFeedback = function(stage, title, body) {
     }
   }
 };
-
-$('btnEnableFcm')?.addEventListener('click', () => {
-  unlockVibrationEngine();
-  ensureFcmPushToken(true);
-});
 
 async function fetchSafeJson(url) {
   try {
