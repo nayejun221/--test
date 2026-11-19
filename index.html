@@ -440,7 +440,6 @@ color: #000;
 </p>
 <div class="action-row" style="margin-top:0">
 <button type="button" class="btn-sub" id="btnEnableFcm">🔔 푸시 권한 &amp; FCM 토큰 등록</button>
-<button type="button" class="btn-sub" id="btnTestPushLocal">📳 노랑 3번·빨강 5번 진동 테스트</button>
 </div>
 </div>
 
@@ -923,25 +922,6 @@ window.triggerStageFeedback = function(stage, title, body) {
 $('btnEnableFcm')?.addEventListener('click', () => {
   unlockVibrationEngine();
   ensureFcmPushToken(true);
-});
-
-$('btnTestPushLocal')?.addEventListener('click', () => {
-  unlockVibrationEngine();
-  ensureFcmPushToken(true).then(() => {
-    window.triggerStageFeedback(
-      'yellow',
-      '🟡 [테스트] 노란색 주의 알림 (진동 3번)',
-      `${selected?.boardStation || '출발역'} (${selected?.departure || '23:50'}) 노란색 전환 시 진동이 3번 울립니다.`
-    );
-    toast('📳 노란색(진동 3번) 실행! 3.5초 뒤 빨간색(진동 5번)도 이어서 울립니다.');
-    setTimeout(() => {
-      window.triggerStageFeedback(
-        'red',
-        '🔴 [테스트] 빨간색 긴급 알림 (진동 5번)',
-        `${selected?.boardStation || '출발역'} (${selected?.departure || '23:50'}) 빨간색 전환 시 진동이 5번 울립니다.`
-      );
-    }, 3500);
-  });
 });
 
 async function fetchSafeJson(url) {
