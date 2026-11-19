@@ -245,7 +245,6 @@ color: #000;
 .screen-middle-big.compact { font-size: 58px; letter-spacing: -2px; }
 .screen-middle-line3 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
 .timer-rule-hint { font-size: 12px; font-weight: 700; opacity: 0.9; margin-top: 8px; padding: 6px 13px; border-radius: 12px; background: rgba(0,0,0,0.14); }
-.timer-badge-stack { display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .timer-wakelock-badge { font-size: 11px; font-weight: 800; padding: 5px 12px; border-radius: 999px; background: rgba(0,0,0,0.18); display: inline-flex; align-items: center; gap: 5px; }
 .timer-bottom-bar { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; }
 .screen-bottom-route { font-size: 14px; font-weight: 700; opacity: 0.95; text-align: center; }
@@ -425,7 +424,7 @@ color: #000;
 <p class="footnote">GitHub Pages 정적 웹앱 · 서울시 전용</p>
 </section>
 
-<!-- 마이 탭 -->
+<!-- 마이 탭 (토큰 등록 탭 완전 제거됨) -->
 <section class="screen" id="my">
 <h2>나에게 맞는 귀가 설정</h2>
 <p class="desc">저장한 목적지와 선호 조건으로<br/>나에게 맞는 귀가 전략을 찾아요.</p>
@@ -532,14 +531,11 @@ color: #000;
 <div class="timer-rule-hint" id="timerRuleHint">📳 색상 전환 시 강제 진동 · 🟡 노랑(6~15분): 3번 · 🔴 빨강(5분 이하): 5번</div>
 </div>
 <div class="timer-bottom-bar">
-<div class="timer-badge-stack">
 <div class="timer-wakelock-badge" id="timerWakeLockStatus">🔆 화면 꺼짐 방지 준비 중</div>
-<div class="timer-wakelock-badge" id="timerFcmStatus">🔔 잠금화면 백그라운드 푸시 확인 중</div>
-</div>
 <div class="screen-bottom-route" id="timerBottomRoute">출발 · 대중교통 ➔ 택시</div>
 <div class="timer-btn-row">
-<button type="button" class="btn-timer-back" id="btnCloseTimer">창 닫기 (백그라운드 유지)</button>
-<button type="button" class="btn-timer-back" id="btnCancelAlarm">알림 예약 해제 ✕</button>
+<button type="button" class="btn-timer-back" id="btnCloseTimer">창 닫기</button>
+<button type="button" class="btn-timer-back" id="btnCancelAlarm">알림 해제 ✕</button>
 </div>
 </div>
 </div>
@@ -585,80 +581,6 @@ color: #000;
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- Firebase v13.4.0 모듈형 SDK (FCM 웹 푸시 & Firestore 예약 브릿지) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-analytics.js";
-  import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-messaging.js";
-  import { getFirestore, collection, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCqBWipiz9MKWXmrejVdqwlXqSUhHzqtKE",
-    authDomain: "gotohome-4b94a.firebaseapp.com",
-    projectId: "gotohome-4b94a",
-    storageBucket: "gotohome-4b94a.firebasestorage.app",
-    messagingSenderId: "638485182070",
-    appId: "1:638485182070:web:d40b8d3c48ff25edff9157",
-    measurementId: "G-K6RXPH7MZF"
-  };
-  const VAPID_KEY = "BCUDc5Bzbf7HrPhrYTi52T_RfT5aUMOJkqHxKIftHJQ1JW3TmG2PmieQRzBtqAY2Frl2MiqolCUVY7rjsd1m1yM";
-
-  const app = initializeApp(firebaseConfig);
-  let analytics = null;
-  try { analytics = getAnalytics(app); } catch {}
-  const db = getFirestore(app);
-
-  let messaging = null;
-  isSupported().then(ok => {
-    if (ok) {
-      messaging = getMessaging(app);
-      onMessage(messaging, payload => {
-        const title = payload?.notification?.title || payload?.data?.title || '🚨 집에 못 갈 지도 마지노선 알림';
-        const body = payload?.notification?.body || payload?.data?.body || '출발 시각을 확인하세요!';
-        const stage = payload?.data?.stage || 'yellow';
-        if (window.triggerStageFeedback) {
-          window.triggerStageFeedback(stage, title, body);
-        }
-      });
-    }
-  }).catch(() => {});
-
-  window.FirebasePushBridge = {
-    async requestFcmToken(swRegistration) {
-      if (!messaging) {
-        const ok = await isSupported().catch(() => false);
-        if (ok) messaging = getMessaging(app);
-      }
-      if (!messaging) return null;
-      return await getToken(messaging, {
-        vapidKey: VAPID_KEY,
-        serviceWorkerRegistration: swRegistration
-      });
-    },
-    async saveScheduledAlert(existingAlertId, payloadData) {
-      if (existingAlertId) {
-        await setDoc(doc(db, 'scheduled_alerts', existingAlertId), {
-          status: 'cancelled',
-          updatedAt: serverTimestamp()
-        }, { merge: true }).catch(() => {});
-      }
-      const newDocRef = doc(collection(db, 'scheduled_alerts'));
-      await setDoc(newDocRef, {
-        ...payloadData,
-        createdAt: serverTimestamp()
-      });
-      return newDocRef.id;
-    },
-    async cancelScheduledAlert(alertId) {
-      if (!alertId) return;
-      await setDoc(doc(db, 'scheduled_alerts', alertId), {
-        status: 'cancelled',
-        cancelledAt: serverTimestamp()
-      }, { merge: true });
-    }
-  };
-</script>
-
 <script>
 'use strict';
 
@@ -674,130 +596,6 @@ const GEMINI_MAX_TOKENS = 8192;
 const $ = id => document.getElementById(id);
 const won = n => Number(n).toLocaleString('ko-KR') + '원';
 
-/* ───────────── Firebase FCM + Service Worker 초기화 및 백그라운드 알람 예약 엔진 ───────────── */
-let swRegistration = null;
-let currentFcmToken = localStorage.getItem('homeway.fcm.token') || '';
-let activeScheduledAlertId = localStorage.getItem('homeway.fcm.alertId') || '';
-
-function updateFcmUiBadges(text, isReady = false) {
-  const timerBadge = $('timerFcmStatus');
-  if (timerBadge) {
-    timerBadge.textContent = `🔔 ${text}`;
-  }
-}
-
-async function initFirebaseWebPush() {
-  if ('serviceWorker' in navigator) {
-    try {
-      swRegistration = await navigator.serviceWorker.register('./sw.js');
-    } catch (e) {
-      console.warn('Service Worker 등록 실패:', e);
-    }
-  }
-  if (currentFcmToken) {
-    updateFcmUiBadges('FCM 잠금화면 푸시 연결됨', true);
-  } else {
-    updateFcmUiBadges('푸시 권한 허용 필요', false);
-  }
-}
-
-async function ensureFcmPushToken(interactive = true) {
-  if (!('Notification' in window)) {
-    toast('이 브라우저는 푸시 알림을 지원하지 않습니다.');
-    return null;
-  }
-
-  let perm = Notification.permission;
-  if (perm === 'default' && interactive) {
-    perm = await Notification.requestPermission();
-  }
-  if (perm !== 'granted') {
-    updateFcmUiBadges('알림 권한 차단됨', false);
-    if (interactive) toast('⚠️ 브라우저 설정에서 알림 권한을 [허용]으로 변경해 주세요.');
-    return null;
-  }
-
-  try {
-    if (!swRegistration && 'serviceWorker' in navigator) {
-      swRegistration = await navigator.serviceWorker.register('./sw.js');
-    }
-    if (window.FirebasePushBridge) {
-      const token = await window.FirebasePushBridge.requestFcmToken(swRegistration);
-      if (token) {
-        currentFcmToken = token;
-        localStorage.setItem('homeway.fcm.token', token);
-        updateFcmUiBadges('FCM 잠금화면 푸시 예약 준비 완료', true);
-        return token;
-      }
-    }
-  } catch (err) {
-    console.warn('FCM 토큰 발급 실패:', err);
-    updateFcmUiBadges('FCM 토큰 발급 확인 (HTTPS/로컬호스트 필요)', false);
-  }
-  return null;
-}
-
-function getTargetEpochMs(targetTimeStr) {
-  const now = new Date();
-  const [dh, dm] = String(targetTimeStr || getNowTimeStr()).split(':').map(Number);
-  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dh, dm, 0, 0);
-  if (target.getTime() < now.getTime() - 12 * 3600 * 1000) {
-    target.setDate(target.getDate() + 1);
-  }
-  return target.getTime();
-}
-
-async function scheduleBackgroundFcmAlerts(routeObj) {
-  if (!routeObj) return;
-  const token = await ensureFcmPushToken(true);
-  const targetMs = getTargetEpochMs(routeObj.departure);
-  const nowMs = Date.now();
-
-  if (!window.FirebasePushBridge || !token) {
-    updateFcmUiBadges('화면 켜짐 중 강제 진동·알림 작동', Boolean(token));
-    return;
-  }
-
-  try {
-    const min15Ms = targetMs - 15 * 60 * 1000;
-    const min5Ms = targetMs - 5 * 60 * 1000;
-
-    const newId = await window.FirebasePushBridge.saveScheduledAlert(activeScheduledAlertId, {
-      token,
-      status: 'active',
-      boardStation: routeObj.boardStation,
-      departureTimeStr: routeObj.departure,
-      routeName: routeObj.name,
-      routeSummary: routeObj.transitGuideText || routeObj.summary,
-      targetTimestampMs: targetMs,
-      trigger15mMs: min15Ms,
-      trigger5mMs: min5Ms,
-      sent15m: nowMs >= min15Ms,
-      sent5m: nowMs >= min5Ms,
-      sent0m: nowMs >= targetMs
-    });
-
-    activeScheduledAlertId = newId;
-    localStorage.setItem('homeway.fcm.alertId', activeScheduledAlertId);
-    updateFcmUiBadges('잠금화면 15분(3회)·5분(5회)·정시(5회) 푸시 예약됨 ✓', true);
-    toast('🔔 잠금화면 백그라운드 푸시(노랑 3회 · 빨강 5회 진동)가 예약되었습니다!');
-  } catch (err) {
-    console.warn('Firestore 알림 예약 실패:', err);
-    updateFcmUiBadges('Firestore 예약 오류 (보안 규칙 확인)', false);
-  }
-}
-
-async function cancelBackgroundFcmAlerts() {
-  if (window.FirebasePushBridge && activeScheduledAlertId) {
-    try {
-      await window.FirebasePushBridge.cancelScheduledAlert(activeScheduledAlertId);
-    } catch {}
-  }
-  activeScheduledAlertId = '';
-  localStorage.removeItem('homeway.fcm.alertId');
-  updateFcmUiBadges('백그라운드 푸시 예약 해제됨', false);
-}
-
 /* ───────────── 사용자 터치 시 모바일 진동 엔진 사전 활성화 ───────────── */
 function unlockVibrationEngine() {
   if ('vibrate' in navigator) {
@@ -808,17 +606,16 @@ function unlockVibrationEngine() {
 }
 document.addEventListener('pointerdown', unlockVibrationEngine, { passive: true });
 
-/* ───────────── 무조건 실행되는 3회(노랑) / 5회(빨강) 강제 진동 실행기 ───────────── */
+/* ───────────── 3회(노랑) / 5회(빨강) 진동 실행기 ───────────── */
 let activeVibrateTimers = [];
 
 function triggerGuaranteedVibration(stage) {
   activeVibrateTimers.forEach(id => clearTimeout(id));
   activeVibrateTimers = [];
 
-  // 노란색(yellow): 정확히 3번 진동 / 빨간색(red, board): 정확히 5번 진동
   const pulseCount = (stage === 'yellow') ? 3 : 5;
-  const pulseMs = 420; // 1회 진동 길이 (ms)
-  const gapMs = 200;   // 진동 간격 (ms)
+  const pulseMs = 420;
+  const gapMs = 200;
 
   const pattern = [];
   for (let i = 0; i < pulseCount; i++) {
@@ -832,7 +629,6 @@ function triggerGuaranteedVibration(stage) {
       navigator.vibrate(pattern);
     } catch {}
 
-    // 일부 안드로이드 브라우저에서 긴 배열을 1회만 울리는 현상을 차단하기 위한 개별 펄스 강제 보강
     for (let i = 1; i < pulseCount; i++) {
       const delay = i * (pulseMs + gapMs);
       const tId = setTimeout(() => {
@@ -847,7 +643,6 @@ function triggerGuaranteedVibration(stage) {
   return pattern;
 }
 
-/* ───────────── 상태 전환(초록→노랑→빨강→탑승) 진동·알림음·배너 실행기 ───────────── */
 function playAlertBeep(stage) {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -875,29 +670,18 @@ function playAlertBeep(stage) {
 }
 
 window.triggerStageFeedback = function(stage, title, body) {
-  // 1. 노란색 3번 / 빨간색 5번 무조건 진동 실행
   const vibratePattern = triggerGuaranteedVibration(stage);
-
-  // 2. 알림음 동일 횟수(3회 / 5회) 실행
   playAlertBeep(stage);
 
-  // 3. 상단/잠금화면 시스템 알림 배너 표시
   if ('Notification' in window && Notification.permission === 'granted') {
-    const options = {
-      body,
-      tag: 'homeway-last-train-alert',
-      renotify: true,
-      requireInteraction: true,
-      vibrate: vibratePattern,
-      data: { stage }
-    };
-    if (swRegistration && swRegistration.showNotification) {
-      swRegistration.showNotification(title, options).catch(() => {});
-    } else {
-      try {
-        new Notification(title, options);
-      } catch {}
-    }
+    try {
+      new Notification(title, {
+        body,
+        tag: 'homeway-last-train-alert',
+        renotify: true,
+        vibrate: vibratePattern
+      });
+    } catch {}
   }
 };
 
@@ -929,7 +713,6 @@ function getNowTimeStr() {
   return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 }
 
-/* ───────────── 실제 현재 시각(new Date()) 기준 목표 시각까지 남은 시간 계산 ───────────── */
 function calcRemainingFromRealNow(targetTimeStr) {
   const now = new Date();
   const nowTotalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
@@ -954,7 +737,6 @@ function formatDurationKorean(totalMin) {
   return `${m}분`;
 }
 
-/* ───────────── 좌표 기반 거리 계산 (Haversine) ───────────── */
 function calcDistanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const toRad = d => (d * Math.PI) / 180;
@@ -965,7 +747,6 @@ function calcDistanceMeters(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/* ───────────── 역명·장소명 중복 '역' 방지 유틸리티 ───────────── */
 function cleanPlaceName(name) {
   if (!name) return '';
   return String(name).trim().replace(/역{2,}/g, '역');
@@ -1283,7 +1064,6 @@ const SUBWAY_LINES = {
   '신림선': ['샛강역','서울지방병무청역','보라매역','신림역','관악산역']
 };
 
-/* ───────────── 서울시 주요 간선·지선·심야 버스 노선 네트워크 ───────────── */
 const SEOUL_BUS_ROUTES = [
   { routeNm: '470번', isNight: false, stops: ['디지털미디어시티역', '홍대입구역', '신촌역', '충정로역', '서울역', '명동역', '종각역', '을지로입구역', '신사역', '논현역', '신논현역', '강남역', '양재역'] },
   { routeNm: '472번', isNight: false, stops: ['신촌역', '이대역', '광화문역', '을지로입구역', '약수역', '압구정역', '강남구청역', '선정릉역', '강남역'] },
@@ -1334,7 +1114,6 @@ function findNearestGraphStation(lat, lng) {
   return best;
 }
 
-/* ───────────── 서울 버스 노선망 그래프 최단 탐색 ───────────── */
 function computeExactBusRoute(startStName, endStName, isNightTime) {
   const start = normStationKey(startStName);
   const end = normStationKey(endStName);
@@ -1705,7 +1484,6 @@ function toast(t) {
 
 if ($('depTime')) $('depTime').value = getNowTimeStr();
 
-/* ───────────── 빠른 시각 버튼 (다음 도착 / 22시 / 00시 이후) ───────────── */
 $('btnNextSchedule')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
@@ -1727,7 +1505,6 @@ $('setNowBtn')?.addEventListener('click', () => {
   toast(`현재 시각(${$('depTime').value}) 기준으로 경로를 재계산합니다.`);
 });
 
-/* ───────────── 공공데이터포털 서울특별시 대중교통환승경로 조회 API ───────────── */
 function parseSeoulTransitResponse(rawText) {
   if (!rawText) return [];
   const trimmed = rawText.trim();
@@ -1827,7 +1604,6 @@ async function callSeoulTransitEndpoint(endpointName, sx, sy, ex, ey) {
   return parsed;
 }
 
-/* ───────────── 카카오 로컬 API 기반 실제 주변 버스정류소 조회 (HTTPS 직통) ───────────── */
 async function fetchNearestBusStopViaKakao(lat, lng, fallbackLabel) {
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
@@ -1864,7 +1640,6 @@ function classifyTransitLegMode(routeNm) {
   return 'bus';
 }
 
-/* ───────────── 카카오모빌리티 실제 도로 좌표 조회 ───────────── */
 async function getKakaoTaxiRoute(ox, oy, dx, dy) {
   const key = `${Number(ox).toFixed(4)},${Number(oy).toFixed(4)}->${Number(dx).toFixed(4)},${Number(dy).toFixed(4)}`;
   if (roadSegmentCache.has(key)) return roadSegmentCache.get(key);
@@ -1899,7 +1674,6 @@ async function getKakaoTaxiRoute(ox, oy, dx, dy) {
   }
 }
 
-/* ───────────── 다중 지점을 잇는 실제 서울 도로·보행로 좌표 생성 ───────────── */
 async function buildRealPathCoords(pointsLatLng) {
   if (!pointsLatLng || pointsLatLng.length < 2) return pointsLatLng;
   const fullCoords = [];
@@ -1933,7 +1707,6 @@ async function buildRealPathCoords(pointsLatLng) {
   return fullCoords.length >= 2 ? fullCoords : pointsLatLng;
 }
 
-/* ───────────── 카카오 로컬 장소 & 좌표 변환 API ───────────── */
 async function resolveSinglePlace(query) {
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
@@ -1980,7 +1753,6 @@ async function resolveCurrentGpsPlace() {
   });
 }
 
-/* ───────────── 원탭 귀가 ───────────── */
 async function triggerOneTapReturn(destObj, idx) {
   activeDestination = idx;
   renderSaved();
@@ -2066,7 +1838,6 @@ async function searchPlaces(id) {
   }
 }
 
-/* ───────────── 서울시 실시간 지하철 도착 예정 초(barvlDt) 파싱 ───────────── */
 async function getSeoulSubwayLive(stationName) {
   const cleanName = cleanPlaceName(stationName).replace(/역+$/, '').trim();
   if (!cleanName) return [];
@@ -2096,7 +1867,6 @@ async function getSeoulSubwayLive(stationName) {
   });
 }
 
-/* ───────────── 대중교통이 출발 정류장·역에 도착하는 시각 산출 ───────────── */
 function computeVehicleArrivalTime({ baseServiceMin, nowServiceMin, isNowQuery, walkMin, liveArrivals, isNightTime, mode = 'subway' }) {
   if (mode === 'subway' && isNowQuery && liveArrivals && liveArrivals.length > 0) {
     const catchable = liveArrivals
@@ -2140,7 +1910,6 @@ function computeVehicleArrivalTime({ baseServiceMin, nowServiceMin, isNowQuery, 
   };
 }
 
-/* ───────────── 2번째 이후 모든 환승 구간 순차 막차 종료 검사 & 마지막 수단(도보/택시) 전환 ───────────── */
 async function evaluateMultiTransferLastTrainFallback({
   depTimeStr,
   sName,
@@ -2345,7 +2114,6 @@ async function evaluateMultiTransferLastTrainFallback({
   return [];
 }
 
-/* ───────────── 경로 객체를 앱 카드 모델로 변환 ───────────── */
 async function convertApiPathToRouteCard({
   apiPath,
   categoryType,
@@ -2523,7 +2291,6 @@ async function convertApiPathToRouteCard({
   }];
 }
 
-/* ───────────── 서울 전용 실제 대중교통 경로 탐색 메인 엔진 (5대 유형 보장) ───────────── */
 async function runSeoulSearch() {
   if (!places.start || !places.end) return;
 
@@ -2578,7 +2345,6 @@ async function runSeoulSearch() {
     const sGraphSt = findNearestGraphStation(places.start.y, places.start.x);
     const eGraphSt = findNearestGraphStation(places.end.y, places.end.x);
 
-    // 1. 지하철 경로
     for (let i = 0; i < Math.min(2, realTransit.subwayPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.subwayPaths[i],
@@ -2607,7 +2373,6 @@ async function runSeoulSearch() {
       }
     }
 
-    // 2. 버스 경로 (거리비례제 적용)
     for (let i = 0; i < Math.min(2, realTransit.busPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busPaths[i],
@@ -2675,7 +2440,6 @@ async function runSeoulSearch() {
       }
     }
 
-    // 3. 지하철+버스 복합 환승 경로 (통합환승 거리비례제)
     for (let i = 0; i < Math.min(2, realTransit.busNSubPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busNSubPaths[i],
@@ -2729,7 +2493,6 @@ async function runSeoulSearch() {
       }
     }
 
-    // 4. 대중교통+택시
     if (!builtRoutes.some(r => r.category === 'hybrid') && budget > 0) {
       let hubPoint = places.via;
       let firstTransitLeg = null;
@@ -2837,7 +2600,6 @@ async function runSeoulSearch() {
       }
     }
 
-    // 5. 출발지부터 직행 택시
     const taxiDispatchWait = isNightTime ? 6 : 3;
     const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
     const taxiPickupTimeStr = minToTime(taxiPickupServiceMin);
@@ -2922,7 +2684,6 @@ function applyConditionAndRender() {
   renderStrategyCards();
 }
 
-/* ───────────── 5대 핵심 카테고리 균형 큐레이션 ───────────── */
 function curateRecommendedRoutes(pool, cond) {
   if (!pool || pool.length === 0) return [];
   const budget = Number($('budget')?.value ?? 30000);
@@ -2983,7 +2744,6 @@ function createLineBadgeElement(badgeInfo) {
   return node('span', badgeInfo.label, clsMap[badgeInfo.type] || 'line-badge-subway');
 }
 
-/* ───────────── 홈 히어로 카드 '지금 시각 기준 남은 시간' 실시간 갱신 ───────────── */
 function updateHomeHeroCountdown() {
   if (!selected || !$('homeRemain')) return;
   const { remainingMin } = calcRemainingFromRealNow(selected.departure);
@@ -3124,7 +2884,6 @@ document.querySelectorAll('#conditionBar .cond-btn').forEach(btn => {
   });
 });
 
-/* ───────────── 마크다운 텍스트 안전 변환기 ───────────── */
 function renderFormattedBotText(container, rawText) {
   const escaped = String(rawText || '')
     .replace(/&/g, '&amp;')
@@ -3137,7 +2896,6 @@ function renderFormattedBotText(container, rawText) {
   container.innerHTML = formatted;
 }
 
-/* ───────────── 내장 스마트 로컬 경로·막차 응답기 ───────────── */
 async function generateLocalSmartReply(userText) {
   const routeMatch = userText.match(/([가-힣A-Za-z0-9]+역?)\s*(?:에서|부터)\s*([가-힣A-Za-z0-9]+역?)\s*(?:까지|가는|행)/);
   if (routeMatch) {
@@ -3162,7 +2920,6 @@ async function generateLocalSmartReply(userText) {
   return `현재 **[${sName} ➔ ${eName}]** 기준으로 지하철 실시간 운임 및 버스·환승 거리비례 요금을 계산할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
 }
 
-/* ───────────── Gemini AI 챗봇 ───────────── */
 const chatHistory = [];
 let isChatSending = false;
 
@@ -3416,7 +3173,6 @@ $('chatInput')?.addEventListener('keydown', e => {
   }
 });
 
-/* ───────────── 마이탭 설정 저장 / 편집 / 초기화 & 도보 거리 연동 ───────────── */
 $('myMaxWalk')?.addEventListener('change', e => {
   syncMaxWalkSelectors(e.target.value);
   runSeoulSearch();
@@ -3489,7 +3245,6 @@ $('reset')?.addEventListener('click', () => {
   toast('초기 설정으로 되돌아갔습니다.');
 });
 
-/* ───────────── 지도 렌더링 (버스 = 파란색, 지하철 = 초록색) ───────────── */
 function buildHomeMap() {
   if (!homeLeaflet && typeof L !== 'undefined') {
     homeLeaflet = L.map('homeMap', {
@@ -3691,7 +3446,6 @@ $('homeSwap')?.addEventListener('click', () => {
   runSeoulSearch();
 });
 
-/* ───────────── Screen Wake Lock API (타이머 작동 중 화면 자동 꺼짐 방지) ───────────── */
 let wakeLockSentinel = null;
 
 function updateWakeLockBadge(text) {
@@ -3707,13 +3461,13 @@ async function requestScreenWakeLock() {
   try {
     if (wakeLockSentinel && !wakeLockSentinel.released) return;
     wakeLockSentinel = await navigator.wakeLock.request('screen');
-    updateWakeLockBadge('🔆 화면 꺼짐 방지 작동 중 (자동 잠금 해제)');
+    updateWakeLockBadge('🔆 화면 꺼짐 방지 작동 중');
     wakeLockSentinel.addEventListener('release', () => {
       if (!$('timerDialog')?.open) {
         updateWakeLockBadge('🔆 화면 꺼짐 방지 해제됨');
       }
     });
-  } catch (err) {
+  } catch {
     updateWakeLockBadge('⚠️ 배터리 절전 모드 등으로 화면 꺼짐 방지가 제한되었습니다');
   }
 }
@@ -3735,7 +3489,6 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-/* ───────────── 풀스크린 마지노선 알림 타이머 (노랑 3회 · 빨강 5회 강제 진동) ───────────── */
 let timerInterval = null;
 let lastTimerStage = null;
 
@@ -3763,13 +3516,13 @@ function refreshFullscreenTimer() {
       window.triggerStageFeedback(
         'yellow',
         '🟡 출발 15분 전 (주의 · 진동 3번)',
-        `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다. 이동할 준비를 하세요!`
+        `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다.`
       );
     } else if (currentStage === 'red') {
       window.triggerStageFeedback(
         'red',
         '🔴 출발 5분 전 (긴급 · 진동 5번)',
-        `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다! 지금 바로 이동하세요!`
+        `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다!`
       );
     } else if (currentStage === 'board') {
       window.triggerStageFeedback(
@@ -3810,12 +3563,9 @@ function closeFullscreenTimerWindowOnly() {
   timerInterval = null;
   releaseScreenWakeLock();
   $('timerDialog')?.close();
-  if (activeScheduledAlertId) {
-    toast('🔔 창을 닫아도 잠금화면 백그라운드 푸시(노랑 3회·빨강 5회 진동) 예약은 유지됩니다.');
-  }
 }
 
-async function cancelAllAlertsAndCloseTimer() {
+function cancelAllAlertsAndCloseTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
   lastTimerStage = null;
@@ -3825,9 +3575,8 @@ async function cancelAllAlertsAndCloseTimer() {
     try { navigator.vibrate(0); } catch {}
   }
   releaseScreenWakeLock();
-  await cancelBackgroundFcmAlerts();
   $('timerDialog')?.close();
-  toast('마지노선 알림 및 잠금화면 푸시 예약이 해제되었습니다.');
+  toast('마지노선 알림이 해제되었습니다.');
 }
 
 $('navigate')?.addEventListener('click', () => {
@@ -3837,7 +3586,6 @@ $('navigate')?.addEventListener('click', () => {
   refreshFullscreenTimer();
   $('timerDialog')?.showModal();
   requestScreenWakeLock();
-  scheduleBackgroundFcmAlerts(selected);
   clearInterval(timerInterval);
   timerInterval = setInterval(refreshFullscreenTimer, 1000);
 });
@@ -3881,7 +3629,6 @@ window.addEventListener('load', () => {
     if ($('endResolved')) $('endResolved').textContent = `✓ ${places.end.name} 선택됨`;
     if (params.get('t') && $('depTime')) $('depTime').value = params.get('t');
   }
-  initFirebaseWebPush();
   buildHomeMap();
   runSeoulSearch();
 });
