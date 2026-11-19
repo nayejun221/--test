@@ -244,7 +244,7 @@ color: #000;
 .screen-middle-big { font-size: 76px; font-weight: 900; line-height: 1.05; letter-spacing: -3px; margin: 10px 0; word-break: keep-all; }
 .screen-middle-big.compact { font-size: 58px; letter-spacing: -2px; }
 .screen-middle-line3 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-.timer-rule-hint { font-size: 12px; font-weight: 700; opacity: 0.85; margin-top: 8px; padding: 5px 12px; border-radius: 12px; background: rgba(0,0,0,0.12); }
+.timer-rule-hint { font-size: 12px; font-weight: 700; opacity: 0.9; margin-top: 8px; padding: 6px 13px; border-radius: 12px; background: rgba(0,0,0,0.14); }
 .timer-badge-stack { display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .timer-wakelock-badge { font-size: 11px; font-weight: 800; padding: 5px 12px; border-radius: 999px; background: rgba(0,0,0,0.18); display: inline-flex; align-items: center; gap: 5px; }
 .timer-bottom-bar { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; }
@@ -377,7 +377,7 @@ color: #000;
 </div>
 
 <div class="panel detail" id="selectedDetail"></div>
-<button class="primary" id="navigate" type="button">이 전략으로 마지노선 알림 켜기 (타이머 + 백그라운드 푸시) <span>→</span></button>
+<button class="primary" id="navigate" type="button">이 전략으로 마지노선 알림 켜기 (노랑 3회·빨강 5회 진동) <span>→</span></button>
 <div class="action-row">
 <button type="button" class="btn-sub" id="btnShareQr">📱 QR 코드 경로 공유</button>
 <button type="button" class="btn-sub" id="btnOpenKakaoMap">🗺️ 카카오맵 길찾기</button>
@@ -432,15 +432,15 @@ color: #000;
 
 <div class="panel">
 <div class="between">
-<h3 style="margin:0">🔔 잠금화면 백그라운드 푸시 (FCM)</h3>
+<h3 style="margin:0">🔔 잠금화면 백그라운드 푸시 &amp; 강제 진동</h3>
 <span class="badge" id="fcmStatusBadge">연결 중...</span>
 </div>
 <p class="micro" style="margin:8px 0 10px">
-마지노선 알림을 켜면 화면을 잠그거나 브라우저를 닫아도 <b>15분 전(주의) · 5분 전(긴급) · 탑승 시각</b>에 잠금화면 알림과 진동이 울립니다.
+마지노선 알림을 켜면 <b>🟡 15분 전(주의) 진동 3번 · 🔴 5분 전(긴급) &amp; 정시 진동 5번</b>이 화면 상태와 관계없이 무조건 울립니다.
 </p>
 <div class="action-row" style="margin-top:0">
 <button type="button" class="btn-sub" id="btnEnableFcm">🔔 푸시 권한 &amp; FCM 토큰 등록</button>
-<button type="button" class="btn-sub" id="btnTestPushLocal">📳 진동·알림 테스트</button>
+<button type="button" class="btn-sub" id="btnTestPushLocal">📳 노랑 3번·빨강 5번 진동 테스트</button>
 </div>
 </div>
 
@@ -543,7 +543,7 @@ color: #000;
 <div class="screen-middle-line1" id="timerLine1">지금 시각 기준 출발까지</div>
 <div class="screen-middle-big" id="timerBig">1시간</div>
 <div class="screen-middle-line3" id="timerLine3">아직 괜찮아요</div>
-<div class="timer-rule-hint" id="timerRuleHint">⏱️ 색 변경 시 진동·알림 · 🟢 16분 이상 · 🟡 6~15분 · 🔴 5분 이하</div>
+<div class="timer-rule-hint" id="timerRuleHint">📳 색상 전환 시 강제 진동 · 🟡 노랑(6~15분): 3번 · 🔴 빨강(5분 이하): 5번</div>
 </div>
 <div class="timer-bottom-bar">
 <div class="timer-badge-stack">
@@ -773,7 +773,7 @@ async function scheduleBackgroundFcmAlerts(routeObj) {
   const nowMs = Date.now();
 
   if (!window.FirebasePushBridge || !token) {
-    updateFcmUiBadges('화면 켜짐 중 진동·알림 작동', Boolean(token));
+    updateFcmUiBadges('화면 켜짐 중 강제 진동·알림 작동', Boolean(token));
     return;
   }
 
@@ -798,8 +798,8 @@ async function scheduleBackgroundFcmAlerts(routeObj) {
 
     activeScheduledAlertId = newId;
     localStorage.setItem('homeway.fcm.alertId', activeScheduledAlertId);
-    updateFcmUiBadges('잠금화면 15분·5분·정시 푸시 예약됨 ✓', true);
-    toast('🔔 잠금화면 백그라운드 푸시(15분 전 · 5분 전 · 탑승 시각)가 예약되었습니다!');
+    updateFcmUiBadges('잠금화면 15분(3회)·5분(5회)·정시(5회) 푸시 예약됨 ✓', true);
+    toast('🔔 잠금화면 백그라운드 푸시(노랑 3회 · 빨강 5회 진동)가 예약되었습니다!');
   } catch (err) {
     console.warn('Firestore 알림 예약 실패:', err);
     updateFcmUiBadges('Firestore 예약 오류 (보안 규칙 확인)', false);
@@ -817,51 +817,97 @@ async function cancelBackgroundFcmAlerts() {
   updateFcmUiBadges('백그라운드 푸시 예약 해제됨', false);
 }
 
+/* ───────────── 사용자 터치 시 모바일 진동 엔진 사전 활성화 ───────────── */
+function unlockVibrationEngine() {
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate(1);
+    } catch {}
+  }
+}
+document.addEventListener('pointerdown', unlockVibrationEngine, { passive: true });
+
+/* ───────────── 무조건 실행되는 3회(노랑) / 5회(빨강) 강제 진동 실행기 ───────────── */
+let activeVibrateTimers = [];
+
+function triggerGuaranteedVibration(stage) {
+  activeVibrateTimers.forEach(id => clearTimeout(id));
+  activeVibrateTimers = [];
+
+  // 노란색(yellow): 정확히 3번 진동 / 빨간색(red, board): 정확히 5번 진동
+  const pulseCount = (stage === 'yellow') ? 3 : 5;
+  const pulseMs = 420; // 1회 진동 길이 (ms)
+  const gapMs = 200;   // 진동 간격 (ms)
+
+  const pattern = [];
+  for (let i = 0; i < pulseCount; i++) {
+    pattern.push(pulseMs);
+    if (i < pulseCount - 1) pattern.push(gapMs);
+  }
+
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate(0);
+      navigator.vibrate(pattern);
+    } catch {}
+
+    // 일부 안드로이드 브라우저에서 긴 배열을 1회만 울리는 현상을 차단하기 위한 개별 펄스 강제 보강
+    for (let i = 1; i < pulseCount; i++) {
+      const delay = i * (pulseMs + gapMs);
+      const tId = setTimeout(() => {
+        try {
+          navigator.vibrate(pulseMs);
+        } catch {}
+      }, delay);
+      activeVibrateTimers.push(tId);
+    }
+  }
+
+  return pattern;
+}
+
 /* ───────────── 상태 전환(초록→노랑→빨강→탑승) 진동·알림음·배너 실행기 ───────────── */
 function playAlertBeep(stage) {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
-    const pulses = stage === 'red' || stage === 'board' ? [0, 0.22, 0.44] : [0, 0.25];
-    const freq = stage === 'red' || stage === 'board' ? 880 : 660;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
-    pulses.forEach(offset => {
+    const count = (stage === 'yellow') ? 3 : 5;
+    const freq = (stage === 'yellow') ? 660 : 880;
+
+    for (let i = 0; i < count; i++) {
+      const offset = i * 0.25;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, ctx.currentTime + offset);
-      gain.gain.setValueAtTime(0.18, ctx.currentTime + offset);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.16);
+      gain.gain.setValueAtTime(0.22, ctx.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.18);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(ctx.currentTime + offset);
-      osc.stop(ctx.currentTime + offset + 0.17);
-    });
+      osc.stop(ctx.currentTime + offset + 0.19);
+    }
   } catch {}
 }
 
 window.triggerStageFeedback = function(stage, title, body) {
-  const vibratePatterns = {
-    yellow: [300, 150, 300],
-    red: [500, 200, 500, 200, 500],
-    board: [800, 200, 800, 200, 800]
-  };
-  if ('vibrate' in navigator) {
-    try {
-      navigator.vibrate(vibratePatterns[stage] || [300, 150, 300]);
-    } catch {}
-  }
+  // 1. 노란색 3번 / 빨간색 5번 무조건 진동 실행
+  const vibratePattern = triggerGuaranteedVibration(stage);
 
+  // 2. 알림음 동일 횟수(3회 / 5회) 실행
   playAlertBeep(stage);
 
+  // 3. 상단/잠금화면 시스템 알림 배너 표시
   if ('Notification' in window && Notification.permission === 'granted') {
     const options = {
       body,
       tag: 'homeway-last-train-alert',
       renotify: true,
       requireInteraction: true,
-      vibrate: vibratePatterns[stage] || [300, 150, 300],
+      vibrate: vibratePattern,
       data: { stage }
     };
     if (swRegistration && swRegistration.showNotification) {
@@ -874,15 +920,27 @@ window.triggerStageFeedback = function(stage, title, body) {
   }
 };
 
-$('btnEnableFcm')?.addEventListener('click', () => ensureFcmPushToken(true));
+$('btnEnableFcm')?.addEventListener('click', () => {
+  unlockVibrationEngine();
+  ensureFcmPushToken(true);
+});
+
 $('btnTestPushLocal')?.addEventListener('click', () => {
+  unlockVibrationEngine();
   ensureFcmPushToken(true).then(() => {
     window.triggerStageFeedback(
       'yellow',
-      '🟡 [테스트] 출발 15분 전 주의 알림',
-      `${selected?.boardStation || '출발역'} (${selected?.departure || '23:50'}) 슬슬 이동할 준비를 하세요!`
+      '🟡 [테스트] 노란색 주의 알림 (진동 3번)',
+      `${selected?.boardStation || '출발역'} (${selected?.departure || '23:50'}) 노란색 전환 시 진동이 3번 울립니다.`
     );
-    toast('📳 진동·알림음 및 알림 배너 테스트가 실행되었습니다.');
+    toast('📳 노란색(진동 3번) 실행! 3.5초 뒤 빨간색(진동 5번)도 이어서 울립니다.');
+    setTimeout(() => {
+      window.triggerStageFeedback(
+        'red',
+        '🔴 [테스트] 빨간색 긴급 알림 (진동 5번)',
+        `${selected?.boardStation || '출발역'} (${selected?.departure || '23:50'}) 빨간색 전환 시 진동이 5번 울립니다.`
+      );
+    }, 3500);
   });
 });
 
@@ -3720,7 +3778,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-/* ───────────── 풀스크린 마지노선 알림 타이머 (실제 현재 시각 new Date() 기준 + 상태 전환 진동·알림) ───────────── */
+/* ───────────── 풀스크린 마지노선 알림 타이머 (노랑 3회 · 빨강 5회 강제 진동) ───────────── */
 let timerInterval = null;
 let lastTimerStage = null;
 
@@ -3747,19 +3805,19 @@ function refreshFullscreenTimer() {
     if (currentStage === 'yellow') {
       window.triggerStageFeedback(
         'yellow',
-        '🟡 출발 15분 전 (주의)',
+        '🟡 출발 15분 전 (주의 · 진동 3번)',
         `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다. 이동할 준비를 하세요!`
       );
     } else if (currentStage === 'red') {
       window.triggerStageFeedback(
         'red',
-        '🔴 출발 5분 전 (긴급)',
+        '🔴 출발 5분 전 (긴급 · 진동 5번)',
         `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다! 지금 바로 이동하세요!`
       );
     } else if (currentStage === 'board') {
       window.triggerStageFeedback(
         'board',
-        '🚨 정류장·역 도착! 지금 탑승하세요',
+        '🚨 정류장·역 도착! 지금 탑승하세요 (진동 5번)',
         `${selected.boardStation} (${selected.departure}) 탑승 시각입니다!`
       );
     }
@@ -3796,7 +3854,7 @@ function closeFullscreenTimerWindowOnly() {
   releaseScreenWakeLock();
   $('timerDialog')?.close();
   if (activeScheduledAlertId) {
-    toast('🔔 창을 닫아도 잠금화면 백그라운드 푸시 예약은 유지됩니다.');
+    toast('🔔 창을 닫아도 잠금화면 백그라운드 푸시(노랑 3회·빨강 5회 진동) 예약은 유지됩니다.');
   }
 }
 
@@ -3804,6 +3862,11 @@ async function cancelAllAlertsAndCloseTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
   lastTimerStage = null;
+  activeVibrateTimers.forEach(id => clearTimeout(id));
+  activeVibrateTimers = [];
+  if ('vibrate' in navigator) {
+    try { navigator.vibrate(0); } catch {}
+  }
   releaseScreenWakeLock();
   await cancelBackgroundFcmAlerts();
   $('timerDialog')?.close();
@@ -3812,6 +3875,7 @@ async function cancelAllAlertsAndCloseTimer() {
 
 $('navigate')?.addEventListener('click', () => {
   if (!selected) return;
+  unlockVibrationEngine();
   lastTimerStage = null;
   refreshFullscreenTimer();
   $('timerDialog')?.showModal();
