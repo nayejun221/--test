@@ -191,7 +191,7 @@ body.light-theme .grounding-link{color:#2563eb}
 .chat-input-area button:active{transform:scale(0.96);opacity:0.9}
 .chat-input-area button:disabled{opacity:0.5;cursor:default}
 
-.time-picker-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+.time-picker-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 12px}
 .time-picker-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .time-picker-head label{margin:0;color:var(--yellow);font-weight:800;font-size:12px}
 .now-reset-btn{flex-shrink:0;background:var(--yellow);color:#14170a;border:0;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:5px;box-shadow:0 3px 10px rgba(255,185,24,0.35);transition:transform 0.15s, filter 0.15s}
@@ -264,7 +264,6 @@ color: #000;
 
 <!-- 홈 탭 -->
 <section class="screen on" id="home">
-<h2>서울시 전용 초고속 길찾기</h2>
 <div class="time-picker-box">
 <div class="time-picker-head">
 <label for="depTime">⏱️ 조회 기준 시각 (경로 탐색 기준)</label>
@@ -667,10 +666,6 @@ function formatStationName(name) {
 const metroFareCache = new Map();
 let lastMetroApiUsed = false;
 
-/**
- * 서울교통공사 실시간운임정보 API 조회 (https://apis.data.go.kr/B553766/fare2/getRltmFare)
- * 직접 요청 + 다중 CORS 프록시를 병렬 실행하여 응답 속도 및 성공률 극대화
- */
 async function fetchSeoulMetroRealtimeFare(fromStation, toStation) {
   const sClean = cleanPlaceName(fromStation).replace(/역+$/, '').trim();
   const eClean = cleanPlaceName(toStation).replace(/역+$/, '').trim();
@@ -759,11 +754,6 @@ async function fetchSeoulMetroRealtimeFare(fromStation, toStation) {
   return null;
 }
 
-/**
- * 구간별 실제 이동거리(km) 정밀 산출
- * - 지하철: 역간 실제 노선 궤도 곡률(직선 × 1.32) 반영
- * - 버스: 도로 주행 곡률(직선 × 1.38) 반영
- */
 function estimateLegDistanceKm(leg) {
   const isSub = classifyTransitLegMode(leg.routeNm) === 'subway';
   const curveFactor = isSub ? 1.32 : 1.38;
@@ -788,12 +778,6 @@ function estimateLegDistanceKm(leg) {
   return 4.0;
 }
 
-/**
- * 수도권 거리비례제 추가 요금 계산기
- * - 기본거리 10km 이내: 추가 0원
- * - 10km 초과 ~ 50km 이내: 5km당 +100원
- * - 50km 초과: 8km당 +100원
- */
 function calcDistanceSurcharge(distanceKm) {
   let extra = 0;
   if (distanceKm > 10) {
@@ -807,9 +791,6 @@ function calcDistanceSurcharge(distanceKm) {
   return extra;
 }
 
-/**
- * 수도권 대중교통 실시간 운임 · 버스 거리비례제 · 통합환승할인제 통합 계산 엔진
- */
 async function calculateDetailedTransitFare(legs) {
   if (!legs || legs.length === 0) {
     return {
@@ -834,7 +815,6 @@ async function calculateDetailedTransitFare(legs) {
   const hasShinbundang = legs.some(l => /신분당/i.test(l.routeNm));
   const isTransfer = legs.length >= 2;
 
-  // 1) 지하철 단독 이용 (환승 포함)
   if (hasSubway && !hasBus) {
     const firstSub = legs[0];
     const lastSub = legs[legs.length - 1];
@@ -873,7 +853,6 @@ async function calculateDetailedTransitFare(legs) {
     };
   }
 
-  // 2) 버스 단독 (단일 노선) — 버스 거리비례제 적용 (10km 초과 시 5km당 +100원)
   if (hasBus && !hasSubway && !isTransfer) {
     const busBase = hasNightBus ? 2500 : 1500;
     const busDistExtra = calcDistanceSurcharge(totalDistanceKm);
@@ -894,13 +873,11 @@ async function calculateDetailedTransitFare(legs) {
     };
   }
 
-  // 3) 버스↔버스 환승 또는 지하철↔버스 통합환승 (수도권 통합환승할인 거리비례제)
   const highestBaseFare = hasNightBus ? 2500 : (hasSubway ? 1550 : 1500);
   const distanceExtra = calcDistanceSurcharge(totalDistanceKm);
   const sbdExtra = hasShinbundang ? 1000 : 0;
   const totalTransferFare = highestBaseFare + distanceExtra + sbdExtra;
 
-  // 환승 미적용 시 개별 탑승 합계 대비 절약된 기본요금 계산
   const sumIndividualBases = legs.reduce((acc, l) => {
     if (/^N\d+/i.test(l.routeNm)) return acc + 2500;
     return acc + (classifyTransitLegMode(l.routeNm) === 'subway' ? 1550 : 1500);
@@ -2126,7 +2103,6 @@ async function convertApiPathToRouteCard({
     }
   }
 
-  // 서울교통공사 실시간 운임정보 API + 버스·지하철 거리비례제 + 통합환승할인 정밀 산출
   const fareCalc = await calculateDetailedTransitFare(legs);
 
   const transfers = Math.max(0, legs.length - 1);
