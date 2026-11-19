@@ -87,11 +87,12 @@ body.light-theme .strategy.warning{background:#fef2f2}
 .strategy h3{margin:0;font-size:15px;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
 .strategy .departure{font-size:22px;font-weight:750;margin-top:10px;letter-spacing:-1px}
 .strategy .departure small{font-size:11px;font-weight:400;color:var(--muted)}
-.strategy .fare{font-size:12px;margin-top:6px;color:var(--text-sub);line-height:1.55}
-.fare-detail-chip{display:inline-block;margin-top:4px;font-size:10px;padding:2px 7px;border-radius:5px;background:rgba(123,211,255,0.12);color:#7bd3ff;font-weight:600}
-body.light-theme .fare-detail-chip{background:#e0f2fe;color:#0369a1}
+.strategy .fare{font-size:13px;font-weight:700;margin-top:8px;color:var(--text);line-height:1.55}
+.fare-detail-box{margin-top:6px;padding:7px 9px;border-radius:8px;background:rgba(123,211,255,0.1);border:1px solid rgba(123,211,255,0.22);font-size:11px;color:#8dd8ff;line-height:1.5;font-weight:600}
+body.light-theme .fare-detail-box{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+.transfer-discount-pill{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:4px;background:#064e3b;color:#6ee7b7;font-size:10px;font-weight:700}
+body.light-theme .transfer-discount-pill{background:#d1fae5;color:#047857}
 .line-highlight-bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center}
-/* 지하철 = 초록색(#16a34a), 버스 = 파란색(#2563eb) */
 .line-badge-subway{background:#16a34a;color:#ffffff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
 .line-badge-bus{background:#2563eb;color:#ffffff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
 .line-badge-nightbus{background:#e11d48;color:#ffffff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
@@ -271,7 +272,7 @@ color: #000;
 </div>
 <div class="transit-badge">
 <span class="transit-dot"></span>
-<span id="transitBadgeText">서울교통공사 실시간 운임 · 수도권 거리비례제·환승 연동</span>
+<span id="transitBadgeText">서울교통공사 실시간운임 · 버스 거리비례·통합환승 연동</span>
 </div>
 <input id="depTime" type="time"/>
 
@@ -281,8 +282,8 @@ color: #000;
 <button type="button" id="btnAfter00Schedule">🌙 00시 이후</button>
 </div>
 
-<div class="micro" style="margin-top:8px;color:var(--muted)">
-💡 서울교통공사 실시간 운임정보 및 수도권 통합환승 거리비례제(10km 초과 시 5km당 +100원)가 반영됩니다.
+<div class="micro" style="margin-top:8px;color:var(--muted)" id="fareApiStatusLine">
+💳 지하철(1,550원~) 및 버스(1,500원~) 모두 10km 초과 시 5km당 +100원 거리비례제·통합환승할인이 적용됩니다.
 </div>
 </div>
 
@@ -301,7 +302,7 @@ color: #000;
 </div>
 
 <div class="panel home-search" id="homeSearch">
-<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">거리비례·환승 정밀운임</span></div>
+<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">실시간·거리비례·환승</span></div>
 <div id="homeAddressFields">
 <label for="start">출발지 (서울 내 역, 건물명 또는 주소)</label>
 <div class="fieldRow">
@@ -344,14 +345,14 @@ color: #000;
 </div>
 <div id="savedRoutes" style="margin-top:8px"></div>
 </div>
-<button class="primary" id="openStrategy" type="button">추천 귀가 전략 5선 및 지도 비교 <span>→</span></button>
+<button class="primary" id="openStrategy" type="button">추천 귀가 전략 5선 및 요금 상세 비교 <span>→</span></button>
 <p class="footnote" id="homeFoot">서울교통공사 실시간운임정보 · 서울시 대중교통환승경로 API · 카카오모빌리티</p>
 </section>
 
 <!-- 전략 탭 -->
 <section class="screen" id="strategy">
 <div class="location" id="strategyLocation">출발·도착지 분석 중</div>
-<div class="between micro"><span id="strategyMeta">경로를 누르면 탑승 노선과 지도가 갱신됩니다</span><span id="sortLabel">최소 시간순</span></div>
+<div class="between micro"><span id="strategyMeta">경로를 누르면 탑승 노선과 요금 내역이 갱신됩니다</span><span id="sortLabel">최소 시간순</span></div>
 
 <div class="condition-bar" id="conditionBar">
 <button type="button" class="cond-btn on" data-cond="time">⚡ 최소 시간</button>
@@ -383,25 +384,25 @@ color: #000;
 <!-- 물어보기 탭 -->
 <section class="screen" id="chat">
 <div class="between" style="flex-shrink:0;margin-bottom:6px">
-<span class="badge">✨ Gemini AI + 🚌 서울시 실시간 운임·환승 엔진</span>
+<span class="badge">✨ Gemini AI + 💳 실시간·거리비례·환승 운임 엔진</span>
 <span class="micro" id="aiStatusBadge">연동 준비 완료</span>
 </div>
-<p class="desc">경로 탐색, 거리비례·환승 요금, 막차 끊김 대안, 택시비를 바로 물어보세요.</p>
+<p class="desc">지하철 실시간 운임, 버스 거리비례제, 통합환승 할인 금액을 바로 물어보세요.</p>
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
 <div class="msg bot">안녕하세요! 서울시 심야 귀가 어시스턴트입니다. ✨
-• "서울역에서 건대입구역 가는 실제 탑승 노선과 요금 알려줘"
-• "지하철, 버스, 지하철+버스, 대중교통+택시 5가지 경로 비교해 줘"
-• "명동역에서 신림역 환승 거리비례 요금 계산해 줘"
+• "강남역에서 홍대입구역 지하철·버스 거리비례 요금 알려줘"
+• "서울역에서 잠실역 통합환승 할인 요금 계산해 줘"
+• "5가지 귀가 경로 요금과 소요시간 비교해 줘"
 무엇이든 물어보세요!</div>
 </div>
 <div class="chat-chips" id="chatQuickChips">
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 5대 경로의 지하철·버스 거리비례제 및 통합환승 요금을 상세히 비교해 줘">💳 5대 경로 거리비례·환승 요금 비교</button>
 <button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 심야 올빼미버스(N버스) 노선과 막차 시간 알려줘">🌙 올빼미버스·막차 안내</button>
-<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 경로 중 지하철, 버스, 지하철+버스, 대중교통+택시, 택시 5가지 전략의 요금과 소요시간을 비교 분석해 줘">⚡ 5대 경로·운임 비교</button>
 <button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="서울역에서 잠실역 가는 귀가 경로와 거리비례 운임 알려줘">🚌 서울역➔잠실역 검색</button>
 </div>
 <div class="chat-input-area">
-<input type="text" id="chatInput" placeholder="예: 명동역에서 신림역 경로와 요금 알려줘..." autocomplete="off"/>
+<input type="text" id="chatInput" placeholder="예: 명동역에서 신림역 경로와 거리비례 요금 알려줘..." autocomplete="off"/>
 <button type="button" id="chatSend" onclick="handleChatSend()">전송</button>
 </div>
 </div>
@@ -550,7 +551,7 @@ color: #000;
 <option selected="" value="2000">2km (도보 약 30분)</option>
 <option value="4000">4km (도보 약 60분)</option>
 </select>
-<div class="hintBox">서울교통공사 실시간 운임정보 API와 수도권 통합환승 거리비례제(10km 초과 시 5km당 +100원)를 반영하여 정확한 운임을 산출합니다.</div>
+<div class="hintBox">서울교통공사 실시간 운임정보 API와 버스·지하철 거리비례제(10km 초과 시 5km당 +100원)·통합환승할인제를 모두 반영합니다.</div>
 <button type="button" class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
 </dialog>
 
@@ -651,11 +652,24 @@ function calcDistanceMeters(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/* ───────────── 역명·장소명 중복 '역' 방지 유틸리티 ───────────── */
+function cleanPlaceName(name) {
+  if (!name) return '';
+  return String(name).trim().replace(/역{2,}/g, '역');
+}
+function formatStationName(name) {
+  if (!name) return '';
+  const cleaned = cleanPlaceName(name);
+  return cleaned.endsWith('역') ? cleaned : `${cleaned}역`;
+}
+
 /* ───────────── 서울교통공사 실시간 운임정보 API + 거리비례제·통합환승 요금 엔진 ───────────── */
 const metroFareCache = new Map();
+let lastMetroApiUsed = false;
 
 /**
  * 서울교통공사 실시간운임정보 API 조회 (https://apis.data.go.kr/B553766/fare2/getRltmFare)
+ * 직접 요청 + 다중 CORS 프록시를 병렬 실행하여 응답 속도 및 성공률 극대화
  */
 async function fetchSeoulMetroRealtimeFare(fromStation, toStation) {
   const sClean = cleanPlaceName(fromStation).replace(/역+$/, '').trim();
@@ -663,60 +677,82 @@ async function fetchSeoulMetroRealtimeFare(fromStation, toStation) {
   if (!sClean || !eClean || sClean === eClean) return null;
 
   const cacheKey = `${sClean}->${eClean}`;
-  if (metroFareCache.has(cacheKey)) return metroFareCache.get(cacheKey);
+  if (metroFareCache.has(cacheKey)) {
+    const cached = metroFareCache.get(cacheKey);
+    if (cached?.isRealtimeApi) lastMetroApiUsed = true;
+    return cached;
+  }
 
   const encodedKey = encodeURIComponent(SEOUL_METRO_FARE_KEY);
   const apiUrl = `https://apis.data.go.kr/B553766/fare2/getRltmFare?serviceKey=${encodedKey}&dataType=JSON&pageNo=1&numOfRows=5&dptreStnNm=${encodeURIComponent(sClean)}&arvlStnNm=${encodeURIComponent(eClean)}`;
 
-  const parseFareJson = data => {
-    const items = data?.response?.body?.items?.item || data?.body?.items?.item || data?.items || [];
-    const list = Array.isArray(items) ? items : [items];
-    const first = list.find(Boolean);
-    if (!first) return null;
-    const rawFare = Number(
-      first.gnrlCardFare ?? first.adltCardFare ?? first.cardFare ?? first.gnrlFare ?? first.fare ?? 0
-    );
-    const mvmnDstc = Number(first.mvmnDstc ?? first.dist ?? first.distance ?? 0);
-    if (rawFare >= 1200) {
-      return {
-        fare: rawFare,
-        distanceKm: mvmnDstc > 0 ? Number((mvmnDstc > 200 ? mvmnDstc / 1000 : mvmnDstc).toFixed(1)) : null,
-        isRealtimeApi: true
-      };
+  const parseFarePayload = rawText => {
+    if (!rawText) return null;
+    const trimmed = rawText.trim();
+    if (trimmed.startsWith('{')) {
+      const data = JSON.parse(trimmed);
+      const items = data?.response?.body?.items?.item || data?.body?.items?.item || data?.items || [];
+      const list = Array.isArray(items) ? items : [items];
+      const first = list.find(Boolean);
+      if (!first) return null;
+      const rawFare = Number(
+        first.gnrlCardFare ?? first.adltCardFare ?? first.cardFare ?? first.gnrlFare ?? first.fare ?? 0
+      );
+      const mvmnDstc = Number(first.mvmnDstc ?? first.dist ?? first.distance ?? 0);
+      if (rawFare >= 1200) {
+        return {
+          fare: rawFare,
+          distanceKm: mvmnDstc > 0 ? Number((mvmnDstc > 200 ? mvmnDstc / 1000 : mvmnDstc).toFixed(1)) : null,
+          isRealtimeApi: true
+        };
+      }
+    } else if (trimmed.includes('<gnrlCardFare>') || trimmed.includes('<fare>')) {
+      const doc = new DOMParser().parseFromString(trimmed, 'text/xml');
+      const fareNode = doc.getElementsByTagName('gnrlCardFare')[0] || doc.getElementsByTagName('cardFare')[0] || doc.getElementsByTagName('fare')[0];
+      const distNode = doc.getElementsByTagName('mvmnDstc')[0];
+      const rawFare = Number(fareNode?.textContent || 0);
+      const mvmnDstc = Number(distNode?.textContent || 0);
+      if (rawFare >= 1200) {
+        return {
+          fare: rawFare,
+          distanceKm: mvmnDstc > 0 ? Number((mvmnDstc > 200 ? mvmnDstc / 1000 : mvmnDstc).toFixed(1)) : null,
+          isRealtimeApi: true
+        };
+      }
     }
     return null;
   };
 
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2200);
-    const res = await fetch(apiUrl, { signal: controller.signal });
-    clearTimeout(timer);
-    if (res.ok) {
-      const json = await res.json();
-      const parsed = parseFareJson(json);
-      if (parsed) {
-        metroFareCache.set(cacheKey, parsed);
-        return parsed;
-      }
-    }
-  } catch {}
+  const requestUrls = [
+    apiUrl,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
+    `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`
+  ];
 
   try {
-    const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2200);
-    const res = await fetch(proxyUrl, { signal: controller.signal });
-    clearTimeout(timer);
-    if (res.ok) {
-      const text = await res.text();
-      if (text && text.trim().startsWith('{')) {
-        const parsed = parseFareJson(JSON.parse(text));
-        if (parsed) {
-          metroFareCache.set(cacheKey, parsed);
+    const result = await Promise.any(
+      requestUrls.map(async u => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 2600);
+        try {
+          const res = await fetch(u, { signal: controller.signal });
+          clearTimeout(timer);
+          if (!res.ok) throw new Error('HTTP error');
+          const txt = await res.text();
+          const parsed = parseFarePayload(txt);
+          if (!parsed) throw new Error('No fare data');
           return parsed;
+        } catch (e) {
+          clearTimeout(timer);
+          throw e;
         }
-      }
+      })
+    );
+    if (result) {
+      lastMetroApiUsed = true;
+      metroFareCache.set(cacheKey, result);
+      return result;
     }
   } catch {}
 
@@ -724,9 +760,14 @@ async function fetchSeoulMetroRealtimeFare(fromStation, toStation) {
 }
 
 /**
- * 구간별 실제 이동거리(km) 산출: 지하철 역간 궤도거리(직선×1.22) 및 도로 주행거리(직선×1.28)
+ * 구간별 실제 이동거리(km) 정밀 산출
+ * - 지하철: 역간 실제 노선 궤도 곡률(직선 × 1.32) 반영
+ * - 버스: 도로 주행 곡률(직선 × 1.38) 반영
  */
 function estimateLegDistanceKm(leg) {
+  const isSub = classifyTransitLegMode(leg.routeNm) === 'subway';
+  const curveFactor = isSub ? 1.32 : 1.38;
+
   if (Array.isArray(leg.stationCoords) && leg.stationCoords.length >= 2) {
     let sumM = 0;
     for (let i = 1; i < leg.stationCoords.length; i++) {
@@ -735,51 +776,49 @@ function estimateLegDistanceKm(leg) {
         leg.stationCoords[i][0], leg.stationCoords[i][1]
       );
     }
-    return Math.max(0.8, Number(((sumM * 1.12) / 1000).toFixed(1)));
+    return Math.max(1.0, Number(((sumM * 1.18) / 1000).toFixed(1)));
   }
   if (leg.fy && leg.fx && leg.ty && leg.tx) {
     const straightM = calcDistanceMeters(leg.fy, leg.fx, leg.ty, leg.tx);
-    const factor = classifyTransitLegMode(leg.routeNm) === 'subway' ? 1.22 : 1.28;
-    return Math.max(0.8, Number(((straightM * factor) / 1000).toFixed(1)));
+    return Math.max(1.0, Number(((straightM * curveFactor) / 1000).toFixed(1)));
   }
   if (leg.stationCount && leg.stationCount > 0) {
-    return Number((leg.stationCount * 1.15).toFixed(1));
+    return Number((leg.stationCount * 1.25).toFixed(1));
   }
-  return 3.5;
+  return 4.0;
 }
 
 /**
- * 수도권 도시철도 거리비례제 요금 계산 (2025~2026 교통카드 일반 기준: 10km 이내 1,550원, 10~50km 5km당 +100원, 50km 초과 8km당 +100원)
+ * 수도권 거리비례제 추가 요금 계산기
+ * - 기본거리 10km 이내: 추가 0원
+ * - 10km 초과 ~ 50km 이내: 5km당 +100원
+ * - 50km 초과: 8km당 +100원
  */
-function calcSubwayDistanceFare(distanceKm, hasShinbundang = false) {
-  const base = 1550;
+function calcDistanceSurcharge(distanceKm) {
   let extra = 0;
   if (distanceKm > 10) {
-    const tier1Km = Math.min(distanceKm, 50) - 10;
-    extra += Math.ceil(tier1Km / 5) * 100;
+    const tier1 = Math.min(distanceKm, 50) - 10;
+    extra += Math.ceil(tier1 / 5) * 100;
   }
   if (distanceKm > 50) {
-    const tier2Km = distanceKm - 50;
-    extra += Math.ceil(tier2Km / 8) * 100;
+    const tier2 = distanceKm - 50;
+    extra += Math.ceil(tier2 / 8) * 100;
   }
-  const sbdSurcharge = hasShinbundang ? 1000 : 0;
-  return {
-    total: base + extra + sbdSurcharge,
-    base,
-    extra,
-    sbdSurcharge
-  };
+  return extra;
 }
 
 /**
- * 수도권 통합환승할인 거리비례제 + 서울교통공사 실시간 운임 통합 계산기
- * - 지하철 단독: 서울교통공사 실시간운임정보 API 우선 조회 후 거리비례제 보정
- * - 버스 단독(환승 없음): 서울 간선·지선 기본 1,500원 (심야 N버스 2,500원)
- * - 버스↔버스 환승 / 버스↔지하철 통합환승: 최고 기본운임 적용 후 총 이동거리 10km 초과 시 5km당 100원 추가
+ * 수도권 대중교통 실시간 운임 · 버스 거리비례제 · 통합환승할인제 통합 계산 엔진
  */
 async function calculateDetailedTransitFare(legs) {
   if (!legs || legs.length === 0) {
-    return { totalCost: 1550, totalDistanceKm: 0, breakdownText: '기본운임 1,550원', isRealtimeApi: false };
+    return {
+      totalCost: 1550,
+      totalDistanceKm: 0,
+      breakdownText: '기본운임 1,550원',
+      transferSaved: 0,
+      isRealtimeApi: false
+    };
   }
 
   let totalDistanceKm = 0;
@@ -795,85 +834,92 @@ async function calculateDetailedTransitFare(legs) {
   const hasShinbundang = legs.some(l => /신분당/i.test(l.routeNm));
   const isTransfer = legs.length >= 2;
 
-  // 1) 지하철 단독 이용 시: 서울교통공사 실시간운임정보 API 조회 우선
+  // 1) 지하철 단독 이용 (환승 포함)
   if (hasSubway && !hasBus) {
     const firstSub = legs[0];
     const lastSub = legs[legs.length - 1];
     const apiFareRes = await fetchSeoulMetroRealtimeFare(firstSub.fname, lastSub.tname);
-    const distCalc = calcSubwayDistanceFare(apiFareRes?.distanceKm || totalDistanceKm, hasShinbundang);
     const effectiveDist = apiFareRes?.distanceKm || totalDistanceKm;
+    const base = 1550;
+    const distExtra = calcDistanceSurcharge(effectiveDist);
+    const sbdExtra = hasShinbundang ? 1000 : 0;
 
     if (apiFareRes && apiFareRes.fare > 0) {
       const finalFare = hasShinbundang && apiFareRes.fare < 2500 ? apiFareRes.fare + 1000 : apiFareRes.fare;
-      const extraPart = Math.max(0, finalFare - 1550);
+      const extraPart = Math.max(0, finalFare - base);
       const breakdown = extraPart > 0
         ? `서울교통공사 실시간운임 · ${effectiveDist}km (기본 1,550원 + 거리·노선추가 ${won(extraPart)})`
-        : `서울교통공사 실시간운임 · ${effectiveDist}km (기본 1,550원 이내)`;
+        : `서울교통공사 실시간운임 · ${effectiveDist}km (10km 이내 기본 1,550원)`;
       return {
         totalCost: finalFare,
         totalDistanceKm: effectiveDist,
         breakdownText: breakdown,
+        transferSaved: 0,
         isRealtimeApi: true
       };
     }
 
-    const breakdown = distCalc.extra > 0 || distCalc.sbdSurcharge > 0
-      ? `지하철 거리비례제 · ${effectiveDist}km (기본 1,550원${distCalc.extra > 0 ? ` + 거리추가 ${won(distCalc.extra)}` : ''}${distCalc.sbdSurcharge > 0 ? ` + 신분당선 ${won(distCalc.sbdSurcharge)}` : ''})`
-      : `지하철 거리비례제 · ${effectiveDist}km (10km 이내 기본운임 1,550원)`;
+    const totalSubFare = base + distExtra + sbdExtra;
+    const overKmStr = effectiveDist > 10 ? `초과 ${(effectiveDist - 10).toFixed(1)}km` : '10km 이내';
+    const breakdown = distExtra > 0 || sbdExtra > 0
+      ? `지하철 거리비례제 · ${effectiveDist}km (기본 1,550원${distExtra > 0 ? ` + ${overKmStr} 거리추가 ${won(distExtra)}` : ''}${sbdExtra > 0 ? ` + 신분당 ${won(sbdExtra)}` : ''})`
+      : `지하철 거리비례제 · ${effectiveDist}km (10km 이내 기본 1,550원)`;
     return {
-      totalCost: distCalc.total,
+      totalCost: totalSubFare,
       totalDistanceKm: effectiveDist,
       breakdownText: breakdown,
+      transferSaved: 0,
       isRealtimeApi: false
     };
   }
 
-  // 2) 버스 단독 (환승 없음): 서울 간선·지선 균일 기본운임 (심야 N버스 2,500원)
+  // 2) 버스 단독 (단일 노선) — 버스 거리비례제 적용 (10km 초과 시 5km당 +100원)
   if (hasBus && !hasSubway && !isTransfer) {
     const busBase = hasNightBus ? 2500 : 1500;
+    const busDistExtra = calcDistanceSurcharge(totalDistanceKm);
+    const totalBusFare = busBase + busDistExtra;
+    const overKmStr = totalDistanceKm > 10 ? `초과 ${(totalDistanceKm - 10).toFixed(1)}km` : '10km 이내';
+    const busTypeLabel = hasNightBus ? '심야 N버스 거리비례제' : '버스 거리비례제';
+
+    const breakdown = busDistExtra > 0
+      ? `${busTypeLabel} · ${totalDistanceKm}km (기본 ${won(busBase)} + ${overKmStr} 거리추가 ${won(busDistExtra)})`
+      : `${busTypeLabel} · ${totalDistanceKm}km (10km 이내 기본 ${won(busBase)})`;
+
     return {
-      totalCost: busBase,
+      totalCost: totalBusFare,
       totalDistanceKm,
-      breakdownText: hasNightBus
-        ? `심야 올빼미버스 단일탑승 · ${totalDistanceKm}km (기본 ${won(busBase)})`
-        : `서울 간선·지선버스 단일탑승 · ${totalDistanceKm}km (기본 ${won(busBase)})`,
+      breakdownText: breakdown,
+      transferSaved: 0,
       isRealtimeApi: false
     };
   }
 
-  // 3) 버스↔버스 환승 또는 버스↔지하철 통합환승 (수도권 통합환승할인 거리비례제)
-  // 최고 기본운임 부과 + 총 누적 이동거리 10km 초과 시 5km당 100원 추가
+  // 3) 버스↔버스 환승 또는 지하철↔버스 통합환승 (수도권 통합환승할인 거리비례제)
   const highestBaseFare = hasNightBus ? 2500 : (hasSubway ? 1550 : 1500);
-  let distanceExtra = 0;
-  if (totalDistanceKm > 10) {
-    const overKm = totalDistanceKm - 10;
-    distanceExtra = Math.ceil(overKm / 5) * 100;
-  }
+  const distanceExtra = calcDistanceSurcharge(totalDistanceKm);
   const sbdExtra = hasShinbundang ? 1000 : 0;
   const totalTransferFare = highestBaseFare + distanceExtra + sbdExtra;
 
+  // 환승 미적용 시 개별 탑승 합계 대비 절약된 기본요금 계산
+  const sumIndividualBases = legs.reduce((acc, l) => {
+    if (/^N\d+/i.test(l.routeNm)) return acc + 2500;
+    return acc + (classifyTransitLegMode(l.routeNm) === 'subway' ? 1550 : 1500);
+  }, 0);
+  const transferSaved = Math.max(0, sumIndividualBases - highestBaseFare);
+
   const transferTypeLabel = (hasSubway && hasBus) ? '지하철+버스 통합환승' : '버스↔버스 환승';
+  const overKmStr = totalDistanceKm > 10 ? `초과 ${(totalDistanceKm - 10).toFixed(1)}km` : '10km 이내';
   const breakdown = distanceExtra > 0
-    ? `${transferTypeLabel} 거리비례제 · 총 ${totalDistanceKm}km (최고기본 ${won(highestBaseFare)} + 10km초과 거리추가 ${won(distanceExtra)}${sbdExtra > 0 ? ` + 신분당 ${won(sbdExtra)}` : ''})`
-    : `${transferTypeLabel} 할인 · 총 ${totalDistanceKm}km (10km 이내 최고기본 ${won(highestBaseFare)} 적용)`;
+    ? `${transferTypeLabel} 거리비례제 · 누적 ${totalDistanceKm}km (최고기본 ${won(highestBaseFare)} + ${overKmStr} 거리추가 ${won(distanceExtra)}${sbdExtra > 0 ? ` + 신분당 ${won(sbdExtra)}` : ''})`
+    : `${transferTypeLabel} · 누적 ${totalDistanceKm}km (10km 이내 최고기본 ${won(highestBaseFare)})`;
 
   return {
     totalCost: totalTransferFare,
     totalDistanceKm,
     breakdownText: breakdown,
+    transferSaved,
     isRealtimeApi: false
   };
-}
-
-/* ───────────── 역명·장소명 중복 '역' 방지 유틸리티 ───────────── */
-function cleanPlaceName(name) {
-  if (!name) return '';
-  return String(name).trim().replace(/역{2,}/g, '역');
-}
-function formatStationName(name) {
-  if (!name) return '';
-  const cleaned = cleanPlaceName(name);
-  return cleaned.endsWith('역') ? cleaned : `${cleaned}역`;
 }
 
 /* ───────────── 서울·수도권 핵심 지하철 노선도 그래프 ───────────── */
@@ -1267,7 +1313,7 @@ const defaults = {
 };
 let settings = structuredClone(defaults);
 try {
-  const s = JSON.parse(localStorage.getItem('homeway.app.v26'));
+  const s = JSON.parse(localStorage.getItem('homeway.app.v27'));
   if (s && Array.isArray(s.destinations) && s.destinations.length === 3) settings = { ...defaults, ...s };
 } catch {}
 
@@ -1856,7 +1902,6 @@ async function evaluateMultiTransferLastTrainFallback({
     const completedNames = completedLegs.map(l => l.routeNm).join(' ➔ ');
     const transitMinutesSoFar = hubArriveServiceMin - board1ServiceMin;
 
-    // 막차 끊김 지점까지의 실제 대중교통 운임 정밀 계산
     const completedFareInfo = await calculateDetailedTransitFare(completedLegs);
     const transitCostSoFar = completedFareInfo.totalCost;
 
@@ -1924,6 +1969,7 @@ async function evaluateMultiTransferLastTrainFallback({
         name: `🚨 [${completedNames}] + ${hubName} 막차 종료 후 도보 (${walkKmStr}km)`,
         cost: transitCostSoFar,
         fareDetail: `${completedFareInfo.breakdownText} + 도보 0원`,
+        transferSaved: completedFareInfo.transferSaved,
         taxiCost: 0,
         usesTaxi: false,
         transfers: cutIdx,
@@ -1970,6 +2016,7 @@ async function evaluateMultiTransferLastTrainFallback({
         name: `🚨 [${completedNames}] + ${hubName} 막차 종료 후 택시 전환`,
         cost: totalFallbackCost,
         fareDetail: `대중교통 ${won(transitCostSoFar)} + 잔여택시 ${won(remainTaxi.fare)} (${remainTaxi.distanceKm}km)`,
+        transferSaved: completedFareInfo.transferSaved,
         taxiCost: remainTaxi.fare,
         usesTaxi: true,
         transfers: cutIdx,
@@ -2079,7 +2126,7 @@ async function convertApiPathToRouteCard({
     }
   }
 
-  // 서울교통공사 실시간 운임정보 API + 거리비례제·통합환승 요금 정밀 산출
+  // 서울교통공사 실시간 운임정보 API + 버스·지하철 거리비례제 + 통합환승할인 정밀 산출
   const fareCalc = await calculateDetailedTransitFare(legs);
 
   const transfers = Math.max(0, legs.length - 1);
@@ -2155,7 +2202,7 @@ async function convertApiPathToRouteCard({
   const categoryIcon = resolvedCategory === 'subway' ? '🚇' : (resolvedCategory === 'bus' ? '🚌' : '🚇+🚌');
   const categoryTagMap = {
     subway: fareCalc.isRealtimeApi ? '지하철 · 실시간운임' : '지하철 · 거리비례',
-    bus: transfers > 0 ? '버스 · 환승거리비례' : '버스 경로',
+    bus: transfers > 0 ? '버스 · 환승거리비례' : '버스 · 거리비례',
     combo: '지하철+버스 · 통합환승'
   };
 
@@ -2165,6 +2212,7 @@ async function convertApiPathToRouteCard({
     name: `${categoryIcon} ${routeNamesTitle} (${firstLeg.fname} ➔ ${lastLeg.tname})`,
     cost: fareCalc.totalCost,
     fareDetail: fareCalc.breakdownText,
+    transferSaved: fareCalc.transferSaved,
     taxiCost: 0,
     usesTaxi: false,
     transfers,
@@ -2189,6 +2237,7 @@ async function convertApiPathToRouteCard({
 async function runSeoulSearch() {
   if (!places.start || !places.end) return;
 
+  lastMetroApiUsed = false;
   const depTimeStr = $('depTime')?.value || getNowTimeStr();
   const baseServiceMin = timeStrToServiceMin(depTimeStr);
   const [dh] = depTimeStr.split(':').map(Number);
@@ -2208,7 +2257,7 @@ async function runSeoulSearch() {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = '⚡ 지하철 실시간 운임 · 버스 거리비례·통합환승 요금을 계산 중...';
+    statusEl.textContent = '⚡ 서울교통공사 실시간 운임 · 버스 거리비례·통합환승 요금을 계산 중...';
   }
 
   try {
@@ -2268,7 +2317,7 @@ async function runSeoulSearch() {
       }
     }
 
-    // 2. 버스 경로
+    // 2. 버스 경로 (거리비례제 적용)
     for (let i = 0; i < Math.min(2, realTransit.busPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busPaths[i],
@@ -2336,7 +2385,7 @@ async function runSeoulSearch() {
       }
     }
 
-    // 3. 지하철+버스 복합 환승 경로
+    // 3. 지하철+버스 복합 환승 경로 (통합환승 거리비례제)
     for (let i = 0; i < Math.min(2, realTransit.busNSubPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busNSubPaths[i],
@@ -2454,6 +2503,7 @@ async function runSeoulSearch() {
             name: `🚇+🚖 [${legRouteNm}] + ${hubPoint.name} 택시 환승 (${hybridTaxi.distanceKm}km)`,
             cost: totalHybridCost,
             fareDetail: `대중교통 ${won(transitFareCalc.totalCost)} (${transitFareCalc.totalDistanceKm}km) + 택시 ${won(hybridTaxi.fare)} (${hybridTaxi.distanceKm}km)`,
+            transferSaved: 0,
             taxiCost: hybridTaxi.fare,
             usesTaxi: true,
             transfers: 1,
@@ -2509,6 +2559,7 @@ async function runSeoulSearch() {
       name: `🚖 카카오 직행 택시 (${kakaoDriveData.distanceKm}km)`,
       cost: kakaoDriveData.fare,
       fareDetail: `카카오모빌리티 실도로 예상 택시비 · 총 ${kakaoDriveData.distanceKm}km`,
+      transferSaved: 0,
       taxiCost: kakaoDriveData.fare,
       usesTaxi: true,
       transfers: 0,
@@ -2538,11 +2589,15 @@ async function runSeoulSearch() {
     applyConditionAndRender();
 
     const hasFallback = visible.some(r => r.isCutoffFallback);
+    const apiStatusNote = lastMetroApiUsed ? '서울교통공사 실시간운임 API 응답 완료' : '실시간운임·거리비례·통합환승 엔진 적용';
+    if ($('fareApiStatusLine')) {
+      $('fareApiStatusLine').textContent = `💳 ${apiStatusNote} · 지하철·버스 모두 10km 초과 시 5km당 +100원 거리비례제 반영`;
+    }
     if (statusEl) {
       statusEl.style.color = hasFallback ? '#ff8b8b' : '#8fdb6e';
       statusEl.textContent = hasFallback
         ? `🚨 2번째 이후 환승 구간 막차 종료 감지! 총 ${visible.length}개 대안 경로와 운임을 계산했습니다.`
-        : `✓ 실시간 지하철 운임 및 버스·환승 거리비례 요금 계산 완료 (${visible.length}개 경로)`;
+        : `✓ ${apiStatusNote} (${visible.length}개 경로 요금 계산 완료)`;
     }
     if ($('transitBadgeText') && selected) {
       $('transitBadgeText').textContent = `${selected.boardStation} ${selected.departure} 도착 · 예상 ${won(selected.cost)}`;
@@ -2674,7 +2729,7 @@ function renderStrategyCards() {
     if (removedTaxiRoutes.length > 0) {
       noticeBox.append(node('div', `🚫 설정한 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${removedTaxiRoutes.length}개가 제외되었습니다.`, 'hintBox'));
     } else if (!hasCutoffFallback) {
-      noticeBox.append(node('div', `✅ 서울교통공사 실시간 운임과 수도권 통합환승 거리비례제(10km 초과 시 5km당 +100원)가 반영된 ${visible.length}개 추천 경로입니다.`, 'hintBox'));
+      noticeBox.append(node('div', `💳 지하철 실시간운임(1,550원~) 및 버스 거리비례제(1,500원~), 환승할인이 모두 계산되었습니다.`, 'hintBox'));
     }
   }
 
@@ -2701,14 +2756,15 @@ function renderStrategyCards() {
     middle.append(time, node('span', r.remaining, 'micro'));
 
     const transferText = r.transfers === 0 ? '환승 없음' : `환승 ${r.transfers}회`;
-    const fareBox = node('div', undefined, 'fare');
-    fareBox.append(document.createTextNode(`예상 ${won(r.cost)} · ${transferText}`));
-    if (r.fareDetail) {
-      fareBox.append(document.createElement('br'));
-      fareBox.append(node('span', `💳 ${r.fareDetail}`, 'fare-detail-chip'));
+    const fareRow = node('div', undefined, 'fare');
+    fareRow.append(document.createTextNode(`예상 요금 ${won(r.cost)} · ${transferText}`));
+    if (r.transferSaved && r.transferSaved > 0) {
+      fareRow.append(node('span', `환승할인 -${won(r.transferSaved)}`, 'transfer-discount-pill'));
     }
 
-    b.append(top, badgeRow, middle, fareBox);
+    const detailBox = node('div', `📊 ${r.fareDetail || won(r.cost)}`, 'fare-detail-box');
+
+    b.append(top, badgeRow, middle, fareRow, detailBox);
     b.addEventListener('click', () => {
       selected = r;
       renderStrategyCards();
@@ -2722,18 +2778,14 @@ function renderStrategyCards() {
     if (box) {
       box.replaceChildren();
       const head = node('div', undefined, 'between');
-      head.append(node('h3', '선택 경로 탑승 노선 및 세부 순서'), node('span', selected.tag, selected.tagClass));
+      head.append(node('h3', '선택 경로 탑승 노선 및 운임 상세'), node('span', selected.tag, selected.tagClass));
 
       const banner = node('div', undefined, 'selected-line-banner');
-      const bTitle = node('b', selected.isCutoffFallback ? '🚨 환승 막차 끊김 대응 마지막 수단 안내' : '🚏 지금 타야 할 대중교통 노선 (지도 색상 연동)');
+      const bTitle = node('b', selected.isCutoffFallback ? '🚨 환승 막차 끊김 대응 마지막 수단 안내' : '🚏 탑승 노선 및 요금 산출 내역');
       const bDesc = document.createElement('div');
       bDesc.style.marginTop = '4px';
       bDesc.textContent = selected.transitGuideText || selected.note;
-      const bFare = document.createElement('div');
-      bFare.style.marginTop = '5px';
-      bFare.style.fontSize = '11px';
-      bFare.style.color = '#7bd3ff';
-      bFare.textContent = `💳 운임 산출 내역: ${selected.fareDetail || won(selected.cost)}`;
+      const bFare = node('div', `💳 ${selected.fareDetail || won(selected.cost)}${selected.transferSaved > 0 ? ` (통합환승 기본요금 -${won(selected.transferSaved)} 면제)` : ''}`, 'fare-detail-box');
       banner.append(bTitle, bDesc, bFare);
 
       box.append(
@@ -2764,8 +2816,8 @@ function renderStrategyCards() {
       $('homeBadge').textContent = (selected.lineBadges?.[0]?.label || selected.tag);
       $('homeBadge').className = 'badge' + (selected.isCutoffFallback ? ' badge-alert' : '');
     }
-    if ($('homeRec')) $('homeRec').textContent = selected.name;
-    if ($('homeRoute')) $('homeRoute').textContent = `${selected.transitGuideText || selected.summary} · ${selected.fareDetail || ''}`;
+    if ($('homeRec')) $('homeRec').textContent = `${selected.name} · ${won(selected.cost)}`;
+    if ($('homeRoute')) $('homeRoute').textContent = `${selected.fareDetail || selected.summary}`;
     if ($('heroPlace')) $('heroPlace').textContent = `${eName} · 마지노선 알림`;
     if ($('originLabel')) $('originLabel').textContent = `${selected.boardStation} ${selected.departure} 도착`;
     if ($('strategyLocation')) $('strategyLocation').innerHTML = `출발: ${sName} ➔ 도착: ${eName}<br>선택 탑승 노선: <b>${selected.lineBadges?.map(b => b.label).join(' ➔ ') || selected.name}</b>`;
@@ -2810,10 +2862,11 @@ async function generateLocalSmartReply(userText) {
     const lines = visible.map((r, idx) => {
       const { remainingMin } = calcRemainingFromRealNow(r.departure);
       const remainLabel = remainingMin > 0 ? `지금 기준 ${formatDurationKorean(remainingMin)} 남음` : '지금 바로 탑승';
-      return `${idx + 1}. **${r.name}** [${r.tag}]\n   • 탑승 노선: ${r.transitGuideText}\n   • 정류장·역 도착: **${r.departure}** (${remainLabel}) · 소요 ${r.minutes}분\n   • 요금: **${won(r.cost)}** (${r.fareDetail || ''})`;
+      const discountTxt = r.transferSaved > 0 ? ` / 환승할인 -${won(r.transferSaved)}` : '';
+      return `${idx + 1}. **${r.name}** [${r.tag}]\n   • 탑승 노선: ${r.transitGuideText}\n   • 정류장·역 도착: **${r.departure}** (${remainLabel}) · 소요 ${r.minutes}분\n   • 총 요금: **${won(r.cost)}** (${r.fareDetail || ''}${discountTxt})`;
     }).join('\n\n');
 
-    return `📍 **[${sName} ➔ ${eName}]** (${depTime} 조회 기준 5대 맞춤 경로·운임 분석)\n\n${lines}\n\n💡 지도는 **버스(파랑)**, **지하철(초록)**, **택시(주황)**, **도보(회색 점선)**로 구분되어 표시됩니다.`;
+    return `📍 **[${sName} ➔ ${eName}]** (${depTime} 조회 기준 거리비례·환승 운임 분석)\n\n${lines}`;
   }
 
   return `현재 **[${sName} ➔ ${eName}]** 기준으로 지하철 실시간 운임 및 버스·환승 거리비례 요금을 계산할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
@@ -2887,7 +2940,8 @@ async function executeAppRouteSearch({ start_place, end_place, departure_time })
         originStopOrStation: r.boardStation,
         minutes: r.minutes,
         costWon: r.cost,
-        fareDetail: r.fareDetail
+        fareDetail: r.fareDetail,
+        transferSavedWon: r.transferSaved || 0
       };
     })
   };
@@ -2958,9 +3012,9 @@ async function askGeminiChatbot(userMessage) {
 현재 앱 탐색 정보:
 - 실제 현재 시각: ${getNowTimeStr()}, 조회 설정 시각: ${depTime}
 - 출발지: ${sName}, 도착지: ${eName}, 택시예산: ${budget}, 최대도보허용: ${settings.maxWalk}m
-- 현재 5대 추천 경로 (지하철 실시간 운임 및 수도권 통합환승 거리비례제 반영):
+- 현재 5대 추천 경로 (지하철 실시간 운임 및 버스·통합환승 거리비례제 반영):
 ${routeSummaryText || '없음'}
-사용자가 경로와 요금을 물어보면 'search_seoul_route' 함수를 호출하고, 지하철·버스 거리비례제·통합환승 요금 내역 및 막차 전환 규칙에 따라 친절하게 답변하세요.`;
+사용자가 경로와 요금을 물어보면 'search_seoul_route' 함수를 호출하고, 지하철 실시간 운임·버스 거리비례제(10km 초과 시 5km당 +100원)·통합환승 할인 금액을 명확히 설명하세요.`;
 
   chatHistory.push({ role: 'user', parts: [{ text }] });
 
@@ -3087,7 +3141,7 @@ $('saveSettings')?.addEventListener('click', () => {
   settings.budget = Number($('budget')?.value ?? 30000);
   settings.pref = activeCondition;
   settings.maxWalk = Number($('myMaxWalk')?.value ?? 2000);
-  localStorage.setItem('homeway.app.v26', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v27', JSON.stringify(settings));
   toast('✓ 귀가 설정(예산·조건·최대 도보 거리)이 기기에 저장되었습니다.');
 });
 
@@ -3127,14 +3181,14 @@ $('saveDestinations')?.addEventListener('click', () => {
       settings.destinations[idx][field] = cleanPlaceName(inp.value.trim());
     }
   });
-  localStorage.setItem('homeway.app.v26', JSON.stringify(settings));
+  localStorage.setItem('homeway.app.v27', JSON.stringify(settings));
   renderSaved();
   $('destinationDialog')?.close();
   toast('✓ 저장 목적지가 업데이트되었습니다.');
 });
 
 $('reset')?.addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v26');
+  localStorage.removeItem('homeway.app.v27');
   settings = structuredClone(defaults);
   applyTheme(settings.theme);
   syncPrefButtons(settings.pref);
@@ -3189,7 +3243,6 @@ async function updateHomeMap() {
     { mode: 'taxi', points: [[s.y, s.x], [e.y, e.x]], precomputed: kakaoDriveData.coordinates }
   ];
 
-  // 버스 = 선명한 파란색(#2563eb), 지하철 = 선명한 초록색(#16a34a)
   const modeStyleMap = {
     walk: {
       casing: { color: '#111827', weight: 6, opacity: 0.45, dashArray: '6, 9' },
