@@ -89,10 +89,10 @@ body.light-theme .strategy.warning{background:#fef2f2}
 .strategy .departure small{font-size:11px;font-weight:400;color:var(--muted)}
 .strategy .fare{font-size:12px;margin-top:6px;color:var(--text-sub)}
 .line-highlight-bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center}
-.line-badge-subway{background:#1d4ed8;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
-.line-badge-bus{background:#15803d;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
-.line-badge-nightbus{background:#991b1b;color:#fecaca;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
-.line-badge-taxi{background:#b45309;color:#fef3c7;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.line-badge-subway{background:#2563eb;color:#ffffff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.line-badge-bus{background:#16a34a;color:#ffffff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.line-badge-nightbus{background:#e11d48;color:#ffffff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.line-badge-taxi{background:#d97706;color:#ffffff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
 .line-badge-walk{background:#4b5563;color:#f3f4f6;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
 .selected-line-banner{background:rgba(255,185,24,0.12);border:1px solid var(--yellow);border-radius:10px;padding:11px 12px;margin:10px 0;font-size:12px;line-height:1.6}
 .selected-line-banner b{color:var(--yellow);font-size:13px}
@@ -112,10 +112,10 @@ body.light-theme .timeline{border-left-color:#86efac}
 .timeline div:before{content:'';width:8px;height:8px;border-radius:50%;background:var(--yellow);position:absolute;left:-22px;top:6px}
 .timeline div.warn:before{background:var(--red)}
 .route-line-pill{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:bold;margin-right:6px}
-.pill-subway{background:#1e3a5f;color:#60a5fa}
-.pill-bus{background:#14532d;color:#4ade80}
-.pill-walk{background:#374151;color:#d1d5db}
-.pill-taxi{background:#78350f;color:#fde047}
+.pill-subway{background:#1d4ed8;color:#dbeafe}
+.pill-bus{background:#15803d;color:#dcfce7}
+.pill-walk{background:#374151;color:#e5e7eb}
+.pill-taxi{background:#b45309;color:#fef3c7}
 .bigTitle{font-size:26px;line-height:1.5;margin:24px 0 12px;letter-spacing:-1px}
 .desc{font-size:13px;color:var(--muted);line-height:1.9}
 .setting{display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid var(--line);font-size:12px}
@@ -144,7 +144,8 @@ body.light-theme .resolved{color:#15803d}
 .home-map-wrap{position:relative;height:255px;border-radius:17px;overflow:hidden;border:1px solid var(--line);margin-bottom:14px;background:var(--card)}
 #homeMap{position:absolute!important;inset:0;width:100%;height:100%}
 .home-map-label{position:absolute;top:12px;left:12px;background:var(--bottom-bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--yellow);font-size:10px;pointer-events:none;z-index:999}
-.home-map-legend{position:absolute;bottom:12px;left:12px;background:var(--bottom-bg);border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--text-sub);font-size:9px;display:flex;gap:8px;pointer-events:none;z-index:999}
+.home-map-legend{position:absolute;bottom:12px;left:12px;background:var(--bottom-bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--text);font-size:10px;font-weight:700;display:flex;gap:9px;pointer-events:none;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
+.legend-swatch{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:4px}
 .home-map-controls{position:absolute;bottom:12px;right:12px;display:flex;gap:7px;z-index:999}
 .home-map-controls button{border:1px solid var(--line);border-radius:8px;background:var(--bottom-bg);color:var(--text);font-size:11px;padding:8px 10px}
 .home-search{padding:16px;margin-bottom:16px}
@@ -153,7 +154,7 @@ body.light-theme .resolved{color:#15803d}
 #homeLookupStatus{font-size:11px;line-height:1.7;margin-top:8px}
 .home-location-actions{display:flex;align-items:center;justify-content:space-between;margin-top:5px}
 .home-location-actions button{font-size:11px}
-body:not(.light-theme) .leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(0.85) saturate(1.2)}
+body:not(.light-theme) .leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(0.82) saturate(1.1)}
 body:not(.light-theme) .leaflet-container{background:#0b1117}
 body.light-theme .leaflet-tile{filter:none}
 body.light-theme .leaflet-container{background:#f8f9fa}
@@ -277,7 +278,7 @@ color: #000;
 </div>
 
 <div class="micro" style="margin-top:8px;color:var(--muted)">
-💡 2번째 이후 환승 구간에서 대중교통 막차가 끊길 경우에만, 마이탭 허용 도보 거리 기준으로 도보 또는 택시 전환을 추천합니다.
+💡 지하철 · 버스 · 지하철+버스 · 대중교통+택시 · 택시 등 5가지 추천 경로를 비교하고 지도에서 노선 색상별로 구분할 수 있습니다.
 </div>
 </div>
 
@@ -285,10 +286,10 @@ color: #000;
 <div id="homeMap"></div>
 <div class="home-map-label" id="homeMapLabel">🗺 실제 서울 노선도·도로 기반 이동 경로</div>
 <div class="home-map-legend" id="homeMapLegend">
-<span><b style="color:#60a5fa">━</b> 지하철</span>
-<span><b style="color:#4ade80">━</b> 버스</span>
-<span><b style="color:#ffb918">━</b> 택시</span>
-<span><b style="color:#9ca3af">┄</b> 도보</span>
+<span><i class="legend-swatch" style="background:#3b82f6"></i>지하철</span>
+<span><i class="legend-swatch" style="background:#22c55e"></i>버스</span>
+<span><i class="legend-swatch" style="background:#f59e0b"></i>택시</span>
+<span><i class="legend-swatch" style="background:#9ca3af;border-top:2px dashed #9ca3af;height:0"></i>도보</span>
 </div>
 <div class="home-map-controls">
 <button id="homeFit" type="button">전체 보기</button>
@@ -296,7 +297,7 @@ color: #000;
 </div>
 
 <div class="panel home-search" id="homeSearch">
-<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">실제 노선·환승 분석</span></div>
+<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">5대 유형 맞춤 분석</span></div>
 <div id="homeAddressFields">
 <label for="start">출발지 (서울 내 역, 건물명 또는 주소)</label>
 <div class="fieldRow">
@@ -339,7 +340,7 @@ color: #000;
 </div>
 <div id="savedRoutes" style="margin-top:8px"></div>
 </div>
-<button class="primary" id="openStrategy" type="button">추천 귀가 전략 및 탑승 노선 상세 보기 <span>→</span></button>
+<button class="primary" id="openStrategy" type="button">추천 귀가 전략 5선 및 지도 비교 <span>→</span></button>
 <p class="footnote" id="homeFoot">서울특별시 대중교통환승경로 API · 열린데이터광장 · 카카오모빌리티</p>
 </section>
 
@@ -386,13 +387,13 @@ color: #000;
 <div class="chat-messages" id="chatMessages">
 <div class="msg bot">안녕하세요! 서울시 심야 귀가 어시스턴트입니다. ✨
 • "서울역에서 건대입구역 가는 실제 탑승 노선 알려줘"
-• "환승역에서 막차 끊겼을 때 택시·도보 전환 경로 분석해 줘"
+• "지하철, 버스, 지하철+버스, 대중교통+택시 5가지 경로 비교해 줘"
 • "명동역에서 신림역 가는 지하철·버스 환승 경로 찾아줘"
 무엇이든 물어보세요!</div>
 </div>
 <div class="chat-chips" id="chatQuickChips">
 <button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 심야 올빼미버스(N버스) 노선과 막차 시간 알려줘">🌙 올빼미버스·막차 안내</button>
-<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 경로 중 가성비와 시간을 모두 잡는 최적 전략 분석해 줘">⚡ 현재 경로 최적 분석</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 경로 중 지하철, 버스, 지하철+버스, 대중교통+택시, 택시 5가지 전략을 비교 분석해 줘">⚡ 5대 경로 비교 분석</button>
 <button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="서울역에서 잠실역 가는 귀가 경로와 탑승 노선 알려줘">🚇 서울역➔잠실역 검색</button>
 </div>
 <div class="chat-input-area">
@@ -545,7 +546,7 @@ color: #000;
 <option selected="" value="2000">2km (도보 약 30분)</option>
 <option value="4000">4km (도보 약 60분)</option>
 </select>
-<div class="hintBox">2번째 이후 환승 지점 도착 시각이 해당 구간 막차 시각 이후로 예측되면, 허용 도보 거리 이내 시 도보와 택시 둘 다 추천하고 초과 시 택시 전환만 추천합니다.</div>
+<div class="hintBox">지하철, 버스, 지하철+버스, 대중교통+택시, 직행 택시 등 5가지 추천 경로를 제공하며, 2번째 이후 환승 막차 종료 시 허용 도보 거리 기준으로 전환 수단을 추천합니다.</div>
 <button type="button" class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
 </dialog>
 
@@ -628,7 +629,7 @@ function formatStationName(name) {
   return cleaned.endsWith('역') ? cleaned : `${cleaned}역`;
 }
 
-/* ───────────── 서울·수도권 핵심 지하철 노선도 그래프 (실제 환승·정차역 계산용) ───────────── */
+/* ───────────── 서울·수도권 핵심 지하철 노선도 그래프 ───────────── */
 const SUBWAY_STATIONS = {
   '서울역': [37.5547, 126.9707], '시청역': [37.5657, 126.9769], '종각역': [37.5702, 126.9831],
   '종로3가역': [37.5704, 126.9922], '종로5가역': [37.5709, 127.0019], '동대문역': [37.5714, 127.0096],
@@ -1074,94 +1075,68 @@ async function callSeoulTransitEndpoint(endpointName, sx, sy, ex, ey) {
   return parsed;
 }
 
-/* ───────────── 실제 정류소 경유 버스 노선 조회 (출발지·도착지 공통 버스 매칭) ───────────── */
-async function findRealCommonBusRoutes(sx, sy, ex, ey, isNightTime) {
+/* ───────────── 주변 정류소 및 실제 경유 버스 노선 조회 ───────────── */
+async function fetchNearbyBusStopsAndRoutes(lat, lng, isNightTime) {
   try {
-    const sStopUrl = `http://ws.bus.go.kr/api/rest/stationinfo/getStationByPos?serviceKey=${encodeURIComponent(DATA_GO_TRANSIT_KEY)}&tmX=${sx}&tmY=${sy}&radius=400&resultType=json`;
-    const eStopUrl = `http://ws.bus.go.kr/api/rest/stationinfo/getStationByPos?serviceKey=${encodeURIComponent(DATA_GO_TRANSIT_KEY)}&tmX=${ex}&tmY=${ey}&radius=450&resultType=json`;
+    const stopUrl = `http://ws.bus.go.kr/api/rest/stationinfo/getStationByPos?serviceKey=${encodeURIComponent(DATA_GO_TRANSIT_KEY)}&tmX=${lng}&tmY=${lat}&radius=450&resultType=json`;
+    const rawStop = await fetchViaCorsProxies(stopUrl);
+    if (!rawStop) return [];
 
-    const [sXml, eXml] = await Promise.all([
-      fetchViaCorsProxies(sStopUrl),
-      fetchViaCorsProxies(eStopUrl)
-    ]);
-    if (!sXml || !eXml) return [];
+    let stops = [];
+    if (rawStop.trim().startsWith('{')) {
+      const j = JSON.parse(rawStop);
+      const list = j?.msgBody?.itemList || [];
+      stops = (Array.isArray(list) ? list : [list]).map(it => ({
+        arsId: String(it.arsId || '').replace(/-/g, ''),
+        stationNm: cleanPlaceName(it.stationNm || ''),
+        gpsX: Number(it.gpsX || 0),
+        gpsY: Number(it.gpsY || 0)
+      })).filter(s => s.arsId && s.arsId !== '0');
+    } else {
+      const doc = new DOMParser().parseFromString(rawStop, 'text/xml');
+      stops = Array.from(doc.getElementsByTagName('itemList')).map(it => ({
+        arsId: (it.getElementsByTagName('arsId')?.[0]?.textContent || '').replace(/-/g, '').trim(),
+        stationNm: cleanPlaceName(it.getElementsByTagName('stationNm')?.[0]?.textContent || ''),
+        gpsX: Number(it.getElementsByTagName('gpsX')?.[0]?.textContent || 0),
+        gpsY: Number(it.getElementsByTagName('gpsY')?.[0]?.textContent || 0)
+      })).filter(s => s.arsId && s.arsId !== '0');
+    }
 
-    const extractStops = raw => {
+    const topStops = stops.slice(0, 3);
+    const results = [];
+    for (const st of topStops) {
+      const rUrl = `http://ws.bus.go.kr/api/rest/stationinfo/getRouteByStation?serviceKey=${encodeURIComponent(DATA_GO_TRANSIT_KEY)}&arsId=${st.arsId}&resultType=json`;
+      const rawR = await fetchViaCorsProxies(rUrl);
+      if (!rawR) continue;
+      let routes = [];
       try {
-        if (raw.trim().startsWith('{')) {
-          const j = JSON.parse(raw);
+        if (rawR.trim().startsWith('{')) {
+          const j = JSON.parse(rawR);
           const list = j?.msgBody?.itemList || [];
-          return (Array.isArray(list) ? list : [list]).map(it => ({
-            arsId: String(it.arsId || '').replace(/-/g, ''),
-            stationNm: cleanPlaceName(it.stationNm || ''),
-            gpsX: Number(it.gpsX || 0),
-            gpsY: Number(it.gpsY || 0)
-          })).filter(s => s.arsId && s.arsId !== '0');
-        }
-        const doc = new DOMParser().parseFromString(raw, 'text/xml');
-        return Array.from(doc.getElementsByTagName('itemList')).map(it => ({
-          arsId: (it.getElementsByTagName('arsId')?.[0]?.textContent || '').replace(/-/g, '').trim(),
-          stationNm: cleanPlaceName(it.getElementsByTagName('stationNm')?.[0]?.textContent || ''),
-          gpsX: Number(it.getElementsByTagName('gpsX')?.[0]?.textContent || 0),
-          gpsY: Number(it.getElementsByTagName('gpsY')?.[0]?.textContent || 0)
-        })).filter(s => s.arsId && s.arsId !== '0');
-      } catch {
-        return [];
-      }
-    };
-
-    const sStops = extractStops(sXml).slice(0, 3);
-    const eStops = extractStops(eXml).slice(0, 3);
-    if (sStops.length === 0 || eStops.length === 0) return [];
-
-    const extractRoutesAtStop = async arsId => {
-      const rUrl = `http://ws.bus.go.kr/api/rest/stationinfo/getRouteByStation?serviceKey=${encodeURIComponent(DATA_GO_TRANSIT_KEY)}&arsId=${arsId}&resultType=json`;
-      const raw = await fetchViaCorsProxies(rUrl);
-      if (!raw) return [];
-      try {
-        if (raw.trim().startsWith('{')) {
-          const j = JSON.parse(raw);
-          const list = j?.msgBody?.itemList || [];
-          return (Array.isArray(list) ? list : [list]).map(it => ({
+          routes = (Array.isArray(list) ? list : [list]).map(it => ({
             busRouteNm: String(it.busRouteNm || '').trim(),
             stBegin: String(it.stBegin || '').trim(),
             stEnd: String(it.stEnd || '').trim()
           })).filter(r => r.busRouteNm);
+        } else {
+          const doc = new DOMParser().parseFromString(rawR, 'text/xml');
+          routes = Array.from(doc.getElementsByTagName('itemList')).map(it => ({
+            busRouteNm: (it.getElementsByTagName('busRouteNm')?.[0]?.textContent || '').trim(),
+            stBegin: (it.getElementsByTagName('stBegin')?.[0]?.textContent || '').trim(),
+            stEnd: (it.getElementsByTagName('stEnd')?.[0]?.textContent || '').trim()
+          })).filter(r => r.busRouteNm);
         }
-        const doc = new DOMParser().parseFromString(raw, 'text/xml');
-        return Array.from(doc.getElementsByTagName('itemList')).map(it => ({
-          busRouteNm: (it.getElementsByTagName('busRouteNm')?.[0]?.textContent || '').trim(),
-          stBegin: (it.getElementsByTagName('stBegin')?.[0]?.textContent || '').trim(),
-          stEnd: (it.getElementsByTagName('stEnd')?.[0]?.textContent || '').trim()
-        })).filter(r => r.busRouteNm);
-      } catch {
-        return [];
-      }
-    };
+      } catch {}
 
-    const [sRoutesList, eRoutesList] = await Promise.all([
-      Promise.all(sStops.map(st => extractRoutesAtStop(st.arsId))),
-      Promise.all(eStops.map(st => extractRoutesAtStop(st.arsId)))
-    ]);
-
-    const eRouteNames = new Set(eRoutesList.flat().map(r => r.busRouteNm));
-    const matched = [];
-    sStops.forEach((st, idx) => {
-      for (const r of (sRoutesList[idx] || [])) {
-        if (eRouteNames.has(r.busRouteNm)) {
-          const isN = /^N\d+/i.test(r.busRouteNm);
-          if (isNightTime && !isN) continue;
-          if (!isNightTime && isN) continue;
-          matched.push({
-            busRouteNm: r.busRouteNm,
-            direction: r.stBegin && r.stEnd ? `${r.stBegin}↔${r.stEnd}` : '',
-            fromStop: st,
-            toStop: eStops[0]
-          });
-        }
+      const filteredRoutes = routes.filter(r => {
+        const isN = /^N\d+/i.test(r.busRouteNm);
+        return isNightTime ? isN : !isN;
+      });
+      if (filteredRoutes.length > 0) {
+        results.push({ stop: st, routes: filteredRoutes });
       }
-    });
-    return matched;
+    }
+    return results;
   } catch {
     return [];
   }
@@ -1305,7 +1280,7 @@ async function triggerOneTapReturn(destObj, idx) {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = `📡 현재 위치를 확인하고 [${destObj.name}: ${destObj.area}]행 실제 탑승 노선과 도착 시각을 조회 중...`;
+    statusEl.textContent = `📡 현재 위치를 확인하고 [${destObj.name}: ${destObj.area}]행 5대 맞춤 경로를 조회 중...`;
   }
   toast(`📍 현재 위치 확인 후 [${destObj.name} (${destObj.area})]행 실제 노선을 탐색합니다...`);
 
@@ -1383,7 +1358,7 @@ async function searchPlaces(id) {
   }
 }
 
-/* ───────────── 서울시 실시간 지하철 도착 예정 초(barvlDt) 및 방면 파싱 ───────────── */
+/* ───────────── 서울시 실시간 지하철 도착 예정 초(barvlDt) 파싱 ───────────── */
 async function getSeoulSubwayLive(stationName) {
   const cleanName = cleanPlaceName(stationName).replace(/역+$/, '').trim();
   if (!cleanName) return [];
@@ -1471,7 +1446,6 @@ async function evaluateMultiTransferLastTrainFallback({
 }) {
   if (!legs || legs.length < 2) return [];
 
-  // 1구간 자체가 막차 종료 후인 경우 제외
   const firstMode = classifyTransitLegMode(legs[0].routeNm);
   const isFirstNightBus = /^N\d+/i.test(legs[0].routeNm);
   const firstLastServiceMin = isFirstNightBus ? (27 * 60 + 30) : (firstMode === 'bus' ? (23 * 60 + 50) : (24 * 60 + 25));
@@ -1480,7 +1454,6 @@ async function evaluateMultiTransferLastTrainFallback({
   const transferWalkMin = 4;
   let runningServiceMin = board1ServiceMin;
 
-  // 1구간부터 순차적으로 이동 시간을 누적하며, 2번째 이후(cutIdx >= 1) 환승 구간 중 최초로 막차가 끊기는 지점을 탐색
   for (let cutIdx = 1; cutIdx < legs.length; cutIdx++) {
     const prevLeg = legs[cutIdx - 1];
     const targetLeg = legs[cutIdx];
@@ -1495,20 +1468,17 @@ async function evaluateMultiTransferLastTrainFallback({
       ? (27 * 60 + 30)
       : (targetMode === 'bus' ? (23 * 60 + 50) : (24 * 60 + 5));
 
-    // 해당 환승 구간(targetLeg)의 대중교통 막차가 아직 운행 중이면 다음 환승 구간으로 계속 진행
     if (hubReadyServiceMin <= targetLastServiceMin) {
       runningServiceMin = hubReadyServiceMin;
       continue;
     }
 
-    // 2번째 이후 환승 구간(cutIdx >= 1)에서 막차 종료 감지! 해당 환승 거점(hub)에서 마지막 수단으로 도보 또는 택시 전환
     const hubLat = prevLeg.ty || targetLeg.fy;
     const hubLng = prevLeg.tx || targetLeg.fx;
     const hubName = prevLeg.tname || targetLeg.fname;
     if (!hubLat || !hubLng) return [];
 
     const hubArriveStr = minToTime(hubArriveServiceMin);
-    const hubReadyStr = minToTime(hubReadyServiceMin);
     const targetLastStr = minToTime(targetLastServiceMin);
 
     const completedLegs = legs.slice(0, cutIdx);
@@ -1516,7 +1486,6 @@ async function evaluateMultiTransferLastTrainFallback({
     const transitMinutesSoFar = hubArriveServiceMin - board1ServiceMin;
     const transitCostSoFar = completedLegs.some(l => classifyTransitLegMode(l.routeNm) === 'bus') ? 1500 : 1400;
 
-    // 지금까지 정상 탑승한 대중교통 구간들의 지도 세그먼트 및 타임라인 스텝 구성
     const baseMapSegments = [
       { mode: 'walk', points: [[places.start.y, places.start.x], [legs[0].fy, legs[0].fx]] }
     ];
@@ -1574,18 +1543,16 @@ async function evaluateMultiTransferLastTrainFallback({
     const fallbackRoutes = [];
     const remainTaxi = await getKakaoTaxiRoute(hubLng, hubLat, places.end.x, places.end.y);
 
-    // 마이탭 허용 최대 도보 거리(maxWalkMeters) 기준 분기:
-    // - walkRemainM <= maxWalkMeters: 도보 전환 + 택시 전환 둘 다 추천하여 사용자가 선택 가능
-    // - walkRemainM > maxWalkMeters: 도보 제외하고 택시 전환만 추천
     if (walkRemainM <= maxWalkMeters) {
       fallbackRoutes.push({
         id: `cutoff_walk_${cutIdx}_${hubName}`,
+        category: 'hybrid',
         name: `🚨 [${completedNames}] + ${hubName} 막차 종료 후 도보 (${walkKmStr}km)`,
         cost: transitCostSoFar,
         taxiCost: 0,
         usesTaxi: false,
         transfers: cutIdx,
-        isHybrid: false,
+        isHybrid: true,
         isCutoffFallback: true,
         departure: board1TimeStr,
         boardStation: legs[0].fname,
@@ -1607,9 +1574,9 @@ async function evaluateMultiTransferLastTrainFallback({
         steps: [
           ...baseSteps,
           { pill: 'pill-walk', tag: `막차 종료 (${targetLastStr})`, label: `${hubArriveStr} ${hubName} 도착 (${cutIdx + 1}번째 구간 [${targetLeg.routeNm}] 막차 종료됨)` },
-          { pill: 'pill-walk', tag: `도보 ${walkRemainMin}분`, label: `${hubName}에서 ${eName}까지 도보 ${walkKmStr}km 이동 (허용 도보 ${maxWalkKmStr}km 이내 · ${walkFinalArriveStr} 도착)` }
+          { pill: 'pill-walk', tag: `도보 ${walkRemainMin}분`, label: `${hubName}에서 ${eName}까지 도보 ${walkKmStr}km 이동 (${walkFinalArriveStr} 도착)` }
         ],
-        note: `${cutIdx + 1}번째 구간(${targetLeg.routeNm}) 막차가 ${targetLastStr}에 종료되었으나, 잔여 거리(${walkKmStr}km)가 설정한 최대 도보 거리(${maxWalkKmStr}km) 이내여서 도보 또는 택시 중 선택하실 수 있습니다.`
+        note: `${cutIdx + 1}번째 구간(${targetLeg.routeNm}) 막차가 ${targetLastStr}에 종료되었으나, 잔여 거리(${walkKmStr}km)가 허용 최대 도보 거리(${maxWalkKmStr}km) 이내여서 도보 또는 택시 중 선택하실 수 있습니다.`
       });
     }
 
@@ -1624,6 +1591,7 @@ async function evaluateMultiTransferLastTrainFallback({
 
       fallbackRoutes.push({
         id: `cutoff_taxi_${cutIdx}_${hubName}`,
+        category: 'hybrid',
         name: `🚨 [${completedNames}] + ${hubName} 막차 종료 후 택시 전환`,
         cost: totalFallbackCost,
         taxiCost: remainTaxi.fare,
@@ -1643,7 +1611,7 @@ async function evaluateMultiTransferLastTrainFallback({
         ],
         transitGuideText: `${completedNames} 이용 후 ${hubName} 도착(${hubArriveStr}) 시 [${targetLeg.routeNm}] 막차(${targetLastStr}) 종료 ➔ 마지막 수단 택시 (${won(remainTaxi.fare)})`,
         minutes: totalFallbackMin,
-        tag: walkRemainM > maxWalkMeters ? '도보초과·택시전환' : `${cutIdx + 1}구간 막차종료·택시선택`,
+        tag: '대중교통+택시 (막차전환)',
         tagClass: 'tag-red',
         isWarning: true,
         remaining: `${walkCompareDesc} · 직행 대비 ${won(savedTaxiWon)} 절약`,
@@ -1651,7 +1619,7 @@ async function evaluateMultiTransferLastTrainFallback({
         steps: [
           ...baseSteps,
           { pill: 'pill-walk', tag: `막차 종료 (${targetLastStr})`, label: `${hubArriveStr} ${hubName} 도착 (${cutIdx + 1}번째 구간 [${targetLeg.routeNm}] 막차 종료)` },
-          { pill: 'pill-taxi', tag: `택시 ${won(remainTaxi.fare)}`, label: `${hubName} 승차 위치에서 마지막 수단 택시 탑승 (${remainTaxi.distanceKm}km · ${remainTaxi.durationMin}분 · ${walkCompareDesc}) ➔ ${taxiFinalArriveStr} ${eName} 도착` }
+          { pill: 'pill-taxi', tag: `택시 ${won(remainTaxi.fare)}`, label: `${hubName} 승차 위치에서 마지막 수단 택시 탑승 (${remainTaxi.distanceKm}km · ${remainTaxi.durationMin}분) ➔ ${taxiFinalArriveStr} ${eName} 도착` }
         ],
         note: `${cutIdx + 1}번째 구간(${targetLeg.routeNm}) 막차가 ${targetLastStr}에 종료되어 ${hubName}부터 마지막 수단으로 택시를 연결했습니다. (${walkCompareDesc})`
       });
@@ -1710,7 +1678,6 @@ async function convertApiPathToRouteCard({
   const totalApiMin = (apiPath.time > 0 ? apiPath.time : Math.max(12, Math.round(kakaoDriveData.distanceKm * 2.1))) + walk1Min + walk2Min;
   const inVehicleTotalMin = Math.max(5, totalApiMin - walk1Min - walk2Min);
 
-  // 각 구간별 예상 탑승 시간 배분 (역 수 또는 거리 비례)
   const weights = legs.map(l => {
     if (l.stationCount && l.stationCount > 0) return l.stationCount;
     if (l.fy && l.fx && l.ty && l.tx) return Math.max(1, calcDistanceMeters(l.fy, l.fx, l.ty, l.tx) / 800);
@@ -1719,7 +1686,6 @@ async function convertApiPathToRouteCard({
   const totalWeight = weights.reduce((a, b) => a + b, 0) || legs.length;
   const perLegRideMinutes = weights.map(w => Math.max(4, Math.round((inVehicleTotalMin * w) / totalWeight)));
 
-  // 2번째 이후 환승 구간이 있을 경우, 순차적으로 막차 종료 여부를 검사하고 끊겼을 때만 마지막 수단(도보/택시) 추천
   if (legs.length >= 2) {
     const cutoffCards = await evaluateMultiTransferLastTrainFallback({
       depTimeStr,
@@ -1737,9 +1703,13 @@ async function convertApiPathToRouteCard({
     }
   }
 
-  // 모든 환승 구간의 대중교통이 정상 운행 중이면 100% 대중교통 환승 경로로 반환
   const transfers = Math.max(0, legs.length - 1);
-  const hasBus = legs.some(l => classifyTransitLegMode(l.routeNm) === 'bus');
+  const modesPresent = new Set(legs.map(l => classifyTransitLegMode(l.routeNm)));
+  const resolvedCategory = (modesPresent.has('subway') && modesPresent.has('bus'))
+    ? 'combo'
+    : (modesPresent.has('bus') ? 'bus' : 'subway');
+
+  const hasBus = modesPresent.has('bus');
   const hasNightBus = legs.some(l => /^N\d+/i.test(l.routeNm));
   const baseCost = hasNightBus ? 2500 : (hasBus ? 1500 : 1400);
   const finalArriveStr = minToTime(arrivalInfo.boardServiceMin + inVehicleTotalMin + walk2Min);
@@ -1806,10 +1776,16 @@ async function convertApiPathToRouteCard({
   });
 
   const routeNamesTitle = legs.map(l => l.routeNm).join(' ➔ ');
-  const categoryIcon = categoryType === 'subway' ? '🚇' : (categoryType === 'bus' ? '🚌' : '🚇+🚌');
+  const categoryIcon = resolvedCategory === 'subway' ? '🚇' : (resolvedCategory === 'bus' ? '🚌' : '🚇+🚌');
+  const categoryTagMap = {
+    subway: '지하철 경로',
+    bus: '버스 경로',
+    combo: '지하철+버스 복합'
+  };
 
   return [{
-    id: `real_${categoryType}_${idx}_${routeNamesTitle}`,
+    id: `real_${resolvedCategory}_${idx}_${routeNamesTitle}`,
+    category: resolvedCategory,
     name: `${categoryIcon} ${routeNamesTitle} (${firstLeg.fname} ➔ ${lastLeg.tname})`,
     cost: baseCost,
     taxiCost: 0,
@@ -1822,8 +1798,8 @@ async function convertApiPathToRouteCard({
     lineBadges,
     transitGuideText,
     minutes: totalApiMin,
-    tag: liveArrivals.length > 0 ? '실시간·정확노선' : sourceLabel,
-    tagClass: categoryType === 'subway' ? 'tag-blue' : 'tag-green',
+    tag: categoryTagMap[resolvedCategory] || sourceLabel,
+    tagClass: resolvedCategory === 'subway' ? 'tag-blue' : (resolvedCategory === 'bus' ? 'tag-green' : 'tag'),
     isWarning: false,
     remaining: `${arrivalInfo.boardTimeStr} ${firstLeg.fname} 도착 · 택시비 0원`,
     summary: `${firstLeg.fname} [${firstLeg.routeNm}] ${arrivalInfo.boardTimeStr} 도착 ➔ ${finalArriveStr} 목적지 도착`,
@@ -1832,7 +1808,7 @@ async function convertApiPathToRouteCard({
   }];
 }
 
-/* ───────────── 서울 전용 실제 대중교통 경로 탐색 메인 엔진 ───────────── */
+/* ───────────── 서울 전용 실제 대중교통 경로 탐색 메인 엔진 (5대 유형 보장) ───────────── */
 async function runSeoulSearch() {
   if (!places.start || !places.end) return;
 
@@ -1855,14 +1831,15 @@ async function runSeoulSearch() {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = '⚡ 서울시 대중교통 노선 및 환승 경로를 정밀 분석 중...';
+    statusEl.textContent = '⚡ 지하철 · 버스 · 지하철+버스 · 대중교통+택시 · 택시 5대 경로를 분석 중...';
   }
 
   try {
-    const [taxiRes, realTransit, commonBuses] = await Promise.all([
+    const [taxiRes, realTransit, startStopsInfo, endStopsInfo] = await Promise.all([
       getKakaoTaxiRoute(places.start.x, places.start.y, places.end.x, places.end.y),
       fetchAllRealSeoulTransitPaths(places.start.x, places.start.y, places.end.x, places.end.y),
-      findRealCommonBusRoutes(places.start.x, places.start.y, places.end.x, places.end.y, isNightTime)
+      fetchNearbyBusStopsAndRoutes(places.start.y, places.start.x, isNightTime),
+      fetchNearbyBusStopsAndRoutes(places.end.y, places.end.x, isNightTime)
     ]);
 
     if (taxiRes) {
@@ -1874,7 +1851,7 @@ async function runSeoulSearch() {
 
     const addUniqueCards = cards => {
       for (const c of cards) {
-        const sig = c.lineBadges?.map(b => b.label).join('|') + ':' + c.isCutoffFallback;
+        const sig = (c.lineBadges?.map(b => b.label).join('|') || c.name) + ':' + c.category + ':' + Boolean(c.isCutoffFallback);
         if (!seenRouteSignatures.has(sig)) {
           seenRouteSignatures.add(sig);
           builtRoutes.push(c);
@@ -1890,24 +1867,25 @@ async function runSeoulSearch() {
         idx: i,
         depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
         sName, eName, maxWalkMeters,
-        sourceLabel: '공공데이터·지하철'
+        sourceLabel: '지하철 경로'
       });
       addUniqueCards(cards);
     }
 
-    // 1-B. 서울 전 노선도 다익스트라 최단 환승 경로 산출 (2번째 이후 환승 구간 막차 종료 시 자동 분기 포함)
+    // 1-B. 서울 노선도 그래프 기반 최단 지하철 경로 보강
     const sGraphSt = findNearestGraphStation(places.start.y, places.start.x);
     const eGraphSt = findNearestGraphStation(places.end.y, places.end.x);
-    if (sGraphSt && eGraphSt && sGraphSt.distM <= 2500 && eGraphSt.distM <= 2500) {
-      const graphRoute = computeExactSubwayRoute(sGraphSt.stationName, eGraphSt.stationName);
-      if (graphRoute) {
+    let graphSubwayRoute = null;
+    if (sGraphSt && eGraphSt && sGraphSt.distM <= 3000 && eGraphSt.distM <= 3000) {
+      graphSubwayRoute = computeExactSubwayRoute(sGraphSt.stationName, eGraphSt.stationName);
+      if (graphSubwayRoute && !builtRoutes.some(r => r.category === 'subway')) {
         const cards = await convertApiPathToRouteCard({
-          apiPath: graphRoute,
+          apiPath: graphSubwayRoute,
           categoryType: 'subway',
           idx: 99,
           depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
           sName, eName, maxWalkMeters,
-          sourceLabel: '서울노선도·정밀환승'
+          sourceLabel: '지하철 경로'
         });
         addUniqueCards(cards);
       }
@@ -1921,45 +1899,50 @@ async function runSeoulSearch() {
         idx: i,
         depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
         sName, eName, maxWalkMeters,
-        sourceLabel: '공공데이터·버스'
+        sourceLabel: '버스 경로'
       });
       addUniqueCards(cards);
     }
 
-    // 2-B. 출발 정류장·도착 정류장 실제 경유 버스 노선 매칭
-    if (commonBuses.length > 0) {
-      const uniqueBusMap = new Map();
-      commonBuses.forEach(b => {
-        if (!uniqueBusMap.has(b.busRouteNm)) uniqueBusMap.set(b.busRouteNm, b);
-      });
-      const matchedBuses = Array.from(uniqueBusMap.values()).slice(0, 2);
-      for (let i = 0; i < matchedBuses.length; i++) {
-        const mb = matchedBuses[i];
-        const busEstMin = Math.max(12, Math.round(kakaoDriveData.distanceKm * 2.5) + 4);
-        const cards = await convertApiPathToRouteCard({
-          apiPath: {
-            time: busEstMin,
-            legs: [{
-              routeNm: `${mb.busRouteNm}번`,
-              fname: mb.fromStop.stationNm,
-              fx: mb.fromStop.gpsX,
-              fy: mb.fromStop.gpsY,
-              tname: mb.toStop.stationNm,
-              tx: mb.toStop.gpsX,
-              ty: mb.toStop.gpsY
-            }]
-          },
-          categoryType: 'bus',
-          idx: 50 + i,
-          depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
-          sName, eName, maxWalkMeters,
-          sourceLabel: '정류소실제경유노선'
-        });
-        addUniqueCards(cards);
+    // 2-B. 버스 전용 경로가 아직 없으면 출발·도착 정류소 실제 경유 버스 노선으로 구성
+    if (!builtRoutes.some(r => r.category === 'bus')) {
+      const sStopData = startStopsInfo[0];
+      const eStopData = endStopsInfo[0];
+      const eRouteSet = new Set(endStopsInfo.flatMap(x => x.routes.map(r => r.busRouteNm)));
+      let directBus = null;
+      if (sStopData) {
+        directBus = sStopData.routes.find(r => eRouteSet.has(r.busRouteNm)) || sStopData.routes[0];
       }
+      const busRouteLabel = directBus
+        ? `${directBus.busRouteNm}번`
+        : (isNightTime ? 'N37번 심야버스' : '간선버스');
+      const fromBusStop = sStopData?.stop || { stationNm: `${sName} 버스정류장`, gpsX: places.start.x, gpsY: places.start.y };
+      const toBusStop = eStopData?.stop || { stationNm: `${eName} 버스정류장`, gpsX: places.end.x, gpsY: places.end.y };
+      const busEstMin = Math.max(14, Math.round(kakaoDriveData.distanceKm * 2.6) + 5);
+
+      const cards = await convertApiPathToRouteCard({
+        apiPath: {
+          time: busEstMin,
+          legs: [{
+            routeNm: busRouteLabel,
+            fname: fromBusStop.stationNm,
+            fx: fromBusStop.gpsX,
+            fy: fromBusStop.gpsY,
+            tname: toBusStop.stationNm,
+            tx: toBusStop.gpsX,
+            ty: toBusStop.gpsY
+          }]
+        },
+        categoryType: 'bus',
+        idx: 50,
+        depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
+        sName, eName, maxWalkMeters,
+        sourceLabel: '버스 경로'
+      });
+      addUniqueCards(cards);
     }
 
-    // 3. 공공데이터 API 버스+지하철 복합 환승 경로 (2번째 이후 환승 막차 종료 시에만 마지막 수단 택시·도보 전환)
+    // 3. 공공데이터 API 지하철+버스 복합 환승 경로
     for (let i = 0; i < Math.min(2, realTransit.busNSubPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busNSubPaths[i],
@@ -1967,12 +1950,153 @@ async function runSeoulSearch() {
         idx: i,
         depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
         sName, eName, maxWalkMeters,
-        sourceLabel: '공공데이터·복합환승'
+        sourceLabel: '지하철+버스 복합'
       });
       addUniqueCards(cards);
     }
 
-    // 4. 출발지부터 직행 택시 (기본 선택지)
+    // 3-B. 지하철+버스 복합 경로가 아직 없으면 주변 버스정류장 ➔ 환승역 ➔ 목적지 지하철 노선으로 구성
+    if (!builtRoutes.some(r => r.category === 'combo')) {
+      const sStopData = startStopsInfo[0];
+      const feederBus = sStopData?.routes?.[0]?.busRouteNm
+        ? `${sStopData.routes[0].busRouteNm}번`
+        : (isNightTime ? 'N61번' : '지선버스');
+      const fromStop = sStopData?.stop || { stationNm: `${sName} 정류장`, gpsX: places.start.x, gpsY: places.start.y };
+
+      const mainSubwayLeg = graphSubwayRoute?.legs?.[0];
+      if (mainSubwayLeg && mainSubwayLeg.tname) {
+        const subTime = Math.max(8, Math.round((graphSubwayRoute.time || 15) * 0.75));
+        const cards = await convertApiPathToRouteCard({
+          apiPath: {
+            time: subTime + 9,
+            legs: [
+              {
+                routeNm: feederBus,
+                fname: fromStop.stationNm,
+                fx: fromStop.gpsX,
+                fy: fromStop.gpsY,
+                tname: mainSubwayLeg.fname,
+                tx: mainSubwayLeg.fx,
+                ty: mainSubwayLeg.fy
+              },
+              {
+                routeNm: mainSubwayLeg.routeNm,
+                fname: mainSubwayLeg.fname,
+                fx: mainSubwayLeg.fx,
+                fy: mainSubwayLeg.fy,
+                tname: eGraphSt?.stationName || mainSubwayLeg.tname,
+                tx: eGraphSt?.x || mainSubwayLeg.tx,
+                ty: eGraphSt?.y || mainSubwayLeg.ty,
+                stationCount: mainSubwayLeg.stationCount,
+                stationCoords: mainSubwayLeg.stationCoords
+              }
+            ]
+          },
+          categoryType: 'combo',
+          idx: 70,
+          depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
+          sName, eName, maxWalkMeters,
+          sourceLabel: '지하철+버스 복합'
+        });
+        addUniqueCards(cards);
+      }
+    }
+
+    // 4. 대중교통+택시 (2번째 이후 환승 막차 종료 전환이 이미 있으면 우선 사용, 없으면 지정 환승지/중간 환승 거점 연계형 생성)
+    if (!builtRoutes.some(r => r.category === 'hybrid') && budget > 0) {
+      let hubPoint = places.via;
+      let firstTransitLeg = null;
+
+      if (!hubPoint && graphSubwayRoute && graphSubwayRoute.legs.length >= 1) {
+        const firstL = graphSubwayRoute.legs[0];
+        if (graphSubwayRoute.legs.length >= 2) {
+          hubPoint = { name: firstL.tname, x: firstL.tx, y: firstL.ty };
+          firstTransitLeg = firstL;
+        } else if (firstL.stationCoords && firstL.stationCoords.length >= 3) {
+          const midIdx = Math.floor(firstL.stationCoords.length * 0.65);
+          const midCoord = firstL.stationCoords[midIdx];
+          const midSt = findNearestGraphStation(midCoord[0], midCoord[1]);
+          if (midSt && midSt.stationName !== firstL.fname && midSt.stationName !== firstL.tname) {
+            hubPoint = { name: midSt.stationName, x: midSt.x, y: midSt.y };
+            firstTransitLeg = {
+              routeNm: firstL.routeNm,
+              fname: firstL.fname,
+              fx: firstL.fx,
+              fy: firstL.fy,
+              tname: midSt.stationName,
+              tx: midSt.x,
+              ty: midSt.y,
+              stationCoords: firstL.stationCoords.slice(0, midIdx + 1)
+            };
+          }
+        }
+      }
+
+      if (hubPoint && hubPoint.x && hubPoint.y) {
+        const hybridTaxi = await getKakaoTaxiRoute(hubPoint.x, hubPoint.y, places.end.x, places.end.y);
+        if (hybridTaxi && hybridTaxi.fare <= budget) {
+          const legRouteNm = firstTransitLeg?.routeNm || (isNightTime ? '심야버스' : '지하철');
+          const legFromNm = firstTransitLeg?.fname || sName;
+          const legFromX = firstTransitLeg?.fx || places.start.x;
+          const legFromY = firstTransitLeg?.fy || places.start.y;
+          const transitWalkMin = Math.max(2, Math.round(calcDistanceMeters(places.start.y, places.start.x, legFromY, legFromX) / 67));
+          const transitRideMin = Math.max(6, Math.round((kakaoDriveData.durationMin || 20) * 0.55));
+          const boardSvcMin = baseServiceMin + transitWalkMin + (isNightTime ? 10 : 4);
+          const boardTimeStr = minToTime(boardSvcMin);
+          const hubArrTimeStr = minToTime(boardSvcMin + transitRideMin);
+          const finalArrTimeStr = minToTime(boardSvcMin + transitRideMin + 3 + hybridTaxi.durationMin);
+          const totalHybridCost = 1400 + hybridTaxi.fare;
+          const savedWon = Math.max(0, kakaoDriveData.fare - hybridTaxi.fare);
+
+          addUniqueCards([{
+            id: `hybrid_hub_${hubPoint.name}`,
+            category: 'hybrid',
+            name: `🚇+🚖 [${legRouteNm}] + ${hubPoint.name} 택시 환승 (${hybridTaxi.distanceKm}km)`,
+            cost: totalHybridCost,
+            taxiCost: hybridTaxi.fare,
+            usesTaxi: true,
+            transfers: 1,
+            isHybrid: true,
+            isCutoffFallback: false,
+            departure: boardTimeStr,
+            boardStation: legFromNm,
+            mapSegments: [
+              { mode: 'walk', points: [[places.start.y, places.start.x], [legFromY, legFromX]] },
+              {
+                mode: classifyTransitLegMode(legRouteNm),
+                points: [[legFromY, legFromX], [hubPoint.y, hubPoint.x]],
+                precomputed: firstTransitLeg?.stationCoords || null,
+                hub: { stationName: `${hubPoint.name} (택시 환승)`, x: hubPoint.x, y: hubPoint.y }
+              },
+              {
+                mode: 'taxi',
+                points: [[hubPoint.y, hubPoint.x], [places.end.y, places.end.x]],
+                precomputed: hybridTaxi.coordinates
+              }
+            ],
+            lineBadges: [
+              { type: classifyTransitLegMode(legRouteNm), label: `${classifyTransitLegMode(legRouteNm) === 'subway' ? '🚇' : '🚌'} ${legRouteNm}` },
+              { type: 'taxi', label: `🚖 ${hubPoint.name} 이후 택시 (${won(hybridTaxi.fare)})` }
+            ],
+            transitGuideText: `${legFromNm}에서 [${legRouteNm}] 탑승 ➔ ${hubPoint.name} 하차 후 택시 환승 (${hybridTaxi.distanceKm}km · ${won(hybridTaxi.fare)})`,
+            minutes: transitWalkMin + transitRideMin + 3 + hybridTaxi.durationMin,
+            tag: '대중교통+택시',
+            tagClass: 'tag',
+            isWarning: false,
+            remaining: `직행 택시 대비 ${won(savedWon)} 절약`,
+            summary: `${legFromNm} ${boardTimeStr} 탑승 ➔ ${hubPoint.name} 택시 환승 (${finalArrTimeStr} 도착)`,
+            steps: [
+              { pill: 'pill-walk', tag: `도보 ${transitWalkMin}분`, label: `${depTimeStr} ${sName} 출발 ➔ ${legFromNm} 이동` },
+              { pill: classifyTransitLegMode(legRouteNm) === 'subway' ? 'pill-subway' : 'pill-bus', tag: `${legRouteNm} · ${boardTimeStr}`, label: `${legFromNm}에서 [${legRouteNm}] 탑승 (${transitRideMin}분 이동) ➔ ${hubArrTimeStr} ${hubPoint.name} 하차` },
+              { pill: 'pill-taxi', tag: `택시 ${won(hybridTaxi.fare)}`, label: `${hubPoint.name} 승차 위치에서 택시 탑승 (${hybridTaxi.distanceKm}km · ${hybridTaxi.durationMin}분) ➔ ${finalArrTimeStr} ${eName} 도착` }
+            ],
+            note: `주요 환승 거점(${hubPoint.name})까지 대중교통으로 이동한 뒤 잔여 구간만 택시를 이용해 비용과 시간을 절약하는 전략입니다.`
+          }]);
+        }
+      }
+    }
+
+    // 5. 출발지부터 직행 택시
     const taxiDispatchWait = isNightTime ? 6 : 3;
     const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
     const taxiPickupTimeStr = minToTime(taxiPickupServiceMin);
@@ -1980,6 +2104,7 @@ async function runSeoulSearch() {
 
     builtRoutes.push({
       id: 'kakao_direct_taxi',
+      category: 'taxi',
       name: `🚖 카카오 직행 택시 (${kakaoDriveData.distanceKm}km)`,
       cost: kakaoDriveData.fare,
       taxiCost: kakaoDriveData.fare,
@@ -1994,7 +2119,7 @@ async function runSeoulSearch() {
       lineBadges: [{ type: 'taxi', label: '🚖 일반·중형 택시 직행' }],
       transitGuideText: `${sName} 승차 위치에서 호출 택시 탑승 후 ${eName}까지 환승 없이 직행 이동`,
       minutes: kakaoDriveData.durationMin,
-      tag: '예산 내 직행 택시',
+      tag: '직행 택시',
       tagClass: 'tag',
       isWarning: false,
       remaining: `호출 약 ${taxiDispatchWait}분 후 (${taxiPickupTimeStr}) 택시 도착`,
@@ -2014,8 +2139,8 @@ async function runSeoulSearch() {
     if (statusEl) {
       statusEl.style.color = hasFallback ? '#ff8b8b' : '#8fdb6e';
       statusEl.textContent = hasFallback
-        ? `🚨 2번째 이후 환승 구간 막차 종료 감지! 허용 도보(${(maxWalkMeters / 1000).toFixed(1)}km) 기준으로 마지막 수단을 계산했습니다.`
-        : `✓ 정확한 탑승 노선 및 환승역 분석 완료 (${selected?.boardStation} ${selected?.departure} 도착)`;
+        ? `🚨 2번째 이후 환승 구간 막차 종료 감지! 총 ${visible.length}개 대안 경로를 구성했습니다.`
+        : `✓ 지하철 · 버스 · 지하철+버스 · 대중교통+택시 · 택시 등 ${visible.length}개 경로 분석 완료`;
     }
     if ($('transitBadgeText') && selected) {
       $('transitBadgeText').textContent = `${selected.boardStation} ${selected.departure} 차량 도착 예정`;
@@ -2050,7 +2175,7 @@ function applyConditionAndRender() {
   renderStrategyCards();
 }
 
-/* ───────────── 택시비 예산 초과 시 택시 선택지 완전 제거 ───────────── */
+/* ───────────── 5대 핵심 카테고리(지하철, 버스, 지하철+버스, 대중교통+택시, 택시) 균형 큐레이션 ───────────── */
 function curateRecommendedRoutes(pool, cond) {
   if (!pool || pool.length === 0) return [];
   const budget = Number($('budget')?.value ?? 30000);
@@ -2064,12 +2189,42 @@ function curateRecommendedRoutes(pool, cond) {
     filtered = filtered.filter(r => r.usesTaxi);
   }
 
-  filtered.sort((a, b) => {
+  const sortFn = (a, b) => {
     if (cond === 'cost') return a.cost - b.cost;
     if (cond === 'transfer') return a.transfers - b.transfers;
     return a.minutes - b.minutes;
-  });
-  return filtered.slice(0, 6);
+  };
+
+  filtered.sort(sortFn);
+
+  if (cond === 'taxi') {
+    return filtered.slice(0, 5);
+  }
+
+  // 5개 카테고리별 대표 1개씩 우선 선발하여 지하철·버스·지하철+버스·대중교통+택시·택시가 모두 추천되도록 보장
+  const targetCategories = ['subway', 'bus', 'combo', 'hybrid', 'taxi'];
+  const picked = [];
+  const pickedIds = new Set();
+
+  for (const cat of targetCategories) {
+    const match = filtered.find(r => r.category === cat && !pickedIds.has(r.id));
+    if (match) {
+      picked.push(match);
+      pickedIds.add(match.id);
+    }
+  }
+
+  // 5개 미만일 경우 남은 후보 중 상위 경로로 보충
+  for (const r of filtered) {
+    if (picked.length >= 5) break;
+    if (!pickedIds.has(r.id)) {
+      picked.push(r);
+      pickedIds.add(r.id);
+    }
+  }
+
+  picked.sort(sortFn);
+  return picked.slice(0, 5);
 }
 
 function createLineBadgeElement(badgeInfo) {
@@ -2109,7 +2264,7 @@ function renderStrategyCards() {
     if (removedTaxiRoutes.length > 0) {
       noticeBox.append(node('div', `🚫 설정한 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${removedTaxiRoutes.length}개가 제외되었습니다.`, 'hintBox'));
     } else if (!hasCutoffFallback) {
-      noticeBox.append(node('div', `✅ 대중교통이 정상 운행 중인 시간대이므로 환승 구간 모두 대중교통으로 안내합니다. 카드를 누르면 지도 경로가 갱신됩니다.`, 'hintBox'));
+      noticeBox.append(node('div', `✅ 지하철(파랑) · 버스(초록) · 지하철+버스 · 대중교통+택시(주황) · 택시 등 ${visible.length}개 추천 경로입니다. 카드를 누르면 지도 색상이 갱신됩니다.`, 'hintBox'));
     }
   }
 
@@ -2153,7 +2308,7 @@ function renderStrategyCards() {
       head.append(node('h3', '선택 경로 탑승 노선 및 세부 순서'), node('span', selected.tag, selected.tagClass));
 
       const banner = node('div', undefined, 'selected-line-banner');
-      const bTitle = node('b', selected.isCutoffFallback ? '🚨 환승 막차 끊김 대응 마지막 수단 안내' : '🚏 지금 타야 할 대중교통 노선');
+      const bTitle = node('b', selected.isCutoffFallback ? '🚨 환승 막차 끊김 대응 마지막 수단 안내' : '🚏 지금 타야 할 대중교통 노선 (지도 색상 연동)');
       const bDesc = document.createElement('div');
       bDesc.style.marginTop = '4px';
       bDesc.textContent = selected.transitGuideText || selected.note;
@@ -2230,13 +2385,13 @@ async function generateLocalSmartReply(userText) {
 
   if (visible.length > 0) {
     const lines = visible.map((r, idx) =>
-      `${idx + 1}. **${r.name}**\n   • 탑승 노선: ${r.transitGuideText}\n   • 정류장·역 도착: **${r.departure}** (${r.boardStation}) · 소요 ${r.minutes}분 · ${won(r.cost)}`
+      `${idx + 1}. **${r.name}** [${r.tag}]\n   • 탑승 노선: ${r.transitGuideText}\n   • 정류장·역 도착: **${r.departure}** (${r.boardStation}) · 소요 ${r.minutes}분 · ${won(r.cost)}`
     ).join('\n\n');
 
-    return `📍 **[${sName} ➔ ${eName}]** (${depTime} 기준 실제 노선 분석)\n\n${lines}\n\n💡 상세 시간표와 카운트다운 타이머는 하단 **[귀가 전략]** 탭에서 바로 확인하실 수 있습니다.`;
+    return `📍 **[${sName} ➔ ${eName}]** (${depTime} 기준 5대 맞춤 경로 분석)\n\n${lines}\n\n💡 지도는 **지하철(파랑)**, **버스(초록)**, **택시(주황)**, **도보(회색 점선)**로 구분되어 표시됩니다.`;
   }
 
-  return `현재 **[${sName} ➔ ${eName}]** 기준으로 서울 시내 지하철 및 환승 막차 종료 시 택시·도보 전환 경로를 탐색할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
+  return `현재 **[${sName} ➔ ${eName}]** 기준으로 지하철, 버스, 지하철+버스, 대중교통+택시, 택시 5가지 경로를 탐색할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
 }
 
 /* ───────────── Gemini AI 챗봇 ───────────── */
@@ -2245,7 +2400,7 @@ let isChatSending = false;
 
 const appRouteFunctionDeclaration = {
   name: 'search_seoul_route',
-  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 실제 지하철 호선, 시내버스·심야버스 번호, 2번째 이후 환승 막차 종료 시 택시·도보 전환 경로를 앱 내에서 직접 검색하고 반환합니다.',
+  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 지하철, 버스, 지하철+버스, 대중교통+택시, 택시 등 5가지 추천 경로를 앱 내에서 직접 검색하고 반환합니다.',
   parameters: {
     type: 'OBJECT',
     properties: {
@@ -2295,6 +2450,7 @@ async function executeAppRouteSearch({ start_place, end_place, departure_time })
     distanceKm: kakaoDriveData.distanceKm,
     routes: visible.map(r => ({
       name: r.name,
+      category: r.category,
       isCutoffFallback: Boolean(r.isCutoffFallback),
       boardingLines: r.lineBadges?.map(b => b.label) || [],
       transitGuide: r.transitGuideText,
@@ -2353,7 +2509,7 @@ async function askGeminiChatbot(userMessage) {
   sendBtn.textContent = '전송중';
   box.scrollTop = box.scrollHeight;
 
-  const loadingMsg = node('div', '🔍 서울시 실제 탑승 노선 및 환승 막차 여부를 분석하고 있습니다...', 'msg bot');
+  const loadingMsg = node('div', '🔍 지하철·버스·복합·대중교통+택시·택시 5대 경로를 분석하고 있습니다...', 'msg bot');
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
 
@@ -2363,15 +2519,15 @@ async function askGeminiChatbot(userMessage) {
   const budget = won($('budget')?.value ?? 30000);
 
   const routeSummaryText = visible.map((r, idx) =>
-    `${idx + 1}. ${r.name} | 탑승 노선: ${r.transitGuideText} | 출발 정류장·역 도착 시각: ${r.departure} (${r.boardStation}) | 소요시간: ${r.minutes}분 | 비용: ${won(r.cost)}`
+    `${idx + 1}. [${r.tag}] ${r.name} | 탑승 노선: ${r.transitGuideText} | 출발 정류장·역 도착: ${r.departure} (${r.boardStation}) | 소요: ${r.minutes}분 | 비용: ${won(r.cost)}`
   ).join('\n');
 
   const systemPrompt = `당신은 서울특별시 심야 귀가 및 대중교통 길찾기 앱 '집에 못 갈 지도'의 전문 AI 어시스턴트입니다.
 현재 앱 탐색 정보:
 - 출발지: ${sName}, 도착지: ${eName}, 기준시각: ${depTime}, 택시예산: ${budget}, 최대도보허용: ${settings.maxWalk}m
-- 현재 추천 경로 및 탑승 노선:
+- 현재 5대 추천 경로 (지하철, 버스, 지하철+버스, 대중교통+택시, 택시):
 ${routeSummaryText || '없음'}
-사용자가 경로를 물어보면 'search_seoul_route' 함수를 호출하고, 타야 할 실제 버스 번호·지하철 호선, 2번째 이후 환승 구간에서 막차 종료 시에만 허용 도보 거리 기준으로 도보/택시 전환하는 규칙에 따라 간결하고 친절하게 답변하세요.`;
+사용자가 경로를 물어보면 'search_seoul_route' 함수를 호출하고, 지하철·버스·지하철+버스·대중교통+택시·택시 전략과 2번째 이후 환승 막차 종료 시 허용 도보 거리 기준 전환 규칙에 따라 친절하게 답변하세요.`;
 
   chatHistory.push({ role: 'user', parts: [{ text }] });
 
@@ -2417,7 +2573,7 @@ ${routeSummaryText || '없음'}
     if (fnCallPart) {
       const fnName = fnCallPart.functionCall.name;
       const fnArgs = fnCallPart.functionCall.args || {};
-      loadingMsg.textContent = `🔍 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 실제 노선과 도착 시각을 조회 중입니다...`;
+      loadingMsg.textContent = `🔍 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 5대 경로와 도착 시각을 조회 중입니다...`;
 
       chatHistory.push(candidate.content);
 
@@ -2556,7 +2712,7 @@ $('reset')?.addEventListener('click', () => {
   toast('초기 설정으로 되돌아갔습니다.');
 });
 
-/* ───────────── 지도 및 실제 이동경로 다중 구간 렌더링 ───────────── */
+/* ───────────── 지도 및 지하철·버스 고대비 색상 분리 렌더링 ───────────── */
 function buildHomeMap() {
   if (!homeLeaflet && typeof L !== 'undefined') {
     homeLeaflet = L.map('homeMap', {
@@ -2600,18 +2756,31 @@ async function updateHomeMap() {
     { mode: 'taxi', points: [[s.y, s.x], [e.y, e.x]], precomputed: kakaoDriveData.coordinates }
   ];
 
+  // 지하철(선명한 파란색)과 버스(선명한 초록색)가 지도 위에서 명확히 구분되도록 외곽선(casing) + 메인 컬러 조합
   const modeStyleMap = {
-    walk: { color: '#9ca3af', weight: 4, opacity: 0.92, dashArray: '6, 8' },
-    subway: { color: '#3b82f6', weight: 5, opacity: 0.95 },
-    bus: { color: '#22c55e', weight: 5, opacity: 0.95 },
-    taxi: { color: '#ffb918', weight: 5, opacity: 0.96 }
+    walk: {
+      casing: { color: '#111827', weight: 6, opacity: 0.45, dashArray: '6, 9' },
+      main: { color: '#9ca3af', weight: 4, opacity: 0.95, dashArray: '6, 9' }
+    },
+    subway: {
+      casing: { color: '#ffffff', weight: 9, opacity: 0.85 },
+      main: { color: '#2563eb', weight: 6, opacity: 1.0 }
+    },
+    bus: {
+      casing: { color: '#ffffff', weight: 9, opacity: 0.85 },
+      main: { color: '#16a34a', weight: 6, opacity: 1.0 }
+    },
+    taxi: {
+      casing: { color: '#111827', weight: 8, opacity: 0.75 },
+      main: { color: '#f59e0b', weight: 5, opacity: 1.0 }
+    }
   };
 
   segments.forEach(seg => {
     if (seg.hub && seg.hub.y && seg.hub.x) {
       const iconHub = L.divIcon({
-        html: '<div style="background:#1e293b;color:#ffb918;width:18px;height:18px;border-radius:50%;border:2px solid #ffb918;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;">🔄</div>',
-        iconSize: [18, 18], iconAnchor: [9, 9]
+        html: '<div style="background:#1e293b;color:#ffb918;width:20px;height:20px;border-radius:50%;border:2px solid #ffb918;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.6);">🔄</div>',
+        iconSize: [20, 20], iconAnchor: [10, 10]
       });
       const mHub = L.marker([seg.hub.y, seg.hub.x], { icon: iconHub })
         .addTo(homeLeaflet)
@@ -2635,8 +2804,9 @@ async function updateHomeMap() {
   resolvedCoordsList.forEach((latlngs, idx) => {
     const seg = segments[idx];
     if (latlngs && latlngs.length >= 2 && routeLayersGroup) {
-      const style = modeStyleMap[seg.mode] || modeStyleMap.taxi;
-      L.polyline(latlngs, style).addTo(routeLayersGroup);
+      const stylePair = modeStyleMap[seg.mode] || modeStyleMap.taxi;
+      L.polyline(latlngs, stylePair.casing).addTo(routeLayersGroup);
+      L.polyline(latlngs, stylePair.main).addTo(routeLayersGroup);
       allBoundsPoints.push(...latlngs);
     }
   });
