@@ -274,7 +274,7 @@ color: #000;
 </div>
 <div class="transit-badge">
 <span class="transit-dot"></span>
-<span id="transitBadgeText">서울특별시 대중교통환승경로 API · 실시간운임 연동</span>
+<span id="transitBadgeText">서울교통공사 최단경로 · 버스노선 실궤적 · 실시간운임 연동</span>
 </div>
 <input id="depTime" type="time"/>
 
@@ -284,13 +284,13 @@ color: #000;
 </div>
 
 <div class="micro" style="margin-top:8px;color:var(--muted)" id="fareApiStatusLine">
-💳 서울특별시 대중교통환승경로 API와 서울교통공사 실시간운임·거리비례·통합환승할인이 적용됩니다.
+💳 서울교통공사 최단경로이동정보(getShtrmPath) · 1~9호선 공식역사(249역) · 서울시 노선정보조회(getRoutePath) · 실시간운임 연동
 </div>
 </div>
 
 <div class="home-map-wrap">
 <div id="homeMap"></div>
-<div class="home-map-label" id="homeMapLabel">🗺 서울시 대중교통환승경로 API 기반 이동 경로</div>
+<div class="home-map-label" id="homeMapLabel">🗺 수단별 실제 이동 궤적 (버스실도로·지하철선로·보행로)</div>
 <div class="home-map-legend" id="homeMapLegend">
 <span><i class="legend-swatch" style="background:#3b82f6"></i>버스</span>
 <span><i class="legend-swatch" style="background:#22c55e"></i>지하철</span>
@@ -303,7 +303,7 @@ color: #000;
 </div>
 
 <div class="panel home-search" id="homeSearch">
-<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">서울시 환승경로 API</span></div>
+<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">서울시 환승·최단경로 API</span></div>
 <div id="homeAddressFields">
 <label for="start">출발지 (서울 내 역, 정류장, 건물명 또는 주소)</label>
 <div class="fieldRow">
@@ -347,7 +347,7 @@ color: #000;
 <div id="savedRoutes" style="margin-top:8px"></div>
 </div>
 <button class="primary" id="openStrategy" type="button">추천 귀가 전략 5선 및 요금 상세 비교 <span>→</span></button>
-<p class="footnote" id="homeFoot">서울특별시 대중교통환승경로 조회 API · 서울교통공사 실시간운임정보 · 카카오모빌리티</p>
+<p class="footnote" id="homeFoot">서울교통공사 최단경로이동정보(getShtrmPath) · 1~9호선 공식역사좌표 · 서울시 노선정보조회(getRoutePath) · 카카오모빌리티</p>
 </section>
 
 <!-- 전략 탭 -->
@@ -385,10 +385,10 @@ color: #000;
 <!-- 물어보기 탭 -->
 <section class="screen" id="chat">
 <div class="between" style="flex-shrink:0;margin-bottom:6px">
-<span class="badge">✨ Gemini AI + 🚌 서울시 대중교통환승경로 API</span>
+<span class="badge">✨ Gemini AI + 🚌 서울시 최단경로·환승 API</span>
 <span class="micro" id="aiStatusBadge">연동 준비 완료</span>
 </div>
-<p class="desc">서울시 대중교통환승경로 API 기반 노선과 실시간·거리비례·환승 운임을 바로 물어보세요.</p>
+<p class="desc">서울교통공사 최단경로·환승 API 기반 노선과 실시간·거리비례·환승 운임을 바로 물어보세요.</p>
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
 <div class="msg bot">안녕하세요! 서울시 심야 귀가 어시스턴트입니다. ✨
@@ -557,7 +557,7 @@ color: #000;
 <option selected="" value="2000">2km (도보 약 30분)</option>
 <option value="4000">4km (도보 약 60분)</option>
 </select>
-<div class="hintBox">서울특별시 대중교통환승경로 조회 API와 서울교통공사 실시간 운임정보 API·거리비례제(10km 초과 시 5km당 +100원)·통합환승할인제를 모두 반영합니다.</div>
+<div class="hintBox">서울교통공사 최단경로이동정보(getShtrmPath)·1~9호선 공식 역사 좌표·서울시 버스노선 실궤적(getRoutePath)·실시간 운임정보·거리비례제(10km 초과 시 5km당 +100원)·통합환승할인제를 모두 반영합니다.</div>
 <button type="button" class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
 </dialog>
 
@@ -685,6 +685,37 @@ async function fetchSafeJson(url) {
   }
 }
 
+/* ───────────── 공통 공공데이터포털 CORS 우회 Fetch 헬퍼 ───────────── */
+async function fetchPublicApiText(targetUrl, validatorFn) {
+  const candidates = [
+    targetUrl,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+    `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+  ];
+  try {
+    return await Promise.any(
+      candidates.map(async u => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3000);
+        try {
+          const res = await fetch(u, { signal: controller.signal });
+          clearTimeout(timer);
+          if (!res.ok) throw new Error('HTTP error');
+          const txt = await res.text();
+          if (validatorFn && !validatorFn(txt)) throw new Error('Invalid payload');
+          return txt;
+        } catch (err) {
+          clearTimeout(timer);
+          throw err;
+        }
+      })
+    );
+  } catch {
+    return null;
+  }
+}
+
 /* ───────────── 시간 및 거리 유틸리티 ───────────── */
 function timeStrToServiceMin(timeStr) {
   const [h, m] = String(timeStr || '00:00').split(':').map(Number);
@@ -735,12 +766,12 @@ function calcDistanceMeters(lat1, lon1, lat2, lon2) {
 
 function cleanPlaceName(name) {
   if (!name) return '';
-  return String(name).trim().replace(/역{2,}/g, '역');
+  return String(name).trim().replace(/\([^)]*\)/g, '').replace(/역{2,}/g, '역').trim();
 }
 function formatStationName(name) {
   if (!name) return '';
-  const cleaned = cleanPlaceName(name);
-  return cleaned.endsWith('역') ? cleaned : `${cleaned}역`;
+  const cleaned = cleanPlaceName(name).replace(/역+$/, '');
+  return cleaned ? `${cleaned}역` : '';
 }
 
 /* ───────────── 서울교통공사 실시간 운임정보 API + 거리비례제·통합환승 요금 엔진 ───────────── */
@@ -799,39 +830,13 @@ async function fetchSeoulMetroRealtimeFare(fromStation, toStation) {
     return null;
   };
 
-  const requestUrls = [
-    apiUrl,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`
-  ];
-
-  try {
-    const result = await Promise.any(
-      requestUrls.map(async u => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 2600);
-        try {
-          const res = await fetch(u, { signal: controller.signal });
-          clearTimeout(timer);
-          if (!res.ok) throw new Error('HTTP error');
-          const txt = await res.text();
-          const parsed = parseFarePayload(txt);
-          if (!parsed) throw new Error('No fare data');
-          return parsed;
-        } catch (e) {
-          clearTimeout(timer);
-          throw e;
-        }
-      })
-    );
-    if (result) {
-      lastMetroApiUsed = true;
-      metroFareCache.set(cacheKey, result);
-      return result;
-    }
-  } catch {}
-
+  const rawText = await fetchPublicApiText(apiUrl, txt => Boolean(parseFarePayload(txt)));
+  const parsed = parseFarePayload(rawText);
+  if (parsed) {
+    lastMetroApiUsed = true;
+    metroFareCache.set(cacheKey, parsed);
+    return parsed;
+  }
   return null;
 }
 
@@ -981,69 +986,54 @@ async function calculateDetailedTransitFare(legs, apiDistanceMeters = 0) {
   };
 }
 
-/* ───────────── 서울·수도권 핵심 지하철·버스 노선망 ───────────── */
+/* ───────────── 서울교통공사 1~8호선 + 9호선 2·3단계 공식 역사 좌표 (전체 CSV 병합) ───────────── */
 const SUBWAY_STATIONS = {
-  '서울역': [37.5547, 126.9707], '시청역': [37.5657, 126.9769], '종각역': [37.5702, 126.9831],
-  '종로3가역': [37.5704, 126.9922], '종로5가역': [37.5709, 127.0019], '동대문역': [37.5714, 127.0096],
-  '신설동역': [37.5760, 127.0249], '제기동역': [37.5781, 127.0346], '청량리역': [37.5802, 127.0468],
-  '회기역': [37.5898, 127.0580], '석계역': [37.6148, 127.0658], '창동역': [37.6531, 127.0477],
-  '용산역': [37.5298, 126.9648], '노량진역': [37.5142, 126.9424], '영등포역': [37.5155, 126.9076],
-  '신도림역': [37.5088, 126.8912], '구로역': [37.5030, 126.8819], '가산디지털단지역': [37.4810, 126.8823],
-  '을지로입구역': [37.5660, 126.9826], '을지로3가역': [37.5663, 126.9910], '을지로4가역': [37.5669, 126.9981],
-  '동대문역사문화공원역': [37.5651, 127.0079], '상왕십리역': [37.5644, 127.0293], '왕십리역': [37.5612, 127.0371],
-  '한양대역': [37.5553, 127.0437], '뚝섬역': [37.5472, 127.0474], '성수역': [37.5446, 127.0560],
-  '건대입구역': [37.5404, 127.0692], '구의역': [37.5371, 127.0859], '강변역': [37.5351, 127.0947],
-  '잠실나루역': [37.5207, 127.1038], '잠실역': [37.5133, 127.1001], '잠실새내역': [37.5116, 127.0861],
-  '종합운동장역': [37.5110, 127.0736], '삼성역': [37.5088, 127.0631], '선릉역': [37.5045, 127.0489],
-  '역삼역': [37.5006, 127.0364], '강남역': [37.4979, 127.0276], '교대역': [37.4934, 127.0141],
-  '서초역': [37.4919, 127.0079], '방배역': [37.4814, 126.9976], '사당역': [37.4765, 126.9816],
-  '낙성대역': [37.4770, 126.9635], '서울대입구역': [37.4812, 126.9527], '봉천역': [37.4824, 126.9418],
-  '신림역': [37.4842, 126.9297], '신대방역': [37.4875, 126.9131], '구로디지털단지역': [37.4852, 126.9014],
-  '대림역': [37.4932, 126.8958], '문래역': [37.5179, 126.8947], '영등포구청역': [37.5249, 126.8959],
-  '당산역': [37.5344, 126.9022], '합정역': [37.5495, 126.9138], '홍대입구역': [37.5572, 126.9237],
-  '신촌역': [37.5551, 126.9369], '이대역': [37.5567, 126.9460], '아현역': [37.5573, 126.9561],
-  '충정로역': [37.5597, 126.9637],
-  '연신내역': [37.6190, 126.9210], '불광역': [37.6105, 126.9298], '경복궁역': [37.5758, 126.9735],
-  '안국역': [37.5765, 126.9854], '충무로역': [37.5612, 126.9943], '약수역': [37.5543, 127.0107],
-  '옥수역': [37.5406, 127.0179], '압구정역': [37.5270, 127.0284], '신사역': [37.5163, 127.0201],
-  '고속터미널역': [37.5049, 127.0049], '양재역': [37.4841, 127.0346], '수서역': [37.4873, 127.1018],
-  '가락시장역': [37.4925, 127.1182],
-  '노원역': [37.6551, 127.0613], '혜화역': [37.5823, 127.0018], '명동역': [37.5609, 126.9863],
-  '회현역': [37.5585, 126.9782], '숙대입구역': [37.5450, 126.9722], '삼각지역': [37.5346, 126.9731],
-  '이촌역': [37.5222, 126.9743], '동작역': [37.5029, 126.9793], '총신대입구역': [37.4863, 126.9819],
-  '이수역': [37.4863, 126.9819],
-  '방화역': [37.5774, 126.8127], '김포공항역': [37.5624, 126.8010], '까치산역': [37.5317, 126.8467],
-  '목동역': [37.5260, 126.8649], '여의도역': [37.5216, 126.9242], '여의나루역': [37.5271, 126.9329],
-  '마포역': [37.5395, 126.9459], '공덕역': [37.5432, 126.9515], '광화문역': [37.5716, 126.9765],
-  '청구역': [37.5602, 127.0138], '군자역': [37.5571, 127.0795], '천호역': [37.5384, 127.1238],
-  '강동역': [37.5358, 127.1324],
-  '디지털미디어시티역': [37.5766, 126.9009], '망원역': [37.5560, 126.9101], '상수역': [37.5477, 126.9228],
-  '효창공원앞역': [37.5392, 126.9613], '이태원역': [37.5345, 126.9946], '한강진역': [37.5396, 127.0017],
-  '신당역': [37.5659, 127.0178], '태릉입구역': [37.6179, 127.0751],
-  '어린이대공원역': [37.5480, 127.0746], '강남구청역': [37.5171, 127.0412], '논현역': [37.5110, 127.0214],
-  '내방역': [37.4876, 126.9935],
-  '암사역': [37.5502, 127.1275], '석촌역': [37.5054, 127.1069], '복정역': [37.4700, 127.1266],
-  '개화역': [37.5786, 126.7981], '가양역': [37.5613, 126.8544], '선유도역': [37.5380, 126.8933],
-  '국회의사당역': [37.5281, 126.9178], '샛강역': [37.5172, 126.9284], '흑석역': [37.5087, 126.9637],
-  '신반포역': [37.5034, 126.9959], '사평역': [37.5042, 127.0152], '신논현역': [37.5046, 127.0250],
-  '언주역': [37.5072, 127.0338], '선정릉역': [37.5102, 127.0438], '봉은사역': [37.5142, 127.0602],
-  '석촌고분역': [37.5028, 127.0972], '올림픽공원역': [37.5160, 127.1308],
-  '서울숲역': [37.5436, 127.0447], '압구정로데오역': [37.5273, 127.0405],
-  '한티역': [37.4962, 127.0528], '도곡역': [37.4908, 127.0553], '모란역': [37.4321, 127.1290],
-  '망우역': [37.5995, 127.0919], '서강대역': [37.5520, 126.9355],
-  '보라매역': [37.4998, 126.9204], '서울지방병무청역': [37.5060, 126.9245], '관악산역': [37.4691, 126.9450]
+  "서울역":[37.55315,126.972533],"시청역":[37.56359,126.975407],"종각역":[37.570203,126.983116],"종로3가역":[37.570429,126.992095],"종로5가역":[37.570971,127.0019],"동대문역":[37.57179,127.011383],"동묘앞역":[37.573265,127.016459],"신설동역":[37.576117,127.02471],"제기동역":[37.578116,127.034902],"청량리역":[37.580148,127.045063],
+  "을지로입구역":[37.565998,126.982569],"을지로3가역":[37.566292,126.991773],"을지로4가역":[37.566611,126.998122],"동대문역사문화공원역":[37.565597,127.009113],"신당역":[37.565681,127.019488],"상왕십리역":[37.564504,127.028872],"왕십리역":[37.561159,127.035505],"한양대역":[37.55658,127.043504],"뚝섬역":[37.54718,127.047413],"성수역":[37.544628,127.055983],
+  "건대입구역":[37.540408,127.069231],"구의역":[37.536857,127.085024],"강변역":[37.535161,127.094684],"잠실나루역":[37.520688,127.103836],"잠실역":[37.513305,127.100129],"잠실새내역":[37.520731,127.103738],"종합운동장역":[37.511433,127.076313],"삼성역":[37.508827,127.063203],"선릉역":[37.504257,127.048174],"역삼역":[37.500658,127.03643],
+  "강남역":[37.497958,127.027539],"교대역":[37.493957,127.014631],"서초역":[37.49191,127.007945],"방배역":[37.481469,126.997627],"사당역":[37.476536,126.981631],"낙성대역":[37.47693,126.963783],"서울대입구역":[37.481233,126.952745],"봉천역":[37.482416,126.941896],"신림역":[37.484216,126.929573],"신대방역":[37.487534,126.913279],
+  "구로디지털단지역":[37.485005,126.902626],"대림역":[37.492426,126.895293],"신도림역":[37.508815,126.891222],"문래역":[37.517993,126.894766],"영등포구청역":[37.525766,126.896627],"당산역":[37.533877,126.902011],"합정역":[37.550025,126.914557],"홍대입구역":[37.556748,126.923643],"신촌역":[37.555153,126.93689],"이대역":[37.556734,126.945897],
+  "아현역":[37.557407,126.956079],"충정로역":[37.559742,126.964455],"용두역":[37.574012,127.03811],"신답역":[37.56147,127.056348],"용답역":[37.566412,126.977863],"도림천역":[37.514759,126.882586],"양천구청역":[37.512194,126.865193],"신정네거리역":[37.520218,126.852849],"까치산역":[37.53181,126.846706],
+  "지축역":[37.648281,126.912551],"구파발역":[37.636612,126.918827],"연신내역":[37.618855,126.920859],"불광역":[37.610554,126.929843],"녹번역":[37.600882,126.935758],"홍제역":[37.588851,126.944092],"무악재역":[37.582658,126.950131],"독립문역":[37.574534,126.957902],"경복궁역":[37.575844,126.973576],"안국역":[37.576562,126.98547],
+  "충무로역":[37.561302,126.995473],"동대입구역":[37.55816,127.005273],"약수역":[37.554674,127.010628],"금호역":[37.548269,127.015785],"옥수역":[37.541653,127.017303],"압구정역":[37.526169,127.028502],"신사역":[37.516438,127.020247],"잠원역":[37.512989,127.011613],"고속터미널역":[37.504953,127.004916],"남부터미널역":[37.48494,127.016289],
+  "양재역":[37.48466,127.03513],"매봉역":[37.487114,127.046907],"도곡역":[37.491129,127.055694],"대치역":[37.494601,127.063449],"학여울역":[37.496757,127.070541],"대청역":[37.493607,127.079526],"일원역":[37.48389,127.08416],"수서역":[37.487507,127.101324],"가락시장역":[37.492368,127.118101],"경찰병원역":[37.495754,127.124198],"오금역":[37.502288,127.128344],
+  "당고개역":[37.66956,127.078404],"상계역":[37.660576,127.073199],"노원역":[37.656274,127.063183],"창동역":[37.652993,127.046746],"쌍문역":[37.648274,127.034381],"수유역":[37.637127,127.024731],"미아역":[37.626435,127.026151],"미아사거리역":[37.613276,127.030083],"길음역":[37.604087,127.025353],"성신여대입구역":[37.592782,127.017338],
+  "한성대입구역":[37.58838,127.006751],"혜화역":[37.582116,127.001759],"명동역":[37.561055,126.988271],"회현역":[37.559698,126.979565],"숙대입구역":[37.545124,126.971952],"삼각지역":[37.535057,126.973354],"신용산역":[37.52919,126.96858],"이촌역":[37.522525,126.97335],"동작역":[37.503567,126.980171],"총신대입구역":[37.487521,126.982309],"이수역":[37.487521,126.982309],"남태령역":[37.464339,126.989081],
+  "방화역":[37.577669,126.812822],"개화산역":[37.572458,126.806838],"김포공항역":[37.56217,126.801273],"송정역":[37.561411,126.812052],"마곡역":[37.562182,126.82693],"발산역":[37.562182,126.82693],"우장산역":[37.548864,126.83633],"화곡역":[37.541585,126.840436],"신정역":[37.525001,126.856176],"목동역":[37.526088,126.864296],
+  "오목교역":[37.524557,126.875049],"양평역":[37.525614,126.886177],"영등포시장역":[37.52276,126.905143],"신길역":[37.51763,126.914886],"여의도역":[37.521578,126.924318],"여의나루역":[37.527145,126.932807],"마포역":[37.539718,126.946043],"공덕역":[37.544005,126.951058],"애오개역":[37.553592,126.956733],"서대문역":[37.565812,126.966639],
+  "광화문역":[37.570545,126.976568],"청구역":[37.560237,127.01379],"신금호역":[37.554504,127.020403],"행당역":[37.557297,127.029482],"마장역":[37.566066,127.042921],"답십리역":[37.566833,127.05266],"장한평역":[37.561438,127.064601],"군자역":[37.557102,127.079559],"아차산역":[37.552005,127.089609],"광나루역":[37.545301,127.103478],
+  "천호역":[37.538566,127.123539],"강동역":[37.53581,127.13249],"길동역":[37.538022,127.140085],"굽은다리역":[37.545442,127.142844],"명일역":[37.551317,127.144002],"고덕역":[37.555002,127.154214],"상일동역":[37.556714,127.166381],"둔촌동역":[37.527787,127.136219],"올림픽공원역":[37.516132,127.130282],"방이역":[37.508752,127.126054],
+  "개롱역":[37.498097,127.134817],"거여역":[37.493208,127.143983],"마천역":[37.494972,127.152784],"강일역":[37.557521,127.176018],"미사역":[37.56329,127.192954],"하남풍산역":[37.552201,127.203897],"하남시청역":[37.541723,127.206901],"하남검단산역":[37.539729,127.223427],
+  "응암역":[37.59859,126.915583],"역촌역":[37.60605,126.922764],"독바위역":[37.618413,126.933035],"구산역":[37.611223,126.917246],"새절역":[37.591148,126.913613],"증산역":[37.583989,126.909785],"디지털미디어시티역":[37.577005,126.898643],"월드컵경기장역":[37.569439,126.899077],"마포구청역":[37.563535,126.903326],"망원역":[37.556031,126.910129],
+  "상수역":[37.547704,126.92292],"광흥창역":[37.547464,126.931971],"대흥역":[37.547732,126.942214],"효창공원앞역":[37.539279,126.961348],"녹사평역":[37.53469,126.98665],"이태원역":[37.534485,126.994369],"한강진역":[37.53956,127.001729],"버티고개역":[37.547933,127.006948],"창신역":[37.579772,127.015246],"보문역":[37.585293,127.019377],
+  "안암역":[37.586261,127.02903],"고려대역":[37.59034,127.03626],"월곡역":[37.60192,127.041492],"상월곡역":[37.606392,127.048509],"돌곶이역":[37.610522,127.056419],"석계역":[37.614937,127.065922],"태릉입구역":[37.617319,127.074741],"화랑대역":[37.619875,127.084106],"봉화산역":[37.617293,127.091375],"신내역":[37.612571,127.104326],
+  "장암역":[37.70015,127.053126],"도봉산역":[37.689131,127.046548],"수락산역":[37.677804,127.055314],"마들역":[37.664985,127.057701],"중계역":[37.645052,127.064084],"하계역":[37.636363,127.067999],"공릉역":[37.625642,127.072969],"먹골역":[37.610638,127.077719],"중화역":[37.602604,127.079254],"상봉역":[37.595673,127.085708],
+  "면목역":[37.588671,127.087503],"사가정역":[37.580912,127.088502],"용마산역":[37.573752,127.086802],"중곡역":[37.565877,127.084291],"어린이대공원역":[37.547962,127.07465],"뚝섬유원지역":[37.531558,127.066714],"청담역":[37.519097,127.051851],"강남구청역":[37.517185,127.04122],"학동역":[37.514262,127.031738],"논현역":[37.511108,127.021385],
+  "반포역":[37.508171,127.011717],"내방역":[37.48764,126.993541],"남성역":[37.484688,126.971108],"숭실대입구역":[37.496258,126.953649],"상도역":[37.50279,126.947949],"장승배기역":[37.504845,126.939025],"신대방삼거리역":[37.499717,126.928218],"보라매역":[37.499916,126.920112],"신풍역":[37.500107,126.909806],"남구로역":[37.486181,126.887372],
+  "가산디지털단지역":[37.480376,126.882704],"철산역":[37.47616,126.868217],"광명사거리역":[37.47927,126.854854],"천왕역":[37.486699,126.838684],"온수역":[37.492059,126.823294],
+  "암사역":[37.550127,127.127521],"강동구청역":[37.530348,127.120461],"몽촌토성역":[37.517692,127.11274],"석촌역":[37.504929,127.106682],"송파역":[37.49978,127.11212],"문정역":[37.485931,127.122473],"장지역":[37.478609,127.126229],"복정역":[37.471016,127.126746],"남위례역":[37.462839,127.139047],"산성역":[37.456886,127.149927],
+  "남한산성입구역":[37.451568,127.159845],"단대오거리역":[37.445057,127.156735],"신흥역":[37.440952,127.14759],"수진역":[37.437575,127.140936],"모란역":[37.433888,127.129921],
+  "언주역":[37.507324,127.033905],"선정릉역":[37.510278,127.043902],"삼성중앙역":[37.51306,127.053334],"봉은사역":[37.514258,127.060257],"삼전역":[37.504356,127.08804],"석촌고분역":[37.502453,127.096961],"송파나루역":[37.510303,127.112231],"한성백제역":[37.516311,127.116168],"둔촌오륜역":[37.519395,127.138706],"중앙보훈병원역":[37.528321,127.148376],
+  "회기역":[37.5898,127.0580],"용산역":[37.5298,126.9648],"노량진역":[37.5142,126.9424],"영등포역":[37.5155,126.9076],"구로역":[37.5030,126.8819],
+  "개화역":[37.5786,126.7981],"가양역":[37.5613,126.8544],"선유도역":[37.5380,126.8933],"국회의사당역":[37.5281,126.9178],"샛강역":[37.5172,126.9284],"흑석역":[37.5087,126.9637],
+  "신반포역":[37.5034,126.9959],"사평역":[37.5042,127.0152],"신논현역":[37.5046,127.0250],
+  "서울숲역":[37.5436,127.0447],"압구정로데오역":[37.5273,127.0405],"한티역":[37.4962,127.0528],"망우역":[37.5995,127.0919],"서강대역":[37.5520,126.9355],
+  "서울지방병무청역":[37.5060,126.9245],"관악산역":[37.4691,126.9450]
 };
 
 const SUBWAY_LINES = {
-  '1호선': ['창동역','석계역','회기역','청량리역','제기동역','신설동역','동대문역','종로5가역','종로3가역','종각역','시청역','서울역','용산역','노량진역','영등포역','신도림역','구로역','가산디지털단지역'],
+  '1호선': ['창동역','석계역','회기역','청량리역','제기동역','신설동역','동묘앞역','동대문역','종로5가역','종로3가역','종각역','시청역','서울역','용산역','노량진역','영등포역','신도림역','구로역','가산디지털단지역'],
   '2호선': ['시청역','을지로입구역','을지로3가역','을지로4가역','동대문역사문화공원역','신당역','상왕십리역','왕십리역','한양대역','뚝섬역','성수역','건대입구역','구의역','강변역','잠실나루역','잠실역','잠실새내역','종합운동장역','삼성역','선릉역','역삼역','강남역','교대역','서초역','방배역','사당역','낙성대역','서울대입구역','봉천역','신림역','신대방역','구로디지털단지역','대림역','신도림역','문래역','영등포구청역','당산역','합정역','홍대입구역','신촌역','이대역','아현역','충정로역','시청역'],
-  '3호선': ['연신내역','불광역','경복궁역','안국역','종로3가역','을지로3가역','충무로역','약수역','옥수역','압구정역','신사역','고속터미널역','교대역','양재역','도곡역','수서역','가락시장역'],
-  '4호선': ['노원역','창동역','혜화역','동대문역','동대문역사문화공원역','충무로역','명동역','회현역','서울역','숙대입구역','삼각지역','이촌역','동작역','총신대입구역','사당역'],
-  '5호선': ['방화역','김포공항역','까치산역','목동역','영등포구청역','여의도역','여의나루역','마포역','공덕역','충정로역','광화문역','종로3가역','을지로4가역','동대문역사문화공원역','청구역','왕십리역','군자역','천호역','강동역'],
-  '6호선': ['디지털미디어시티역','망원역','합정역','상수역','공덕역','효창공원앞역','삼각지역','이태원역','한강진역','약수역','청구역','신당역','석계역','태릉입구역'],
-  '7호선': ['태릉입구역','군자역','어린이대공원역','건대입구역','강남구청역','논현역','고속터미널역','내방역','이수역','보라매역','대림역','가산디지털단지역'],
-  '8호선': ['암사역','천호역','잠실역','석촌역','가락시장역','복정역','모란역'],
-  '9호선': ['개화역','김포공항역','가양역','당산역','선유도역','국회의사당역','여의도역','샛강역','노량진역','흑석역','동작역','신반포역','고속터미널역','사평역','신논현역','언주역','선정릉역','봉은사역','종합운동장역','석촌역','석촌고분역','올림픽공원역'],
+  '2호선성수지선': ['성수역','용답역','신답역','용두역','신설동역'],
+  '2호선신정지선': ['신도림역','도림천역','양천구청역','신정네거리역','까치산역'],
+  '3호선': ['지축역','구파발역','연신내역','불광역','녹번역','홍제역','무악재역','독립문역','경복궁역','안국역','종로3가역','을지로3가역','충무로역','동대입구역','약수역','금호역','옥수역','압구정역','신사역','잠원역','고속터미널역','교대역','남부터미널역','양재역','매봉역','도곡역','대치역','학여울역','대청역','일원역','수서역','가락시장역','경찰병원역','오금역'],
+  '4호선': ['당고개역','상계역','노원역','창동역','쌍문역','수유역','미아역','미아사거리역','길음역','성신여대입구역','한성대입구역','혜화역','동대문역','동대문역사문화공원역','충무로역','명동역','회현역','서울역','숙대입구역','삼각지역','신용산역','이촌역','동작역','총신대입구역','사당역','남태령역'],
+  '5호선': ['방화역','개화산역','김포공항역','송정역','마곡역','발산역','우장산역','화곡역','까치산역','신정역','목동역','오목교역','양평역','영등포구청역','영등포시장역','신길역','여의도역','여의나루역','마포역','공덕역','애오개역','충정로역','서대문역','광화문역','종로3가역','을지로4가역','동대문역사문화공원역','청구역','신금호역','행당역','왕십리역','마장역','답십리역','장한평역','군자역','아차산역','광나루역','천호역','강동역','길동역','굽은다리역','명일역','고덕역','상일동역','강일역','미사역','하남풍산역','하남시청역','하남검단산역'],
+  '5호선마천지선': ['강동역','둔촌동역','올림픽공원역','방이역','오금역','개롱역','거여역','마천역'],
+  '6호선': ['응암역','역촌역','불광역','독바위역','연신내역','구산역','새절역','증산역','디지털미디어시티역','월드컵경기장역','마포구청역','망원역','합정역','상수역','광흥창역','대흥역','공덕역','효창공원앞역','삼각지역','녹사평역','이태원역','한강진역','버티고개역','약수역','청구역','신당역','동묘앞역','창신역','보문역','안암역','고려대역','월곡역','상월곡역','돌곶이역','석계역','태릉입구역','화랑대역','봉화산역','신내역'],
+  '7호선': ['장암역','도봉산역','수락산역','마들역','노원역','중계역','하계역','공릉역','태릉입구역','먹골역','중화역','상봉역','면목역','사가정역','용마산역','중곡역','군자역','어린이대공원역','건대입구역','뚝섬유원지역','청담역','강남구청역','학동역','논현역','반포역','고속터미널역','내방역','총신대입구역','남성역','숭실대입구역','상도역','장승배기역','신대방삼거리역','보라매역','신풍역','대림역','남구로역','가산디지털단지역','철산역','광명사거리역','천왕역','온수역'],
+  '8호선': ['암사역','천호역','강동구청역','몽촌토성역','잠실역','석촌역','송파역','가락시장역','문정역','장지역','복정역','남위례역','산성역','남한산성입구역','단대오거리역','신흥역','수진역','모란역'],
+  '9호선': ['개화역','김포공항역','가양역','당산역','선유도역','국회의사당역','여의도역','샛강역','노량진역','흑석역','동작역','신반포역','고속터미널역','사평역','신논현역','언주역','선정릉역','삼성중앙역','봉은사역','종합운동장역','삼전역','석촌고분역','석촌역','송파나루역','한성백제역','올림픽공원역','둔촌오륜역','중앙보훈병원역'],
   '신분당선': ['신사역','논현역','신논현역','강남역','양재역'],
   '경의중앙선': ['디지털미디어시티역','홍대입구역','서강대역','공덕역','효창공원앞역','용산역','이촌역','옥수역','왕십리역','청량리역','회기역','망우역'],
   '공항철도': ['김포공항역','디지털미디어시티역','홍대입구역','공덕역','서울역'],
@@ -1078,6 +1068,190 @@ const SEOUL_BUS_ROUTES = [
   { routeNm: 'N62번', isNight: true, lastTrainMin: 27 * 60 + 30, stops: ['가양역', '목동역', '영등포구청역', '합정역', '홍대입구역', '신촌역', '이대역', '시청역', '을지로3가역', '왕십리역', '건대입구역', '구의역', '강변역'] },
   { routeNm: 'N26번', isNight: true, lastTrainMin: 27 * 60 + 35, stops: ['방화역', '김포공항역', '가양역', '합정역', '홍대입구역', '신촌역', '충정로역', '광화문역', '종로3가역', '동대문역', '청량리역', '회기역', '망우역'] }
 ];
+
+/* ───────────── 1. 서울교통공사 최단경로이동정보 API (getShtrmPath) ───────────── */
+const shortestPathCache = new Map();
+let lastShortestPathApiUsed = false;
+
+async function fetchSeoulMetroShortestPath(startStation, endStation) {
+  const sClean = cleanPlaceName(startStation).replace(/역+$/, '').trim();
+  const eClean = cleanPlaceName(endStation).replace(/역+$/, '').trim();
+  if (!sClean || !eClean || sClean === eClean) return null;
+
+  const key = `${sClean}->${eClean}`;
+  if (shortestPathCache.has(key)) {
+    const cached = shortestPathCache.get(key);
+    if (cached) lastShortestPathApiUsed = true;
+    return cached;
+  }
+
+  const encodedKey = encodeURIComponent(DATA_GO_TRANSIT_KEY);
+  const now = new Date();
+  const searchDt = now.getFullYear() +
+    String(now.getMonth() + 1).padStart(2, '0') +
+    String(now.getDate()).padStart(2, '0') +
+    String(now.getHours()).padStart(2, '0') +
+    String(now.getMinutes()).padStart(2, '0') + '00';
+
+  const apiUrl = `https://apis.data.go.kr/B553766/path/getShtrmPath?serviceKey=${encodedKey}&dataType=JSON&pageNo=1&numOfRows=50&dptreStnNm=${encodeURIComponent(sClean)}&arvlStnNm=${encodeURIComponent(eClean)}&searchDt=${searchDt}`;
+
+  const rawText = await fetchPublicApiText(
+    apiUrl,
+    txt => txt.includes('stnNm') || txt.includes('dptreStnNm') || txt.includes('pathList')
+  );
+  if (!rawText) return null;
+
+  try {
+    const json = JSON.parse(rawText);
+    const body = json?.response?.body || json?.body || json;
+    const rawItems = body?.items?.item || body?.pathList || [];
+    const list = Array.isArray(rawItems) ? rawItems : [rawItems];
+    if (!list.length) return null;
+
+    const legs = [];
+    let curLeg = null;
+    let totalTimeMin = 0;
+
+    list.forEach(item => {
+      const lineNm = String(item.lineNm || item.subwayNm || '').trim();
+      const stNm = formatStationName(item.stnNm || item.dptreStnNm || '');
+      const nextStNm = formatStationName(item.arvlStnNm || '');
+      const reqTimeSec = Number(item.reqTime || item.mvmnTime || 0);
+      if (reqTimeSec > 0) {
+        totalTimeMin += reqTimeSec > 180 ? Math.round(reqTimeSec / 60) : reqTimeSec;
+      }
+
+      const pushStation = (ln, st) => {
+        if (!ln || !st) return;
+        const coord = SUBWAY_STATIONS[normStationKey(st)];
+        if (!curLeg || curLeg.routeNm !== ln) {
+          if (curLeg) legs.push(curLeg);
+          curLeg = { routeNm: ln, stations: [st], stationCoords: coord ? [coord] : [] };
+        } else if (curLeg.stations[curLeg.stations.length - 1] !== st) {
+          curLeg.stations.push(st);
+          if (coord) curLeg.stationCoords.push(coord);
+        }
+      };
+
+      pushStation(lineNm, stNm);
+      if (nextStNm && nextStNm !== stNm) pushStation(lineNm, nextStNm);
+    });
+    if (curLeg) legs.push(curLeg);
+
+    const formattedLegs = legs.filter(l => l.stations.length >= 2).map(l => {
+      const fSt = l.stations[0];
+      const tSt = l.stations[l.stations.length - 1];
+      const fCoord = SUBWAY_STATIONS[normStationKey(fSt)] || l.stationCoords[0] || [0, 0];
+      const tCoord = SUBWAY_STATIONS[normStationKey(tSt)] || l.stationCoords[l.stationCoords.length - 1] || [0, 0];
+      return {
+        routeNm: l.routeNm,
+        fname: fSt,
+        fy: fCoord[0],
+        fx: fCoord[1],
+        tname: tSt,
+        ty: tCoord[0],
+        tx: tCoord[1],
+        stationCount: l.stations.length - 1,
+        stationCoords: l.stationCoords.length >= 2 ? l.stationCoords : [fCoord, tCoord]
+      };
+    });
+
+    if (formattedLegs.length > 0) {
+      const resObj = {
+        time: totalTimeMin > 0 ? totalTimeMin : formattedLegs.reduce((a, b) => a + b.stationCount * 2, 4),
+        legs: formattedLegs,
+        isSeoulApi: true,
+        isOfficialShortestApi: true
+      };
+      lastShortestPathApiUsed = true;
+      shortestPathCache.set(key, resObj);
+      return resObj;
+    }
+  } catch {}
+  return null;
+}
+
+/* ───────────── 2. 서울특별시 노선정보조회 서비스 (getBusRouteList + getRoutePath) ───────────── */
+const busRealPathCache = new Map();
+
+async function fetchSeoulBusRealPath(busNumber, startLat, startLng, endLat, endLng) {
+  const numClean = String(busNumber || '').replace(/번$/, '').trim();
+  if (!numClean || !startLat || !startLng || !endLat || !endLng) return null;
+
+  const cacheKey = `${numClean}:${startLat.toFixed(3)},${startLng.toFixed(3)}->${endLat.toFixed(3)},${endLng.toFixed(3)}`;
+  if (busRealPathCache.has(cacheKey)) return busRealPathCache.get(cacheKey);
+
+  const encKey = buildSeoulPathinfoServiceKey();
+  const listUrl = `http://ws.bus.go.kr/api/rest/busRouteInfo/getBusRouteList?serviceKey=${encKey}&strSrch=${encodeURIComponent(numClean)}`;
+  const listXml = await fetchPublicApiText(listUrl, txt => txt.includes('busRouteId'));
+  if (!listXml) return null;
+
+  try {
+    const doc = new DOMParser().parseFromString(listXml, 'text/xml');
+    const items = Array.from(doc.getElementsByTagName('itemList'));
+    const exactItem = items.find(it => it.getElementsByTagName('busRouteNm')[0]?.textContent?.trim() === numClean) || items[0];
+    const busRouteId = exactItem?.getElementsByTagName('busRouteId')[0]?.textContent?.trim();
+    if (!busRouteId) return null;
+
+    const pathUrl = `http://ws.bus.go.kr/api/rest/busRouteInfo/getRoutePath?serviceKey=${encKey}&busRouteId=${encodeURIComponent(busRouteId)}`;
+    const pathXml = await fetchPublicApiText(pathUrl, txt => txt.includes('gpsY'));
+    if (!pathXml) return null;
+
+    const pDoc = new DOMParser().parseFromString(pathXml, 'text/xml');
+    const pItems = Array.from(pDoc.getElementsByTagName('itemList'));
+    const allCoords = pItems.map(it => {
+      const lat = Number(it.getElementsByTagName('gpsY')[0]?.textContent || 0);
+      const lng = Number(it.getElementsByTagName('gpsX')[0]?.textContent || 0);
+      return (lat && lng) ? [lat, lng] : null;
+    }).filter(Boolean);
+
+    if (allCoords.length < 4) return null;
+
+    let startIdx = 0, endIdx = allCoords.length - 1;
+    let minStartD = Infinity, minEndD = Infinity;
+    allCoords.forEach(([lat, lng], i) => {
+      const ds = calcDistanceMeters(startLat, startLng, lat, lng);
+      if (ds < minStartD) { minStartD = ds; startIdx = i; }
+    });
+    for (let i = startIdx; i < allCoords.length; i++) {
+      const de = calcDistanceMeters(endLat, endLng, allCoords[i][0], allCoords[i][1]);
+      if (de < minEndD) { minEndD = de; endIdx = i; }
+    }
+
+    if (endIdx > startIdx) {
+      const sliced = allCoords.slice(startIdx, endIdx + 1);
+      if (sliced.length >= 2) {
+        busRealPathCache.set(cacheKey, sliced);
+        return sliced;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+/* ───────────── 3. 보행자 실제 도보 경로(OSRM Foot) ───────────── */
+const walkSegmentCache = new Map();
+async function getRealWalkCoords(lat1, lng1, lat2, lng2) {
+  const dist = calcDistanceMeters(lat1, lng1, lat2, lng2);
+  if (dist < 40) return [[lat1, lng1], [lat2, lng2]];
+  const key = `${lat1.toFixed(4)},${lng1.toFixed(4)}->${lat2.toFixed(4)},${lng2.toFixed(4)}`;
+  if (walkSegmentCache.has(key)) return walkSegmentCache.get(key);
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2400);
+    const res = await fetch(`https://router.project-osrm.org/route/v1/foot/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`, { signal: controller.signal });
+    clearTimeout(timer);
+    const data = await res.json();
+    const raw = data?.routes?.[0]?.geometry?.coordinates;
+    if (Array.isArray(raw) && raw.length >= 2) {
+      const coords = raw.map(c => [c[1], c[0]]);
+      walkSegmentCache.set(key, coords);
+      return coords;
+    }
+  } catch {}
+  return null;
+}
 
 /* ───────────── 노선별 개별 막차 시각 조회 (단위: 서비스 분, 24:00 = 1440) ───────────── */
 const SUBWAY_LINE_LAST_TRAIN = {
@@ -1304,17 +1478,18 @@ function computeExactSubwayRoute(startStName, endStName) {
 
   const stationLines = new Map();
   for (const [lineName, stations] of Object.entries(SUBWAY_LINES)) {
+    const cleanLine = lineName.replace(/(성수지선|신정지선|마천지선)$/, '');
     for (let i = 0; i < stations.length; i++) {
       const s = normStationKey(stations[i]);
       if (!SUBWAY_STATIONS[s]) continue;
       if (!stationLines.has(s)) stationLines.set(s, new Set());
-      stationLines.get(s).add(lineName);
+      stationLines.get(s).add(cleanLine);
 
       if (i > 0) {
         const prev = normStationKey(stations[i - 1]);
         if (SUBWAY_STATIONS[prev]) {
-          addEdge(`${prev}|${lineName}`, `${s}|${lineName}`, 2.2, false);
-          addEdge(`${s}|${lineName}`, `${prev}|${lineName}`, 2.2, false);
+          addEdge(`${prev}|${cleanLine}`, `${s}|${cleanLine}`, 2.2, false);
+          addEdge(`${s}|${cleanLine}`, `${prev}|${cleanLine}`, 2.2, false);
         }
       }
     }
@@ -1504,8 +1679,8 @@ document.querySelectorAll('#themeButtons [data-theme]').forEach(b => {
 });
 
 let places = {
-  start: { label: '강남역', name: '강남역', x: 127.0276, y: 37.4979 },
-  end: { label: '홍대입구역', name: '홍대입구역', x: 126.9237, y: 37.5572 },
+  start: { label: '강남역', name: '강남역', x: SUBWAY_STATIONS['강남역'][1], y: SUBWAY_STATIONS['강남역'][0] },
+  end: { label: '홍대입구역', name: '홍대입구역', x: SUBWAY_STATIONS['홍대입구역'][1], y: SUBWAY_STATIONS['홍대입구역'][0] },
   via: null
 };
 
@@ -1588,36 +1763,10 @@ async function fetchSeoulPathinfoRaw(endpointName, queryParamsObj) {
     .join('&');
   const targetUrl = `http://ws.bus.go.kr/api/rest/pathinfo/${endpointName}?serviceKey=${serviceKey}&${qs}`;
 
-  const candidates = [
+  return await fetchPublicApiText(
     targetUrl,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
-  ];
-
-  try {
-    return await Promise.any(
-      candidates.map(async url => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 3200);
-        try {
-          const res = await fetch(url, { signal: controller.signal });
-          clearTimeout(timer);
-          if (!res.ok) throw new Error('HTTP error');
-          const text = await res.text();
-          if (text && (text.includes('<itemList>') || text.includes('"itemList"') || text.includes('<msgBody>'))) {
-            return text;
-          }
-          throw new Error('Invalid Seoul pathinfo body');
-        } catch (err) {
-          clearTimeout(timer);
-          throw err;
-        }
-      })
-    );
-  } catch {
-    return null;
-  }
+    text => Boolean(text && (text.includes('<itemList>') || text.includes('"itemList"') || text.includes('<msgBody>')))
+  );
 }
 
 function parseSeoulLocationInfo(rawText) {
@@ -1829,7 +1978,7 @@ async function getKakaoTaxiRoute(ox, oy, dx, dy) {
   }
 }
 
-async function buildRealPathCoords(pointsLatLng) {
+async function buildRealPathCoords(pointsLatLng, mode = 'taxi') {
   if (!pointsLatLng || pointsLatLng.length < 2) return pointsLatLng;
   const fullCoords = [];
 
@@ -1842,6 +1991,14 @@ async function buildRealPathCoords(pointsLatLng) {
     if (dist < 40) {
       fullCoords.push([lat1, lng1], [lat2, lng2]);
       continue;
+    }
+
+    if (mode === 'walk') {
+      const walkCoords = await getRealWalkCoords(lat1, lng1, lat2, lng2);
+      if (walkCoords && walkCoords.length >= 2) {
+        fullCoords.push(...walkCoords);
+        continue;
+      }
     }
 
     const segData = await getKakaoTaxiRoute(lng1, lat1, lng2, lat2);
@@ -1866,11 +2023,10 @@ async function resolveSinglePlace(query) {
   const cleanedQ = cleanPlaceName(query);
   if (!cleanedQ) return null;
 
-  // 내장 주요 지하철역 좌표 우선 매칭 (정확도 및 응답 속도 향상)
   const stKey = normStationKey(cleanedQ);
   if (SUBWAY_STATIONS[stKey]) {
     return {
-      label: `${stKey} (서울 지하철역)`,
+      label: `${stKey} (서울교통공사 공식 역사)`,
       name: stKey,
       x: SUBWAY_STATIONS[stKey][1],
       y: SUBWAY_STATIONS[stKey][0]
@@ -1980,6 +2136,22 @@ async function searchPlaces(id) {
   }
 
   try {
+    const normQ = cleanPlaceName(q).replace(/역+$/, '');
+    const localStationMatches = [];
+    if (normQ) {
+      for (const [stName, coords] of Object.entries(SUBWAY_STATIONS)) {
+        if (stName.includes(normQ)) {
+          localStationMatches.push({
+            label: `${stName} (서울교통공사 공식 역사)`,
+            name: stName,
+            x: coords[1],
+            y: coords[0]
+          });
+        }
+        if (localStationMatches.length >= 3) break;
+      }
+    }
+
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
     const [seoulLocs, kakaoData] = await Promise.all([
       searchSeoulTransitLocations(q),
@@ -1998,10 +2170,10 @@ async function searchPlaces(id) {
       };
     });
 
-    const combined = [...seoulLocs];
-    const seen = new Set(seoulLocs.map(s => `${s.name}_${s.x.toFixed(3)}_${s.y.toFixed(3)}`));
+    const combined = [...localStationMatches, ...seoulLocs];
+    const seen = new Set(combined.map(s => `${s.name}_${s.x.toFixed(2)}_${s.y.toFixed(2)}`));
     for (const kd of kakaoDocs) {
-      const k = `${kd.name}_${kd.x.toFixed(3)}_${kd.y.toFixed(3)}`;
+      const k = `${kd.name}_${kd.x.toFixed(2)}_${kd.y.toFixed(2)}`;
       if (!seen.has(k)) {
         seen.add(k);
         combined.push(kd);
@@ -2260,19 +2432,25 @@ async function evaluateMultiTransferLastTrainFallback({
     const baseMapSegments = [
       { mode: 'walk', points: [[places.start.y, places.start.x], [legs[0].fy, legs[0].fx]] }
     ];
-    completedLegs.forEach((cl, idx) => {
+    for (let idx = 0; idx < completedLegs.length; idx++) {
+      const cl = completedLegs[idx];
       const isCutPoint = idx === completedLegs.length - 1;
+      const mode = classifyTransitLegMode(cl.routeNm);
+      let realCoords = cl.stationCoords || null;
+      if (mode === 'bus' && (!realCoords || realCoords.length < 2)) {
+        realCoords = await fetchSeoulBusRealPath(cl.routeNm, cl.fy, cl.fx, cl.ty, cl.tx);
+      }
       baseMapSegments.push({
-        mode: classifyTransitLegMode(cl.routeNm),
+        mode,
         points: [[cl.fy, cl.fx], [cl.ty, cl.tx]],
-        precomputed: cl.stationCoords || null,
+        precomputed: realCoords,
         hub: {
           stationName: isCutPoint ? `${cl.tname} (${targetLeg.routeNm} 막차 종료)` : `${cl.tname} (${legs[idx + 1].routeNm} 환승)`,
           x: cl.tx,
           y: cl.ty
         }
       });
-    });
+    }
 
     const baseSteps = [
       { pill: 'pill-walk', tag: `도보 ${walk1Min}분`, label: `${depTimeStr} ${sName} 출발 ➔ ${legs[0].fname} 이동` }
@@ -2530,16 +2708,25 @@ async function convertApiPathToRouteCard({
   if (firstLeg.fy && firstLeg.fx) {
     mapSegments.push({ mode: 'walk', points: [[places.start.y, places.start.x], [firstLeg.fy, firstLeg.fx]] });
   }
-  legs.forEach((l, i) => {
+  for (let i = 0; i < legs.length; i++) {
+    const l = legs[i];
     if (l.fy && l.fx && l.ty && l.tx) {
+      const m = classifyTransitLegMode(l.routeNm);
+      let realCoords = l.stationCoords || null;
+      if (m === 'subway' && (!realCoords || realCoords.length < 2)) {
+        const subGraph = computeExactSubwayRoute(l.fname, l.tname);
+        if (subGraph?.legs?.[0]?.stationCoords) realCoords = subGraph.legs[0].stationCoords;
+      } else if (m === 'bus' && (!realCoords || realCoords.length < 2)) {
+        realCoords = await fetchSeoulBusRealPath(l.routeNm, l.fy, l.fx, l.ty, l.tx);
+      }
       mapSegments.push({
-        mode: classifyTransitLegMode(l.routeNm),
+        mode: m,
         points: [[l.fy, l.fx], [l.ty, l.tx]],
-        precomputed: l.stationCoords || null,
+        precomputed: realCoords,
         hub: (i < legs.length - 1) ? { stationName: `${l.tname} (${legs[i + 1].routeNm} 환승)`, x: l.tx, y: l.ty } : null
       });
     }
-  });
+  }
   if (lastLeg.ty && lastLeg.tx) {
     mapSegments.push({ mode: 'walk', points: [[lastLeg.ty, lastLeg.tx], [places.end.y, places.end.x]] });
   }
@@ -2578,7 +2765,9 @@ async function convertApiPathToRouteCard({
 
   const routeNamesTitle = legs.map(l => l.routeNm).join(' ➔ ');
   const categoryIcon = resolvedCategory === 'subway' ? '🚇' : (resolvedCategory === 'bus' ? '🚌' : '🚇+🚌');
-  const apiPrefix = apiPath.isSeoulApi ? '서울시API · ' : '';
+  const apiPrefix = apiPath.isOfficialShortestApi
+    ? '서울교통공사 최단경로API · '
+    : (apiPath.isSeoulApi ? '서울시API · ' : '');
   const categoryTagMap = {
     subway: `${apiPrefix}${fareCalc.isRealtimeApi ? '지하철 실시간운임' : '지하철 거리비례'}`,
     bus: `${apiPrefix}${transfers > 0 ? '버스 환승거리비례' : '버스 거리비례'}`,
@@ -2619,6 +2808,7 @@ async function runSeoulSearch() {
   if (!places.start || !places.end) return;
 
   lastMetroApiUsed = false;
+  lastShortestPathApiUsed = false;
   const depTimeStr = $('depTime')?.value || getNowTimeStr();
   const baseServiceMin = timeStrToServiceMin(depTimeStr);
   const [dh] = depTimeStr.split(':').map(Number);
@@ -2638,12 +2828,18 @@ async function runSeoulSearch() {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = '📡 서울특별시 대중교통환승경로 조회 API(지하철·버스·복합환승)를 호출 중...';
+    statusEl.textContent = '📡 서울교통공사 최단경로API · 서울시 대중교통환승경로 · 버스 실도로 궤적을 조회 중...';
   }
 
   try {
-    const [taxiRes, realTransit, startBusStop, endBusStop] = await Promise.all([
+    const sGraphSt = findNearestGraphStation(places.start.y, places.start.x);
+    const eGraphSt = findNearestGraphStation(places.end.y, places.end.x);
+
+    const [taxiRes, officialMetroShortest, realTransit, startBusStop, endBusStop] = await Promise.all([
       getKakaoTaxiRoute(places.start.x, places.start.y, places.end.x, places.end.y),
+      (sGraphSt && eGraphSt && sGraphSt.distM <= 3500 && eGraphSt.distM <= 3500)
+        ? fetchSeoulMetroShortestPath(sGraphSt.stationName, eGraphSt.stationName)
+        : Promise.resolve(null),
       fetchAllRealSeoulTransitPaths(places.start.x, places.start.y, places.end.x, places.end.y),
       fetchNearestBusStopViaKakao(places.start.y, places.start.x, sName),
       fetchNearestBusStopViaKakao(places.end.y, places.end.x, eName)
@@ -2666,14 +2862,25 @@ async function runSeoulSearch() {
       }
     };
 
-    const sGraphSt = findNearestGraphStation(places.start.y, places.start.x);
-    const eGraphSt = findNearestGraphStation(places.end.y, places.end.x);
+    // 1) 서울교통공사 최단경로이동정보 API (getShtrmPath) 우선 반영
+    if (officialMetroShortest) {
+      const cards = await convertApiPathToRouteCard({
+        apiPath: officialMetroShortest,
+        categoryType: 'subway',
+        idx: 0,
+        depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
+        sName, eName, maxWalkMeters,
+        sourceLabel: '서울교통공사 최단경로API'
+      });
+      addUniqueCards(cards);
+    }
 
+    // 2) 서울시 대중교통환승경로 API (getPathInfoBySubway)
     for (let i = 0; i < Math.min(3, realTransit.subwayPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.subwayPaths[i],
         categoryType: 'subway',
-        idx: i,
+        idx: i + 1,
         depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
         sName, eName, maxWalkMeters,
         sourceLabel: '서울시API · 지하철'
@@ -2681,6 +2888,7 @@ async function runSeoulSearch() {
       addUniqueCards(cards);
     }
 
+    // 3) 공식 1~9호선 역사 좌표 기반 다익스트라 백업
     let graphSubwayRoute = null;
     if (sGraphSt && eGraphSt && sGraphSt.distM <= 3500 && eGraphSt.distM <= 3500) {
       graphSubwayRoute = computeExactSubwayRoute(sGraphSt.stationName, eGraphSt.stationName);
@@ -2691,12 +2899,13 @@ async function runSeoulSearch() {
           idx: 99,
           depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
           sName, eName, maxWalkMeters,
-          sourceLabel: '지하철 노선망'
+          sourceLabel: '공식역사좌표 · 지하철'
         });
         addUniqueCards(cards);
       }
     }
 
+    // 4) 서울시 대중교통환승경로 API (getPathInfoByBus)
     for (let i = 0; i < Math.min(3, realTransit.busPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busPaths[i],
@@ -2764,6 +2973,7 @@ async function runSeoulSearch() {
       }
     }
 
+    // 5) 서울시 대중교통환승경로 API (getPathInfoByBusNSub)
     for (let i = 0; i < Math.min(3, realTransit.busNSubPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busNSubPaths[i],
@@ -2817,6 +3027,7 @@ async function runSeoulSearch() {
       }
     }
 
+    // 6) 대중교통 + 택시 환승 하이브리드 전략
     if (!builtRoutes.some(r => r.category === 'hybrid') && budget > 0) {
       let hubPoint = places.via;
       let firstTransitLeg = null;
@@ -2940,6 +3151,7 @@ async function runSeoulSearch() {
       }
     }
 
+    // 7) 카카오 직행 택시
     if (!builtRoutes.some(r => r.id === 'kakao_direct_taxi')) {
       const taxiDispatchWait = isNightTime ? 6 : 3;
       const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
@@ -2984,9 +3196,10 @@ async function runSeoulSearch() {
     updateLastScheduleButtonLabel();
 
     const hasFallback = visible.some(r => r.isCutoffFallback);
+    const shortestTag = lastShortestPathApiUsed ? '서울교통공사 최단경로API · ' : '';
     const seoulApiStatus = lastSeoulTransitApiSuccessCount > 0
-      ? `서울시 대중교통환승경로 API (${lastSeoulTransitApiSuccessCount}개 공식노선 수신)`
-      : '서울시 대중교통환승경로 API · 내장 노선망 연동';
+      ? `${shortestTag}서울시 대중교통환승경로 API (${lastSeoulTransitApiSuccessCount}개 공식노선 수신)`
+      : `${shortestTag}공식 1~9호선 역사좌표 · 버스 실도로 궤적 연동`;
     const metroFareNote = lastMetroApiUsed ? '서울교통공사 실시간운임 API 반영' : '거리비례·통합환승 엔진 반영';
 
     if ($('fareApiStatusLine')) {
@@ -3127,7 +3340,7 @@ function renderStrategyCards() {
     if (removedTaxiRoutes.length > 0) {
       noticeBox.append(node('div', `🚫 설정한 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${removedTaxiRoutes.length}개가 제외되었습니다.`, 'hintBox'));
     } else if (!hasCutoffFallback) {
-      noticeBox.append(node('div', `💳 서울특별시 대중교통환승경로 API 노선과 마지막 환승 대중교통 막차 시각·실시간운임(1,550원~)·거리비례제·환승할인이 적용되었습니다.`, 'hintBox'));
+      noticeBox.append(node('div', `💳 서울교통공사 최단경로API · 서울시 대중교통환승경로 API 노선과 마지막 환승 대중교통 막차 시각·실시간운임(1,550원~)·거리비례제·환승할인이 적용되었습니다.`, 'hintBox'));
     }
   }
 
@@ -3304,7 +3517,6 @@ async function syncInputsWithPlaces() {
 function extractStartEndFromText(userText) {
   const text = String(userText || '').trim();
 
-  // 패턴 1: "출발지 A 도착지 B" / "출발: A, 도착: B"
   const explicitMatch = text.match(/출발(?:지)?\s*[:=]?\s*([가-힣A-Za-z0-9\s]+?)\s*(?:,|\/|\s+)\s*도착(?:지)?\s*[:=]?\s*([가-힣A-Za-z0-9]+)/);
   if (explicitMatch) {
     const s = resolveAliasOrPlaceName(explicitMatch[1]);
@@ -3312,7 +3524,6 @@ function extractStartEndFromText(userText) {
     if (s && e) return { start: s, end: e };
   }
 
-  // 패턴 2: "A에서 B(까지/가는/막차/요금/경로/어떻게...)"
   const fromToMatch = text.match(/([가-힣A-Za-z0-9]+(?:\s*위치)?)\s*(?:에서|부터)\s*([가-힣A-Za-z0-9]+?)(?:까지|으로|로|가는|행|막차|요금|경로|버스|지하철|택시|\s|$)/);
   if (fromToMatch && !fromToMatch[1].includes('현재 출발지') && !fromToMatch[1].includes('지금 설정')) {
     const s = resolveAliasOrPlaceName(fromToMatch[1]);
@@ -3320,7 +3531,6 @@ function extractStartEndFromText(userText) {
     if (s && e) return { start: s, end: e };
   }
 
-  // 패턴 3: "A -> B" 또는 "A ➔ B"
   const arrowMatch = text.match(/([가-힣A-Za-z0-9]+)\s*(?:->|➔|→|>|~)\s*([가-힣A-Za-z0-9]+)/);
   if (arrowMatch) {
     const s = resolveAliasOrPlaceName(arrowMatch[1]);
@@ -3350,7 +3560,7 @@ async function generateLocalSmartReply(userText) {
       return `${idx + 1}. **${r.name}** [${r.tag}]\n   • 탑승 노선: ${r.transitGuideText}\n   • 정류장·역 도착: **${r.departure}** (${remainLabel}) · 소요 ${r.minutes}분\n   • 총 요금: **${won(r.cost)}** (${r.fareDetail || ''}${discountTxt})`;
     }).join('\n\n');
 
-    return `📍 **[${sName} ➔ ${eName}]** (서울특별시 대중교통환승경로 API · ${depTime} 조회 기준)\n\n${lines}`;
+    return `📍 **[${sName} ➔ ${eName}]** (서울교통공사 최단경로 · 서울시 대중교통환승경로 API · ${depTime} 조회 기준)\n\n${lines}`;
   }
 
   return `현재 **[${sName} ➔ ${eName}]** 기준으로 서울특별시 대중교통환승경로 API와 거리비례·환승 요금을 계산할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 대중교통환승경로 찾기]**를 눌러주세요!`;
@@ -3491,10 +3701,8 @@ async function askGeminiChatbot(userMessage) {
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
 
-  // 1) 홈 화면 입력창에 미확정 텍스트가 있으면 먼저 동기화
   await syncInputsWithPlaces();
 
-  // 2) 질문 문장에 명시적인 "A에서 B"가 있으면 AI 함수 호출 전 선행 검색으로 정확도 보장
   const preExtracted = extractStartEndFromText(text);
   if (preExtracted && preExtracted.start && preExtracted.end) {
     loadingMsg.textContent = `🔍 [${preExtracted.start} ➔ ${preExtracted.end}] 서울시 대중교통환승경로 조회 중...`;
@@ -3661,453 +3869,451 @@ $('saveSettings')?.addEventListener('click', () => {
 });
 
 $('editDestination')?.addEventListener('click', () => {
-  const wrap = $('destinationInputs');
-  if (!wrap) return;
-  wrap.replaceChildren();
+  const box = $('destinationInputs');
+  box.replaceChildren();
   settings.destinations.forEach((d, i) => {
-    const lbl = node('label', `루트 ${i + 1} (별칭 / 역명)`);
-    const row = node('div', undefined, 'fieldRow');
-    const inName = document.createElement('input');
-    inName.type = 'text';
-    inName.value = d.name;
-    inName.dataset.idx = i;
-    inName.dataset.field = 'name';
-    inName.style.flex = '1';
+    const labelName = node('label', `목적지 ${i + 1} 별칭 (예: 집, 자취방, 본가)`);
+    const inputName = document.createElement('input');
+    inputName.type = 'text';
+    inputName.value = d.name;
+    inputName.id = `destName_${i}`;
 
-    const inArea = document.createElement('input');
-    inArea.type = 'text';
-    inArea.value = d.area;
-    inArea.dataset.idx = i;
-    inArea.dataset.field = 'area';
-    inArea.style.flex = '2';
+    const labelArea = node('label', `목적지 ${i + 1} 서울 역·주소 (예: 홍대입구역, 잠실역)`);
+    const inputArea = document.createElement('input');
+    inputArea.type = 'text';
+    inputArea.value = d.area;
+    inputArea.id = `destArea_${i}`;
 
-    row.append(inName, inArea);
-    wrap.append(lbl, row);
+    box.append(labelName, inputName, labelArea, inputArea);
   });
   $('destinationDialog')?.showModal();
 });
 
 $('saveDestinations')?.addEventListener('click', () => {
-  const inputs = $('destinationInputs')?.querySelectorAll('input') || [];
-  inputs.forEach(inp => {
-    const idx = Number(inp.dataset.idx);
-    const field = inp.dataset.field;
-    if (settings.destinations[idx] && inp.value.trim()) {
-      settings.destinations[idx][field] = cleanPlaceName(inp.value.trim());
-    }
-  });
+  const updated = [];
+  for (let i = 0; i < 3; i++) {
+    const nm = $(`destName_${i}`)?.value.trim() || `목적지 ${i + 1}`;
+    const ar = cleanPlaceName($(`destArea_${i}`)?.value.trim() || '홍대입구역');
+    updated.push({ name: nm, area: ar });
+  }
+  settings.destinations = updated;
   localStorage.setItem('homeway.app.v27', JSON.stringify(settings));
   renderSaved();
   $('destinationDialog')?.close();
-  toast('✓ 저장 목적지가 업데이트되었습니다.');
+  toast('✓ 원탭 저장 목적지가 업데이트되었습니다.');
 });
 
-$('reset')?.addEventListener('click', () => {
-  localStorage.removeItem('homeway.app.v27');
-  settings = structuredClone(defaults);
-  applyTheme(settings.theme);
-  syncPrefButtons(settings.pref);
-  syncMaxWalkSelectors(settings.maxWalk);
-  if ($('budget')) $('budget').value = settings.budget;
-  renderSaved();
-  runSeoulSearch();
-  toast('초기 설정으로 되돌아갔습니다.');
-});
-
-function buildHomeMap() {
-  if (!homeLeaflet && typeof L !== 'undefined') {
-    homeLeaflet = L.map('homeMap', {
-      zoomControl: false,
-      attributionControl: false,
-      preferCanvas: true
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(homeLeaflet);
-    routeLayersGroup = L.layerGroup().addTo(homeLeaflet);
-    homeLeaflet.setView([places.start.y, places.start.x], 13);
-    setTimeout(() => homeLeaflet?.invalidateSize(), 120);
-  }
-  updateHomeMap();
+/* ───────────── Leaflet 지도 및 수단별 다색 경로 렌더링 ───────────── */
+function initHomeMap() {
+  const container = $('homeMap');
+  if (!container || typeof L === 'undefined') return;
+  homeLeaflet = L.map(container, { center: [37.53, 126.98], zoom: 12, zoomControl: false, attributionControl: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(homeLeaflet);
+  routeLayersGroup = L.layerGroup().addTo(homeLeaflet);
 }
-
-let mapRenderToken = 0;
 
 async function updateHomeMap() {
   if (!homeLeaflet || !places.start || !places.end) return;
-  const token = ++mapRenderToken;
-  const s = places.start, e = places.end;
-
-  homeMarkers.forEach(m => homeLeaflet.removeLayer(m));
+  homeMarkers.forEach(m => m.remove());
   homeMarkers = [];
-  if (routeLayersGroup) routeLayersGroup.clearLayers();
+  routeLayersGroup.clearLayers();
 
-  const iconS = L.divIcon({
-    html: '<div style="background:#ffb918;width:15px;height:15px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px #000;"></div>',
-    iconSize: [15, 15], iconAnchor: [7.5, 7.5]
-  });
-  const iconE = L.divIcon({
-    html: '<div style="background:#ef4444;width:20px;height:20px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 0 6px #000;">🏠</div>',
-    iconSize: [20, 20], iconAnchor: [10, 10]
-  });
+  const bounds = [];
 
-  const mStart = L.marker([s.y, s.x], { icon: iconS }).addTo(homeLeaflet).bindPopup(`📍 출발: ${cleanPlaceName(s.name)}`);
-  const mEnd = L.marker([e.y, e.x], { icon: iconE }).addTo(homeLeaflet).bindPopup(`🏠 도착: ${cleanPlaceName(e.name)}`);
-  homeMarkers.push(mStart, mEnd);
+  const mStart = L.circleMarker([places.start.y, places.start.x], {
+    radius: 8, color: '#ffffff', weight: 2, fillColor: '#22c55e', fillOpacity: 1
+  }).bindPopup(`<b>출발:</b> ${cleanPlaceName(places.start.name)}`).addTo(homeLeaflet);
+  homeMarkers.push(mStart);
+  bounds.push([places.start.y, places.start.x]);
 
-  const segments = selected?.mapSegments || [
-    { mode: 'taxi', points: [[s.y, s.x], [e.y, e.x]], precomputed: kakaoDriveData.coordinates }
-  ];
+  const mEnd = L.circleMarker([places.end.y, places.end.x], {
+    radius: 8, color: '#ffffff', weight: 2, fillColor: '#ef4444', fillOpacity: 1
+  }).bindPopup(`<b>도착:</b> ${cleanPlaceName(places.end.name)}`).addTo(homeLeaflet);
+  homeMarkers.push(mEnd);
+  bounds.push([places.end.y, places.end.x]);
 
-  const modeStyleMap = {
-    walk: {
-      casing: { color: '#111827', weight: 6, opacity: 0.45, dashArray: '6, 9' },
-      main: { color: '#9ca3af', weight: 4, opacity: 0.95, dashArray: '6, 9' }
-    },
-    bus: {
-      casing: { color: '#ffffff', weight: 9, opacity: 0.85 },
-      main: { color: '#2563eb', weight: 6, opacity: 1.0 }
-    },
-    subway: {
-      casing: { color: '#ffffff', weight: 9, opacity: 0.85 },
-      main: { color: '#16a34a', weight: 6, opacity: 1.0 }
-    },
-    taxi: {
-      casing: { color: '#111827', weight: 8, opacity: 0.75 },
-      main: { color: '#f59e0b', weight: 5, opacity: 1.0 }
-    }
-  };
+  if (selected && Array.isArray(selected.mapSegments) && selected.mapSegments.length > 0) {
+    const styleByMode = {
+      bus: { color: '#3b82f6', weight: 5, opacity: 0.92 },
+      subway: { color: '#22c55e', weight: 5, opacity: 0.92 },
+      taxi: { color: '#f59e0b', weight: 5, opacity: 0.95 },
+      walk: { color: '#9ca3af', weight: 4, opacity: 0.9, dashArray: '6, 8' }
+    };
 
-  segments.forEach(seg => {
-    if (seg.hub && seg.hub.y && seg.hub.x) {
-      const iconHub = L.divIcon({
-        html: '<div style="background:#1e293b;color:#ffb918;width:20px;height:20px;border-radius:50%;border:2px solid #ffb918;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.6);">🔄</div>',
-        iconSize: [20, 20], iconAnchor: [10, 10]
-      });
-      const mHub = L.marker([seg.hub.y, seg.hub.x], { icon: iconHub })
-        .addTo(homeLeaflet)
-        .bindPopup(`🔄 환승·전환 지점: ${seg.hub.stationName}`);
-      homeMarkers.push(mHub);
-    }
-  });
-
-  const resolvedCoordsList = await Promise.all(
-    segments.map(async seg => {
+    for (const seg of selected.mapSegments) {
+      let coords = null;
       if (Array.isArray(seg.precomputed) && seg.precomputed.length >= 2) {
-        return seg.precomputed;
+        coords = seg.precomputed;
+      } else {
+        coords = await buildRealPathCoords(seg.points, seg.mode);
       }
-      return await buildRealPathCoords(seg.points);
-    })
-  );
 
-  if (token !== mapRenderToken) return;
+      if (coords && coords.length >= 2) {
+        L.polyline(coords, styleByMode[seg.mode] || styleByMode.taxi).addTo(routeLayersGroup);
+        coords.forEach(c => bounds.push(c));
+      }
 
-  const allBoundsPoints = [[s.y, s.x], [e.y, e.x]];
-  resolvedCoordsList.forEach((latlngs, idx) => {
-    const seg = segments[idx];
-    if (latlngs && latlngs.length >= 2 && routeLayersGroup) {
-      const stylePair = modeStyleMap[seg.mode] || modeStyleMap.taxi;
-      L.polyline(latlngs, stylePair.casing).addTo(routeLayersGroup);
-      L.polyline(latlngs, stylePair.main).addTo(routeLayersGroup);
-      allBoundsPoints.push(...latlngs);
+      if (seg.hub && seg.hub.y && seg.hub.x) {
+        const hubMarker = L.circleMarker([seg.hub.y, seg.hub.x], {
+          radius: 7, color: '#ffffff', weight: 2, fillColor: '#3b82f6', fillOpacity: 1
+        }).bindPopup(`<b>거점:</b> ${cleanPlaceName(seg.hub.stationName)}`).addTo(homeLeaflet);
+        homeMarkers.push(hubMarker);
+        bounds.push([seg.hub.y, seg.hub.x]);
+      }
     }
-  });
-
-  homeLeaflet.invalidateSize();
-  if (allBoundsPoints.length >= 2) {
-    homeLeaflet.fitBounds(allBoundsPoints, { padding: [32, 32], maxZoom: 15 });
-  }
-}
-
-function buildShareUrl() {
-  const url = new URL(window.location.href.split('?')[0]);
-  url.searchParams.set('sn', cleanPlaceName(places.start.name));
-  url.searchParams.set('sx', places.start.x);
-  url.searchParams.set('sy', places.start.y);
-  url.searchParams.set('dn', cleanPlaceName(places.end.name));
-  url.searchParams.set('dx', places.end.x);
-  url.searchParams.set('dy', places.end.y);
-  url.searchParams.set('t', $('depTime')?.value || getNowTimeStr());
-  return url.toString();
-}
-
-function updateQrCodes() {
-  const shareUrl = buildShareUrl();
-  if ($('groupRouteLabel')) $('groupRouteLabel').textContent = `${cleanPlaceName(places.start.name)} ➔ ${cleanPlaceName(places.end.name)} (${selected?.departure || $('depTime')?.value} 정류장·역 도착)`;
-  const gBox = $('groupQrBox');
-  if (gBox) {
-    gBox.innerHTML = '';
-    if (typeof QRCode !== 'undefined') {
-      new QRCode(gBox, { text: shareUrl, width: 170, height: 170 });
+  } else {
+    const coords = kakaoDriveData.coordinates?.length >= 2
+      ? kakaoDriveData.coordinates
+      : await buildRealPathCoords([[places.start.y, places.start.x], [places.end.y, places.end.x]], 'taxi');
+    if (coords?.length >= 2) {
+      L.polyline(coords, { color: '#f59e0b', weight: 5, opacity: 0.92 }).addTo(routeLayersGroup);
+      coords.forEach(c => bounds.push(c));
     }
   }
-}
 
-$('btnShareQr')?.addEventListener('click', () => {
-  if ($('qrDialogDesc')) $('qrDialogDesc').textContent = `${cleanPlaceName(places.start.name)} ➔ ${cleanPlaceName(places.end.name)} (${selected?.departure || ''} 정류장·역 도착)`;
-  const box = $('qrDialogBox');
-  if (box) {
-    box.innerHTML = '';
-    if (typeof QRCode !== 'undefined') new QRCode(box, { text: buildShareUrl(), width: 190, height: 190 });
+  if (bounds.length >= 2) {
+    homeLeaflet.fitBounds(bounds, { padding: [36, 36] });
   }
-  $('qrDialog')?.showModal();
-});
-$('btnCopyModalLink')?.addEventListener('click', () => navigator.clipboard.writeText(buildShareUrl()).then(() => toast('링크 복사 완료!')));
-$('btnCopyGroupLink')?.addEventListener('click', () => navigator.clipboard.writeText(buildShareUrl()).then(() => toast('링크 복사 완료!')));
-$('btnOpenKakaoMap')?.addEventListener('click', () => {
-  window.open(`https://map.kakao.com/link/by/traffic/${encodeURIComponent(cleanPlaceName(places.start.name))},${places.start.y},${places.start.x}/${encodeURIComponent(cleanPlaceName(places.end.name))},${places.end.y},${places.end.x}`, '_blank');
-});
-
-function renderSaved() {
-  ['savedRoutes', 'myRoutes'].forEach(target => {
-    const container = $(target);
-    if (!container) return;
-    container.replaceChildren();
-    settings.destinations.forEach((d, i) => {
-      const b = node('button', undefined, 'saved' + (i === activeDestination ? ' active' : ''));
-      b.type = 'button';
-      b.append(node('span', '⌂', 'symbol'));
-      const text = node('span');
-      text.append(node('small', '현재 위치 ➔ ' + d.name), node('b', d.area));
-      b.append(text, node('span', '›', 'arrow'));
-      b.addEventListener('click', () => {
-        triggerOneTapReturn(d, i);
-        if (target === 'myRoutes') tab('home');
-      });
-      container.append(b);
-    });
-  });
 }
-renderSaved();
 
-['start', 'end', 'via'].forEach(id => {
-  let timer;
-  const input = $(id);
-  if (!input) return;
-  input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => searchPlaces(id), 300); });
-});
-document.querySelectorAll('[data-search]').forEach(b => b.addEventListener('click', () => searchPlaces(b.dataset.search)));
-
-$('homeFind')?.addEventListener('click', async () => {
-  await syncInputsWithPlaces();
-  await runSeoulSearch();
-  tab('strategy');
-});
-$('fetchRoutes')?.addEventListener('click', async () => {
-  $('searchDialog')?.close();
-  await syncInputsWithPlaces();
-  await runSeoulSearch();
-});
-$('openStrategy')?.addEventListener('click', () => tab('strategy'));
-$('settings')?.addEventListener('click', () => $('searchDialog')?.showModal());
-$('homeAdvanced')?.addEventListener('click', () => $('searchDialog')?.showModal());
-$('homeFit')?.addEventListener('click', () => updateHomeMap());
-document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => $(b.dataset.close)?.close()));
-
-$('depTime')?.addEventListener('change', () => runSeoulSearch());
-
-function handleBudgetSliderChange() {
-  const bVal = Number($('budget')?.value ?? 30000);
-  if ($('budgetText')) $('budgetText').textContent = won(bVal);
-  if ($('myBudget')) $('myBudget').textContent = won(bVal);
-  applyConditionAndRender();
-}
-$('budget')?.addEventListener('input', handleBudgetSliderChange);
-$('budget')?.addEventListener('change', handleBudgetSliderChange);
-
-$('homeSwap')?.addEventListener('click', () => {
-  const a = places.start, b = places.end;
-  places.start = b; places.end = a;
-  if ($('start')) $('start').value = cleanPlaceName(b.name);
-  if ($('end')) $('end').value = cleanPlaceName(a.name);
-  if ($('startResolved')) $('startResolved').textContent = `✓ ${cleanPlaceName(b.name)} 선택됨`;
-  if ($('endResolved')) $('endResolved').textContent = `✓ ${cleanPlaceName(a.name)} 선택됨`;
-  runSeoulSearch();
-});
-
+/* ───────────── 풀스크린 마지노선 타이머 & Wake Lock 화면 꺼짐 방지 ───────────── */
+let alarmTargetTime = null, alarmTimer = null, lastAlertStage = 'none';
 let wakeLockSentinel = null;
+
 function updateWakeLockBadge(text) {
-  const badge = $('timerWakeLockStatus');
-  if (badge) badge.textContent = text;
+  const el = $('timerWakeLockStatus');
+  if (el) el.textContent = text;
 }
 
-async function requestScreenWakeLock() {
+async function requestTimerWakeLock() {
   if (!('wakeLock' in navigator)) {
-    updateWakeLockBadge('ℹ️ 이 브라우저는 화면 꺼짐 방지를 지원하지 않습니다');
+    updateWakeLockBadge('🔆 타이머 작동 중 (화면 유지 활성)');
     return;
   }
   try {
-    if (wakeLockSentinel && !wakeLockSentinel.released) return;
     wakeLockSentinel = await navigator.wakeLock.request('screen');
-    updateWakeLockBadge('🔆 화면 꺼짐 방지 작동 중');
+    updateWakeLockBadge('🔆 화면 꺼짐 방지 켜짐 (실시간 감시 중)');
     wakeLockSentinel.addEventListener('release', () => {
-      if (!$('timerDialog')?.open) {
-        updateWakeLockBadge('🔆 화면 꺼짐 방지 해제됨');
+      wakeLockSentinel = null;
+      if (alarmTargetTime) {
+        updateWakeLockBadge('🔆 화면 꺼짐 방지 재연결 대기');
       }
     });
   } catch {
-    updateWakeLockBadge('⚠️ 배터리 절전 모드 등으로 화면 꺼짐 방지가 제한되었습니다');
+    updateWakeLockBadge('🔆 화면 켜짐 유지 모드');
   }
 }
 
-async function releaseScreenWakeLock() {
+async function releaseTimerWakeLock() {
   if (wakeLockSentinel) {
-    try { await wakeLockSentinel.release(); } catch {}
+    try {
+      await wakeLockSentinel.release();
+    } catch {}
     wakeLockSentinel = null;
   }
-  updateWakeLockBadge('🔆 화면 꺼짐 방지 해제됨');
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && $('timerDialog')?.open) {
-    requestScreenWakeLock();
-    refreshFullscreenTimer();
+  if (document.visibilityState === 'visible' && alarmTargetTime && $('timerDialog')?.open) {
+    requestTimerWakeLock();
+    tickAlarm();
   }
 });
 
-let timerInterval = null;
-let lastTimerStage = null;
-
-function refreshFullscreenTimer() {
-  if (!selected) return;
-  const screenEl = $('timerPhoneScreen');
-  if (!screenEl) return;
-
-  const { remainingMin } = calcRemainingFromRealNow(selected.departure);
-  const formattedDuration = formatDurationKorean(remainingMin);
-  const bigEl = $('timerBig');
-
-  screenEl.classList.remove('state-green', 'state-yellow', 'state-red');
-  if (bigEl) {
-    bigEl.classList.toggle('compact', formattedDuration.length >= 5);
+function formatFullscreenBigCountdown(remainingMin) {
+  if (remainingMin >= 60) {
+    const h = Math.floor(remainingMin / 60);
+    const m = remainingMin % 60;
+    return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
   }
+  return `${remainingMin}분`;
+}
 
-  let currentStage = 'green';
-  if (remainingMin === 0) currentStage = 'board';
-  else if (remainingMin <= 5) currentStage = 'red';
-  else if (remainingMin <= 15) currentStage = 'yellow';
+function tickAlarm() {
+  if (!alarmTargetTime) return;
+  const { diffSec, remainingMin } = calcRemainingFromRealNow(alarmTargetTime);
 
-  if (lastTimerStage !== null && lastTimerStage !== currentStage) {
-    if (currentStage === 'yellow') {
-      window.triggerStageFeedback(
-        'yellow',
-        '🟡 출발 15분 전 (주의 · 진동 3번)',
-        `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다.`
-      );
-    } else if (currentStage === 'red') {
+  const screenEl = $('timerPhoneScreen');
+  const captionEl = $('timerStatusCaption');
+  const line1El = $('timerLine1');
+  const bigEl = $('timerBig');
+  const line3El = $('timerLine3');
+  if (!screenEl || !bigEl) return;
+
+  const bigStr = formatFullscreenBigCountdown(remainingMin);
+  bigEl.textContent = bigStr;
+  bigEl.classList.toggle('compact', bigStr.length >= 6);
+
+  if (diffSec <= 0) {
+    screenEl.className = 'fullscreen-timer-screen state-red';
+    captionEl.textContent = '마지노선 도달';
+    line1El.textContent = '정류장·역 도착 시각입니다!';
+    bigEl.textContent = '지금 탑승';
+    bigEl.classList.add('compact');
+    line3El.textContent = '막차·대중교통을 놓치면 택시 전환!';
+  } else if (remainingMin <= 5) {
+    screenEl.className = 'fullscreen-timer-screen state-red';
+    captionEl.textContent = '긴급 · 5분 이하';
+    line1El.textContent = '지금 시각 기준 출발까지';
+    line3El.textContent = '지금 출발해야 해요!';
+
+    if (lastAlertStage !== 'red') {
+      lastAlertStage = 'red';
       window.triggerStageFeedback(
         'red',
-        '🔴 출발 5분 전 (긴급 · 진동 5번)',
-        `${selected.boardStation} ${selected.departure} 출발까지 ${formattedDuration} 남았습니다!`
-      );
-    } else if (currentStage === 'board') {
-      window.triggerStageFeedback(
-        'board',
-        '🚨 정류장·역 도착! 지금 탑승하세요 (진동 5번)',
-        `${selected.boardStation} (${selected.departure}) 탑승 시각입니다!`
+        '🚨 빨강 경고 (5분 이하)',
+        `정류장·역 도착까지 ${remainingMin}분 남았습니다! 지금 바로 출발하세요.`
       );
     }
-  }
-  lastTimerStage = currentStage;
-
-  if (remainingMin <= 5) {
-    screenEl.classList.add('state-red');
-    if ($('timerStatusCaption')) $('timerStatusCaption').textContent = remainingMin === 0 ? '정류장·역 도착!' : '긴급';
-    if ($('timerLine1')) $('timerLine1').textContent = remainingMin === 0 ? '지금 정류장·역' : '지금 시각 기준 출발까지';
-    if (bigEl) bigEl.textContent = remainingMin === 0 ? '탑승!' : formattedDuration;
-    if ($('timerLine3')) $('timerLine3').textContent = remainingMin === 0 ? '놓치지 않게 바로 탑승하세요!' : '지금 바로 정류장·역으로 이동하세요!';
   } else if (remainingMin <= 15) {
-    screenEl.classList.add('state-yellow');
-    if ($('timerStatusCaption')) $('timerStatusCaption').textContent = '주의';
-    if ($('timerLine1')) $('timerLine1').textContent = '지금 시각 기준 출발까지';
-    if (bigEl) bigEl.textContent = formattedDuration;
-    if ($('timerLine3')) $('timerLine3').textContent = '슬슬 정류장·역으로 이동할 준비를 하세요';
+    screenEl.className = 'fullscreen-timer-screen state-yellow';
+    captionEl.textContent = '준비 · 6~15분';
+    line1El.textContent = '지금 시각 기준 출발까지';
+    line3El.textContent = '슬슬 준비하세요';
+
+    if (lastAlertStage !== 'yellow' && lastAlertStage !== 'red') {
+      lastAlertStage = 'yellow';
+      window.triggerStageFeedback(
+        'yellow',
+        '⚠️ 노랑 주의 (15분 이하)',
+        `정류장·역 도착까지 ${remainingMin}분 남았습니다. 슬슬 이동을 준비하세요.`
+      );
+    }
   } else {
-    screenEl.classList.add('state-green');
-    if ($('timerStatusCaption')) $('timerStatusCaption').textContent = '여유';
-    if ($('timerLine1')) $('timerLine1').textContent = '지금 시각 기준 출발까지';
-    if (bigEl) bigEl.textContent = formattedDuration;
-    if ($('timerLine3')) $('timerLine3').textContent = '아직 괜찮아요';
+    screenEl.className = 'fullscreen-timer-screen state-green';
+    captionEl.textContent = '여유 · 16분 이상';
+    line1El.textContent = '지금 시각 기준 출발까지';
+    line3El.textContent = '아직 괜찮아요';
+  }
+}
+
+$('navigate')?.addEventListener('click', async () => {
+  if (!selected) return;
+  unlockVibrationEngine();
+  if ('Notification' in window && Notification.permission === 'default') {
+    try { await Notification.requestPermission(); } catch {}
   }
 
-  if ($('timerDestLabel')) $('timerDestLabel').textContent = `${selected.boardStation} (${selected.departure} 출발)`;
-  if ($('timerBottomRoute')) $('timerBottomRoute').textContent = `${selected.transitGuideText || selected.summary}`;
-}
+  alarmTargetTime = selected.departure;
+  lastAlertStage = 'none';
 
-function closeFullscreenTimerWindowOnly() {
-  clearInterval(timerInterval);
-  timerInterval = null;
-  releaseScreenWakeLock();
-  $('timerDialog')?.close();
-}
+  const eName = cleanPlaceName(places.end?.name || '도착지');
+  $('timerDestLabel').textContent = `${selected.boardStation} ${selected.departure} 도착`;
+  $('timerBottomRoute').textContent = `${eName} 행 · ${selected.lineBadges?.map(b => b.label).join(' ➔ ') || selected.name} (${won(selected.cost)})`;
 
-function cancelAllAlertsAndCloseTimer() {
-  clearInterval(timerInterval);
-  timerInterval = null;
-  lastTimerStage = null;
+  $('timerDialog').showModal();
+  await requestTimerWakeLock();
+  tickAlarm();
+
+  clearInterval(alarmTimer);
+  alarmTimer = setInterval(tickAlarm, 1000);
+  toast(`📳 풀스크린 알림 시작! 15분 이하(노랑 3회 진동), 5분 이하(빨강 5회 진동) 및 화면 꺼짐 방지가 작동합니다.`);
+});
+
+$('btnCloseTimer')?.addEventListener('click', () => {
+  $('timerDialog').close();
+  releaseTimerWakeLock();
+});
+
+$('btnCancelAlarm')?.addEventListener('click', () => {
+  alarmTargetTime = null;
+  lastAlertStage = 'none';
+  clearInterval(alarmTimer);
   activeVibrateTimers.forEach(id => clearTimeout(id));
   activeVibrateTimers = [];
   if ('vibrate' in navigator) {
     try { navigator.vibrate(0); } catch {}
   }
-  releaseScreenWakeLock();
-  $('timerDialog')?.close();
+  releaseTimerWakeLock();
+  $('timerDialog').close();
   toast('마지노선 알림이 해제되었습니다.');
+});
+
+/* ───────────── QR 코드 및 카카오맵 외부 연동 ───────────── */
+function getShareUrl() {
+  const url = new URL(window.location.href.split('?')[0]);
+  if (places.start) url.searchParams.set('s', cleanPlaceName(places.start.name));
+  if (places.end) url.searchParams.set('e', cleanPlaceName(places.end.name));
+  if ($('depTime')?.value) url.searchParams.set('t', $('depTime').value);
+  return url.toString();
 }
 
-$('navigate')?.addEventListener('click', () => {
-  if (!selected) return;
-  unlockVibrationEngine();
-  lastTimerStage = null;
-  refreshFullscreenTimer();
-  $('timerDialog')?.showModal();
-  requestScreenWakeLock();
-  clearInterval(timerInterval);
-  timerInterval = setInterval(refreshFullscreenTimer, 1000);
-});
-$('btnCloseTimer')?.addEventListener('click', closeFullscreenTimerWindowOnly);
-$('btnCancelAlarm')?.addEventListener('click', cancelAllAlertsAndCloseTimer);
-$('timerDialog')?.addEventListener('close', () => {
-  clearInterval(timerInterval);
-  timerInterval = null;
-  releaseScreenWakeLock();
-});
-
-setInterval(updateHomeHeroCountdown, 5000);
-
-function tab(id) {
-  document.querySelectorAll('.screen').forEach(e => e.classList.toggle('on', e.id === id));
-  document.querySelectorAll('[data-tab]').forEach(b => {
-    b.classList.toggle('on', b.dataset.tab === id);
-    b.setAttribute('aria-current', b.dataset.tab === id ? 'page' : 'false');
+function renderQrToElement(el, text, size = 160) {
+  if (!el || typeof QRCode === 'undefined') return;
+  el.replaceChildren();
+  new QRCode(el, {
+    text,
+    width: size,
+    height: size,
+    colorDark: '#0b1117',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
   });
-  const titles = { home: '⌂ 집에 못 갈 지도', strategy: '귀가 전략', group: '모임 · QR 공유', my: '마이', chat: '물어보기' };
-  if ($('pageTitle')) $('pageTitle').textContent = titles[id] || '집에 못 갈 지도';
-  window.scrollTo(0, 0);
-  if (id === 'home' && homeLeaflet) { setTimeout(() => { homeLeaflet.invalidateSize(); updateHomeMap(); }, 150); }
-  if (id === 'strategy') applyConditionAndRender();
-  if (id === 'group') updateQrCodes();
-  if (id === 'chat') {
-    syncInputsWithPlaces();
-    if ($('aiStatusBadge')) {
-      $('aiStatusBadge').textContent = `${cleanPlaceName(places.start?.name || '')} ➔ ${cleanPlaceName(places.end?.name || '')}`;
-    }
+}
+
+function updateQrCodes() {
+  const link = getShareUrl();
+  const sName = cleanPlaceName(places.start?.name || '강남역');
+  const eName = cleanPlaceName(places.end?.name || '홍대입구역');
+  const dep = $('depTime')?.value || getNowTimeStr();
+  if ($('groupRouteLabel')) $('groupRouteLabel').textContent = `${sName} ➔ ${eName} (${dep})`;
+  renderQrToElement($('groupQrBox'), link, 160);
+}
+
+$('btnShareQr')?.addEventListener('click', () => {
+  const link = getShareUrl();
+  const sName = cleanPlaceName(places.start?.name || '출발지');
+  const eName = cleanPlaceName(places.end?.name || '도착지');
+  $('qrDialogDesc').textContent = `${sName} ➔ ${eName} (${selected?.lineBadges?.map(b => b.label).join(' ➔ ') || ''})`;
+  renderQrToElement($('qrDialogBox'), link, 180);
+  $('qrDialog').showModal();
+});
+
+$('btnCopyGroupLink')?.addEventListener('click', () => {
+  navigator.clipboard?.writeText(getShareUrl());
+  toast('경로 공유 링크가 클립보드에 복사되었습니다!');
+});
+$('btnCopyModalLink')?.addEventListener('click', () => {
+  navigator.clipboard?.writeText(getShareUrl());
+  toast('경로 공유 링크가 클립보드에 복사되었습니다!');
+});
+
+$('btnOpenKakaoMap')?.addEventListener('click', () => {
+  if (!places.start || !places.end) return;
+  const sName = encodeURIComponent(cleanPlaceName(places.start.name));
+  const eName = encodeURIComponent(cleanPlaceName(places.end.name));
+  const url = `https://map.kakao.com/link/by/traffic/${sName},${places.start.y},${places.start.x}/${eName},${places.end.y},${places.end.x}`;
+  window.open(url, '_blank');
+});
+
+/* ───────────── 탭 전환 및 기본 이벤트 바인딩 ───────────── */
+function go(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === tab));
+  document.querySelectorAll('.bottom button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  const titles = { home: '집에 못 갈 지도', strategy: '귀가 전략', chat: '물어보기', group: '모임·QR 공유', my: '마이' };
+  $('pageTitle').replaceChildren(node('span', '⌂', 'icon'), document.createTextNode(titles[tab]));
+  if (tab === 'home' && homeLeaflet) setTimeout(() => homeLeaflet.invalidateSize(), 120);
+  if (tab === 'group') updateQrCodes();
+  if (tab === 'chat') {
     const box = $('chatMessages');
     if (box) box.scrollTop = box.scrollHeight;
   }
 }
-document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => tab(b.dataset.tab)));
 
-window.addEventListener('load', () => {
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('sx') && params.has('sy') && params.has('dx') && params.has('dy')) {
-    places.start = { label: cleanPlaceName(params.get('sn') || '출발지'), name: cleanPlaceName(params.get('sn') || '출발지'), x: Number(params.get('sx')), y: Number(params.get('sy')) };
-    places.end = { label: cleanPlaceName(params.get('dn') || '도착지'), name: cleanPlaceName(params.get('dn') || '도착지'), x: Number(params.get('dx')), y: Number(params.get('dy')) };
-    if ($('start')) $('start').value = places.start.name;
-    if ($('end')) $('end').value = places.end.name;
-    if ($('startResolved')) $('startResolved').textContent = `✓ ${places.start.name} 선택됨`;
-    if ($('endResolved')) $('endResolved').textContent = `✓ ${places.end.name} 선택됨`;
-    if (params.get('t') && $('depTime')) $('depTime').value = params.get('t');
+document.querySelectorAll('.bottom button').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
+$('openStrategy')?.addEventListener('click', () => go('strategy'));
+$('settings')?.addEventListener('click', () => $('searchDialog').showModal());
+$('homeAdvanced')?.addEventListener('click', () => $('searchDialog').showModal());
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => $(b.dataset.close).close()));
+document.querySelectorAll('[data-search]').forEach(b => b.addEventListener('click', () => searchPlaces(b.dataset.search)));
+
+['start', 'end', 'via'].forEach(id => {
+  $(id)?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.isComposing) {
+      e.preventDefault();
+      searchPlaces(id);
+    }
+  });
+});
+
+$('homeSwap')?.addEventListener('click', () => {
+  [places.start, places.end] = [places.end, places.start];
+  $('start').value = cleanPlaceName(places.start?.name || '');
+  $('end').value = cleanPlaceName(places.end?.name || '');
+  if ($('startResolved')) $('startResolved').textContent = `✓ ${$('start').value} 선택됨`;
+  if ($('endResolved')) $('endResolved').textContent = `✓ ${$('end').value} 선택됨`;
+  runSeoulSearch();
+});
+
+$('homeFind')?.addEventListener('click', async () => {
+  const sVal = cleanPlaceName($('start')?.value.trim());
+  const eVal = cleanPlaceName($('end')?.value.trim());
+  if (!sVal || !eVal) {
+    toast('출발지와 도착지를 입력해 주세요.');
+    return;
   }
-  buildHomeMap();
+  if (!places.start || cleanPlaceName(places.start.name) !== sVal) {
+    const sp = await resolveSinglePlace(sVal);
+    if (sp) {
+      places.start = sp;
+      $('start').value = sp.name;
+      if ($('startResolved')) $('startResolved').textContent = `✓ ${sp.name} 선택됨`;
+    }
+  }
+  if (!places.end || cleanPlaceName(places.end.name) !== eVal) {
+    const ep = await resolveSinglePlace(eVal);
+    if (ep) {
+      places.end = ep;
+      $('end').value = ep.name;
+      if ($('endResolved')) $('endResolved').textContent = `✓ ${ep.name} 선택됨`;
+    }
+  }
+  runSeoulSearch();
+});
+
+$('fetchRoutes')?.addEventListener('click', () => {
+  $('searchDialog').close();
+  runSeoulSearch();
+});
+$('depTime')?.addEventListener('change', runSeoulSearch);
+$('budget')?.addEventListener('input', applyConditionAndRender);
+$('homeFit')?.addEventListener('click', () => updateHomeMap());
+
+function renderSaved() {
+  const h = $('savedRoutes'), m = $('myRoutes');
+  if (h) h.replaceChildren();
+  if (m) m.replaceChildren();
+  settings.destinations.forEach((d, i) => {
+    const b = node('button', undefined, 'saved' + (i === activeDestination ? ' active' : ''));
+    b.type = 'button';
+    const text = node('span');
+    text.append(node('small', `${d.name} · 현재 위치에서 바로 탐색`), node('b', cleanPlaceName(d.area)));
+    b.append(node('span', '⌂', 'symbol'), text, node('span', '→', 'arrow'));
+
+    b.addEventListener('click', () => {
+      triggerOneTapReturn(d, i);
+    });
+    if (h) h.append(b);
+
+    const row = node('div', undefined, 'setting');
+    const left = node('span', `${d.name} · ${cleanPlaceName(d.area)}`);
+    const goBtn = node('button', '지금 출발 ➔', 'chip on');
+    goBtn.type = 'button';
+    goBtn.style.padding = '6px 10px';
+    goBtn.addEventListener('click', () => {
+      go('home');
+      triggerOneTapReturn(d, i);
+    });
+    row.append(left, goBtn);
+    if (m) m.append(row);
+  });
+}
+
+$('reset')?.addEventListener('click', () => {
+  localStorage.removeItem('homeway.app.v27');
+  location.reload();
+});
+
+window.addEventListener('load', async () => {
+  initHomeMap();
+  renderSaved();
+
+  setInterval(updateHomeHeroCountdown, 10000);
+
+  const params = new URLSearchParams(window.location.search);
+  const qStart = params.get('s');
+  const qEnd = params.get('e');
+  const qTime = params.get('t');
+  if (qTime && /^\d{2}:\d{2}$/.test(qTime)) $('depTime').value = qTime;
+
+  if (qStart && qEnd) {
+    $('start').value = cleanPlaceName(qStart);
+    $('end').value = cleanPlaceName(qEnd);
+    const [sp, ep] = await Promise.all([resolveSinglePlace(qStart), resolveSinglePlace(qEnd)]);
+    if (sp) places.start = sp;
+    if (ep) places.end = ep;
+  }
+
   runSeoulSearch();
 });
 </script>
