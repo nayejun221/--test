@@ -1549,15 +1549,40 @@ function toast(t) {
 
 if ($('depTime')) $('depTime').value = getNowTimeStr();
 
+function getActiveRouteLastTrainInfo() {
+  const targetRoute = (selected && selected.lastTrainTimeStr)
+    ? selected
+    : (visible.find(r => r.lastTrainTimeStr) || rawRoutes.find(r => r.lastTrainTimeStr));
+
+  if (targetRoute && targetRoute.lastTrainTimeStr) {
+    return {
+      timeStr: targetRoute.lastTrainTimeStr,
+      routeLabel: targetRoute.lastTransferRouteNm || targetRoute.name
+    };
+  }
+  return {
+    timeStr: minToTime(24 * 60 + 15),
+    routeLabel: '기본 대중교통 노선'
+  };
+}
+
+function updateLastScheduleButtonLabel() {
+  const btn = $('btnLastSchedule');
+  if (!btn) return;
+  const info = getActiveRouteLastTrainInfo();
+  btn.textContent = `🚨 막차 (${info.timeStr})`;
+}
+
 $('btnNextSchedule')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
   toast('현재 시각 기준 서울시 대중교통환승경로 API로 다음 차 도착 시각을 재계산합니다.');
 });
 $('btnLastSchedule')?.addEventListener('click', () => {
-  $('depTime').value = '23:45';
+  const info = getActiveRouteLastTrainInfo();
+  $('depTime').value = info.timeStr;
   runSeoulSearch();
-  toast('막차 시간대(23:45) 기준으로 마지막 환승 대중교통 막차 시각 및 도보·택시 전환 경로를 조회합니다.');
+  toast(`마지막 환승 경로 [${info.routeLabel}] 막차 시간(${info.timeStr}) 기준으로 경로와 도보·택시 연결을 조회합니다.`);
 });
 $('setNowBtn')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
@@ -2088,6 +2113,8 @@ function buildFirstLegCutoffDirectFallback({
   eName,
   firstLeg,
   firstLastStr,
+  lastLegRouteNm,
+  finalLastStr,
   maxWalkMeters
 }) {
   const directCards = [];
@@ -2111,6 +2138,8 @@ function buildFirstLegCutoffDirectFallback({
       transfers: 0,
       isHybrid: true,
       isCutoffFallback: true,
+      lastTrainTimeStr: finalLastStr || firstLastStr,
+      lastTransferRouteNm: lastLegRouteNm || firstLeg.routeNm,
       departure: depTimeStr,
       boardStation: `${sName} 출발`,
       mapSegments: [
@@ -2151,6 +2180,8 @@ function buildFirstLegCutoffDirectFallback({
     transfers: 0,
     isHybrid: false,
     isCutoffFallback: true,
+    lastTrainTimeStr: finalLastStr || firstLastStr,
+    lastTransferRouteNm: lastLegRouteNm || firstLeg.routeNm,
     departure: taxiPickupTimeStr,
     boardStation: `${sName} 승차 위치`,
     mapSegments: [
@@ -2192,6 +2223,9 @@ async function evaluateMultiTransferLastTrainFallback({
 
   const firstLastServiceMin = getRouteLastTrainServiceMin(legs[0].routeNm, false);
   if (board1ServiceMin > firstLastServiceMin) return [];
+
+  const lastLeg = legs[legs.length - 1];
+  const finalTransitLastStr = minToTime(getRouteLastTrainServiceMin(lastLeg.routeNm, true));
 
   const transferWalkMin = 4;
   let runningServiceMin = board1ServiceMin;
@@ -2296,6 +2330,8 @@ async function evaluateMultiTransferLastTrainFallback({
         transfers: cutIdx,
         isHybrid: true,
         isCutoffFallback: true,
+        lastTrainTimeStr: finalTransitLastStr,
+        lastTransferRouteNm: lastLeg.routeNm,
         departure: board1TimeStr,
         boardStation: legs[0].fname,
         mapSegments: [
@@ -2343,6 +2379,8 @@ async function evaluateMultiTransferLastTrainFallback({
         transfers: cutIdx,
         isHybrid: true,
         isCutoffFallback: true,
+        lastTrainTimeStr: finalTransitLastStr,
+        lastTransferRouteNm: lastLeg.routeNm,
         departure: board1TimeStr,
         boardStation: legs[0].fname,
         mapSegments: [
@@ -2394,6 +2432,10 @@ async function convertApiPathToRouteCard({
   const lastLeg = legs[legs.length - 1];
   const firstMode = classifyTransitLegMode(firstLeg.routeNm);
 
+  /* 마지막 환승 대중교통의 막차 시간을 해당 경로의 기준 막차 시간으로 설정 */
+  const finalTransitLegLastMin = getRouteLastTrainServiceMin(lastLeg.routeNm, legs.length > 1);
+  const finalTransitLastStr = minToTime(finalTransitLegLastMin);
+
   const walk1Dist = (firstLeg.fy && firstLeg.fx)
     ? calcDistanceMeters(places.start.y, places.start.x, firstLeg.fy, firstLeg.fx)
     : 200;
@@ -2429,6 +2471,8 @@ async function convertApiPathToRouteCard({
       eName,
       firstLeg,
       firstLastStr: minToTime(firstLastServiceMin),
+      lastLegRouteNm: lastLeg.routeNm,
+      finalLastStr: finalTransitLastStr,
       maxWalkMeters
     });
   }
@@ -2460,10 +2504,6 @@ async function convertApiPathToRouteCard({
       return cutoffCards;
     }
   }
-
-  /* 마지막 환승 대중교통의 막차 시간을 해당 경로의 기준 막차 시간으로 설정 */
-  const finalTransitLegLastMin = getRouteLastTrainServiceMin(lastLeg.routeNm, legs.length > 1);
-  const finalTransitLastStr = minToTime(finalTransitLegLastMin);
 
   const fareCalc = await calculateDetailedTransitFare(legs, apiPath.distance || 0);
 
@@ -2563,6 +2603,7 @@ async function convertApiPathToRouteCard({
     isHybrid: false,
     isSeoulApi: Boolean(apiPath.isSeoulApi),
     lastTrainTimeStr: finalTransitLastStr,
+    lastTransferRouteNm: lastLeg.routeNm,
     departure: arrivalInfo.boardTimeStr,
     boardStation: firstLeg.fname,
     mapSegments,
@@ -2867,6 +2908,8 @@ async function runSeoulSearch() {
               transfers: 1,
               isHybrid: true,
               isCutoffFallback: false,
+              lastTrainTimeStr: minToTime(firstLegLastMin),
+              lastTransferRouteNm: legRouteNm,
               departure: boardTimeStr,
               boardStation: legFromNm,
               mapSegments: [
@@ -2948,6 +2991,7 @@ async function runSeoulSearch() {
 
     rawRoutes = builtRoutes;
     applyConditionAndRender();
+    updateLastScheduleButtonLabel();
 
     const hasFallback = visible.some(r => r.isCutoffFallback);
     const seoulApiStatus = lastSeoulTransitApiSuccessCount > 0
@@ -2995,6 +3039,7 @@ function applyConditionAndRender() {
     selected = visible.find(r => r.id === selected.id);
   }
   renderStrategyCards();
+  updateLastScheduleButtonLabel();
 }
 
 function curateRecommendedRoutes(pool, cond) {
@@ -3131,6 +3176,7 @@ function renderStrategyCards() {
     b.addEventListener('click', () => {
       selected = r;
       renderStrategyCards();
+      updateLastScheduleButtonLabel();
       toast(`선택된 노선: ${r.transitGuideText}`);
     });
     cardsEl.append(b);
