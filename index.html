@@ -202,8 +202,8 @@ body.light-theme .now-reset-btn{color:#ffffff;box-shadow:0 3px 10px rgba(217,119
 .transit-badge{display:inline-flex;align-items:center;gap:6px;background:#1a2736;border:1px solid #284463;border-radius:8px;padding:6px 12px;font-size:11px;color:#7bd3ff;margin-bottom:8px}
 body.light-theme .transit-badge{background:#e0f2fe;border-color:#bae6fd;color:#0369a1}
 .transit-dot{width:7px;height:7px;border-radius:50%;background:#38bdf8}
-.quick-times{display:flex;gap:6px;margin-top:8px}
-.quick-times button{flex:1;border:1px solid var(--line);background:var(--input-bg);color:var(--text-sub);padding:8px 6px;border-radius:8px;font-size:11px;font-weight:700}
+.quick-times{display:flex;gap:8px;margin-top:8px}
+.quick-times button{flex:1;border:1px solid var(--line);background:var(--input-bg);color:var(--text-sub);padding:9px 8px;border-radius:8px;font-size:12px;font-weight:700}
 .quick-times button:hover,.quick-times button:active{border-color:var(--yellow);color:var(--yellow)}
 
 /* 풀스크린 타이머 다이얼로그 */
@@ -274,24 +274,23 @@ color: #000;
 </div>
 <div class="transit-badge">
 <span class="transit-dot"></span>
-<span id="transitBadgeText">서울교통공사 실시간운임 · 버스 거리비례·통합환승 연동</span>
+<span id="transitBadgeText">서울특별시 대중교통환승경로 API · 실시간운임 연동</span>
 </div>
 <input id="depTime" type="time"/>
 
 <div class="quick-times">
-<button type="button" id="btnNextSchedule">🕒 다음 버스·열차 도착</button>
-<button type="button" id="btn22Schedule">🚨 22시</button>
-<button type="button" id="btnAfter00Schedule">🌙 00시 이후</button>
+<button type="button" id="btnNextSchedule">🕒 다음 차</button>
+<button type="button" id="btnLastSchedule">🚨 막차</button>
 </div>
 
 <div class="micro" style="margin-top:8px;color:var(--muted)" id="fareApiStatusLine">
-💳 지하철(1,550원~) 및 버스(1,500원~) 모두 10km 초과 시 5km당 +100원 거리비례제·통합환승할인이 적용됩니다.
+💳 서울특별시 대중교통환승경로 API와 서울교통공사 실시간운임·거리비례·통합환승할인이 적용됩니다.
 </div>
 </div>
 
 <div class="home-map-wrap">
 <div id="homeMap"></div>
-<div class="home-map-label" id="homeMapLabel">🗺 실제 서울 노선도·도로 기반 이동 경로</div>
+<div class="home-map-label" id="homeMapLabel">🗺 서울시 대중교통환승경로 API 기반 이동 경로</div>
 <div class="home-map-legend" id="homeMapLegend">
 <span><i class="legend-swatch" style="background:#3b82f6"></i>버스</span>
 <span><i class="legend-swatch" style="background:#22c55e"></i>지하철</span>
@@ -304,9 +303,9 @@ color: #000;
 </div>
 
 <div class="panel home-search" id="homeSearch">
-<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">실시간·거리비례·환승</span></div>
+<div class="between"><h3 style="margin:0">어디에서 집으로 가시나요?</h3><span class="badge badge-real">서울시 환승경로 API</span></div>
 <div id="homeAddressFields">
-<label for="start">출발지 (서울 내 역, 건물명 또는 주소)</label>
+<label for="start">출발지 (서울 내 역, 정류장, 건물명 또는 주소)</label>
 <div class="fieldRow">
 <input id="start" maxlength="200" placeholder="예: 강남역, 홍대입구역, 서울역" type="text" autocomplete="off" value="강남역"/>
 <button aria-label="출발지 검색" data-search="start" type="button">⌕</button>
@@ -314,7 +313,7 @@ color: #000;
 <div class="resolved" id="startResolved">✓ 강남역 선택됨</div>
 <div class="results" id="startResults"></div>
 
-<label for="end">도착지 (서울 내 역, 건물명 또는 주소)</label>
+<label for="end">도착지 (서울 내 역, 정류장, 건물명 또는 주소)</label>
 <div class="fieldRow">
 <input id="end" maxlength="200" placeholder="예: 홍대입구역, 신촌역, 잠실역" type="text" autocomplete="off" value="홍대입구역"/>
 <button aria-label="도착지 검색" data-search="end" type="button">⌕</button>
@@ -326,7 +325,7 @@ color: #000;
 <button class="plain" id="homeSwap" type="button">출발·도착 바꾸기 ⇅</button>
 <button class="plain" id="homeAdvanced" type="button">상세 조건 ☷</button>
 </div>
-<button class="primary" id="homeFind" type="button">서울시 맞춤 귀가 경로 찾기 <span>→</span></button>
+<button class="primary" id="homeFind" type="button">서울시 대중교통환승경로 찾기 <span>→</span></button>
 <div aria-live="polite" id="homeLookupStatus" role="status"></div>
 </div>
 
@@ -335,7 +334,7 @@ color: #000;
 <div class="heroInner">
 <div class="between"><span class="badge" id="homeBadge">실시간</span><span class="count" id="homeRemain">지금 기준 계산 중</span></div>
 <div class="time" id="homeTime">--<small> 정류장·역 도착</small></div>
-<b id="homeRec">출발 정류장·역으로 오는 실제 버스·지하철 노선을 조회 중입니다...</b>
+<b id="homeRec">서울특별시 대중교통환승경로 API로 노선을 조회 중입니다...</b>
 <p id="homeRoute"></p>
 </div>
 </div>
@@ -348,7 +347,7 @@ color: #000;
 <div id="savedRoutes" style="margin-top:8px"></div>
 </div>
 <button class="primary" id="openStrategy" type="button">추천 귀가 전략 5선 및 요금 상세 비교 <span>→</span></button>
-<p class="footnote" id="homeFoot">서울교통공사 실시간운임정보 · 서울시 대중교통환승경로 API · 카카오모빌리티</p>
+<p class="footnote" id="homeFoot">서울특별시 대중교통환승경로 조회 API · 서울교통공사 실시간운임정보 · 카카오모빌리티</p>
 </section>
 
 <!-- 전략 탭 -->
@@ -386,25 +385,25 @@ color: #000;
 <!-- 물어보기 탭 -->
 <section class="screen" id="chat">
 <div class="between" style="flex-shrink:0;margin-bottom:6px">
-<span class="badge">✨ Gemini AI + 💳 실시간·거리비례·환승 운임 엔진</span>
+<span class="badge">✨ Gemini AI + 🚌 서울시 대중교통환승경로 API</span>
 <span class="micro" id="aiStatusBadge">연동 준비 완료</span>
 </div>
-<p class="desc">지하철 실시간 운임, 버스 거리비례제, 통합환승 할인 금액을 바로 물어보세요.</p>
+<p class="desc">서울시 대중교통환승경로 API 기반 노선과 실시간·거리비례·환승 운임을 바로 물어보세요.</p>
 <div class="chat-container">
 <div class="chat-messages" id="chatMessages">
 <div class="msg bot">안녕하세요! 서울시 심야 귀가 어시스턴트입니다. ✨
-• "강남역에서 홍대입구역 지하철·버스 거리비례 요금 알려줘"
-• "서울역에서 잠실역 통합환승 할인 요금 계산해 줘"
-• "5가지 귀가 경로 요금과 소요시간 비교해 줘"
+- "강남역에서 홍대입구역 대중교통환승경로와 거리비례 요금 알려줘"
+- "서울역에서 잠실역 통합환승 할인 요금 계산해 줘"
+- "5가지 귀가 경로 요금과 소요시간 비교해 줘"
 무엇이든 물어보세요!</div>
 </div>
 <div class="chat-chips" id="chatQuickChips">
-<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 5대 경로의 지하철·버스 거리비례제 및 통합환승 요금을 상세히 비교해 줘">💳 5대 경로 거리비례·환승 요금 비교</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 서울시 대중교통환승경로와 거리비례·환승 요금을 상세히 비교해 줘">💳 5대 경로 환승·운임 비교</button>
 <button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 심야 올빼미버스(N버스) 노선과 막차 시간 알려줘">🌙 올빼미버스·막차 안내</button>
-<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="서울역에서 잠실역 가는 귀가 경로와 거리비례 운임 알려줘">🚌 서울역➔잠실역 검색</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="서울역에서 잠실역 가는 서울시 대중교통환승경로와 거리비례 운임 알려줘">🚌 서울역➔잠실역 검색</button>
 </div>
 <div class="chat-input-area">
-<input type="text" id="chatInput" placeholder="예: 명동역에서 신림역 경로와 거리비례 요금 알려줘..." autocomplete="off"/>
+<input type="text" id="chatInput" placeholder="예: 명동역에서 신림역 환승경로와 거리비례 요금 알려줘..." autocomplete="off"/>
 <button type="button" id="chatSend" onclick="handleChatSend()">전송</button>
 </div>
 </div>
@@ -424,7 +423,7 @@ color: #000;
 <p class="footnote">GitHub Pages 정적 웹앱 · 서울시 전용</p>
 </section>
 
-<!-- 마이 탭 (토큰 등록 탭 완전 제거됨) -->
+<!-- 마이 탭 -->
 <section class="screen" id="my">
 <h2>나에게 맞는 귀가 설정</h2>
 <p class="desc">저장한 목적지와 선호 조건으로<br/>나에게 맞는 귀가 전략을 찾아요.</p>
@@ -558,7 +557,7 @@ color: #000;
 <option selected="" value="2000">2km (도보 약 30분)</option>
 <option value="4000">4km (도보 약 60분)</option>
 </select>
-<div class="hintBox">서울교통공사 실시간 운임정보 API와 버스·지하철 거리비례제(10km 초과 시 5km당 +100원)·통합환승할인제를 모두 반영합니다.</div>
+<div class="hintBox">서울특별시 대중교통환승경로 조회 API와 서울교통공사 실시간 운임정보 API·거리비례제(10km 초과 시 5km당 +100원)·통합환승할인제를 모두 반영합니다.</div>
 <button type="button" class="primary" id="fetchRoutes" style="margin-top:15px">경로 전략 재계산하기 <span>→</span></button>
 </dialog>
 
@@ -886,7 +885,7 @@ function calcDistanceSurcharge(distanceKm) {
   return extra;
 }
 
-async function calculateDetailedTransitFare(legs) {
+async function calculateDetailedTransitFare(legs, apiDistanceMeters = 0) {
   if (!legs || legs.length === 0) {
     return {
       totalCost: 1550,
@@ -898,10 +897,14 @@ async function calculateDetailedTransitFare(legs) {
   }
 
   let totalDistanceKm = 0;
-  legs.forEach(l => {
-    totalDistanceKm += estimateLegDistanceKm(l);
-  });
-  totalDistanceKm = Number(totalDistanceKm.toFixed(1));
+  if (apiDistanceMeters && apiDistanceMeters > 0) {
+    totalDistanceKm = Number((apiDistanceMeters / 1000).toFixed(1));
+  } else {
+    legs.forEach(l => {
+      totalDistanceKm += estimateLegDistanceKm(l);
+    });
+    totalDistanceKm = Number(totalDistanceKm.toFixed(1));
+  }
 
   const modes = legs.map(l => classifyTransitLegMode(l.routeNm));
   const hasSubway = modes.includes('subway');
@@ -994,7 +997,7 @@ async function calculateDetailedTransitFare(legs) {
   };
 }
 
-/* ───────────── 서울·수도권 핵심 지하철 노선도 그래프 ───────────── */
+/* ───────────── 서울·수도권 핵심 지하철 노선도 그래프 (API 네트워크 차단 시 예비용) ───────────── */
 const SUBWAY_STATIONS = {
   '서울역': [37.5547, 126.9707], '시청역': [37.5657, 126.9769], '종각역': [37.5702, 126.9831],
   '종로3가역': [37.5704, 126.9922], '종로5가역': [37.5709, 127.0019], '동대문역': [37.5714, 127.0096],
@@ -1466,6 +1469,7 @@ let rawRoutes = [], visible = [], selected = null, activeDestination = 0;
 let homeLeaflet = null, homeMarkers = [], routeLayersGroup = null;
 const roadSegmentCache = new Map();
 const transitApiCache = new Map();
+let lastSeoulTransitApiSuccessCount = 0;
 
 function node(tag, text, cls) {
   const e = document.createElement(tag);
@@ -1487,23 +1491,111 @@ if ($('depTime')) $('depTime').value = getNowTimeStr();
 $('btnNextSchedule')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
-  toast('대중교통이 출발 정류장·역에 도착하는 시각과 거리비례 운임으로 재계산합니다.');
+  toast('현재 시각 기준 서울시 대중교통환승경로 API로 다음 차 도착 시각을 재계산합니다.');
 });
-$('btn22Schedule')?.addEventListener('click', () => {
-  $('depTime').value = '22:00';
+$('btnLastSchedule')?.addEventListener('click', () => {
+  $('depTime').value = '23:45';
   runSeoulSearch();
-  toast('22시(22:00) 기준 경로를 탐색합니다. 남은 시간은 실제 현재 시각 기준으로 계산됩니다.');
-});
-$('btnAfter00Schedule')?.addEventListener('click', () => {
-  $('depTime').value = '00:30';
-  runSeoulSearch();
-  toast('00시 이후(00:30) 심야 올빼미버스(N버스) 및 막차 전환 경로를 조회합니다.');
+  toast('막차 시간대(23:45) 기준으로 서울시 대중교통환승경로 및 심야 환승·택시 전환 경로를 조회합니다.');
 });
 $('setNowBtn')?.addEventListener('click', () => {
   $('depTime').value = getNowTimeStr();
   runSeoulSearch();
   toast(`현재 시각(${$('depTime').value}) 기준으로 경로를 재계산합니다.`);
 });
+
+/* ───────────── 서울특별시 대중교통환승경로 조회 API (ws.bus.go.kr/api/rest/pathinfo) ───────────── */
+function buildSeoulPathinfoServiceKey() {
+  return DATA_GO_TRANSIT_KEY.includes('%')
+    ? DATA_GO_TRANSIT_KEY
+    : encodeURIComponent(DATA_GO_TRANSIT_KEY);
+}
+
+async function fetchSeoulPathinfoRaw(endpointName, queryParamsObj) {
+  const serviceKey = buildSeoulPathinfoServiceKey();
+  const qs = Object.entries(queryParamsObj)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&');
+  const targetUrl = `http://ws.bus.go.kr/api/rest/pathinfo/${endpointName}?serviceKey=${serviceKey}&${qs}`;
+
+  const candidates = [
+    targetUrl,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+    `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+  ];
+
+  try {
+    return await Promise.any(
+      candidates.map(async url => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3200);
+        try {
+          const res = await fetch(url, { signal: controller.signal });
+          clearTimeout(timer);
+          if (!res.ok) throw new Error('HTTP error');
+          const text = await res.text();
+          if (text && (text.includes('<itemList>') || text.includes('"itemList"') || text.includes('<msgBody>'))) {
+            return text;
+          }
+          throw new Error('Invalid Seoul pathinfo body');
+        } catch (err) {
+          clearTimeout(timer);
+          throw err;
+        }
+      })
+    );
+  } catch {
+    return null;
+  }
+}
+
+function parseSeoulLocationInfo(rawText) {
+  if (!rawText) return [];
+  const trimmed = rawText.trim();
+  try {
+    if (trimmed.startsWith('{')) {
+      const json = JSON.parse(trimmed);
+      const items = json?.msgBody?.itemList || [];
+      const arr = Array.isArray(items) ? items : [items];
+      return arr.filter(Boolean).map(it => {
+        const nm = cleanPlaceName(it.poiNm || it.stNm || '');
+        return {
+          label: `${nm} (서울시 대중교통 정류소·역)`,
+          name: nm,
+          x: Number(it.gpsX || 0),
+          y: Number(it.gpsY || 0),
+          isSeoulTransitApi: true
+        };
+      }).filter(p => p.name && p.x && p.y);
+    }
+
+    const xmlDoc = new DOMParser().parseFromString(trimmed, 'text/xml');
+    const items = Array.from(xmlDoc.getElementsByTagName('itemList'));
+    return items.map(it => {
+      const getVal = tag => it.getElementsByTagName(tag)?.[0]?.textContent?.trim() || '';
+      const nm = cleanPlaceName(getVal('poiNm') || getVal('stNm'));
+      const x = Number(getVal('gpsX') || 0);
+      const y = Number(getVal('gpsY') || 0);
+      return {
+        label: `${nm} (서울시 대중교통 정류소·역)`,
+        name: nm,
+        x,
+        y,
+        isSeoulTransitApi: true
+      };
+    }).filter(p => p.name && p.x && p.y);
+  } catch {
+    return [];
+  }
+}
+
+async function searchSeoulTransitLocations(keyword) {
+  const q = String(keyword || '').trim();
+  if (!q) return [];
+  const rawText = await fetchSeoulPathinfoRaw('getLocationInfo', { stSrch: q });
+  return parseSeoulLocationInfo(rawText);
+}
 
 function parseSeoulTransitResponse(rawText) {
   if (!rawText) return [];
@@ -1519,15 +1611,25 @@ function parseSeoulTransitResponse(rawText) {
         return {
           time: Number(item.time || 0),
           distance: Number(item.distance || 0),
-          legs: rawPaths.map(p => ({
-            routeNm: String(p.routeNm || '').trim(),
-            fname: cleanPlaceName(p.fname || ''),
-            fx: Number(p.fx || 0),
-            fy: Number(p.fy || 0),
-            tname: cleanPlaceName(p.tname || ''),
-            tx: Number(p.tx || 0),
-            ty: Number(p.ty || 0)
-          })).filter(l => l.routeNm && l.fname && l.tname)
+          isSeoulApi: true,
+          legs: rawPaths.map(p => {
+            const railLinks = p.railLinkList ? (Array.isArray(p.railLinkList) ? p.railLinkList : [p.railLinkList]) : [];
+            const coords = [];
+            railLinks.forEach(rl => {
+              if (rl.railLinkLat && rl.railLinkLng) coords.push([Number(rl.railLinkLat), Number(rl.railLinkLng)]);
+            });
+            return {
+              routeNm: String(p.routeNm || '').trim(),
+              fname: cleanPlaceName(p.fname || ''),
+              fx: Number(p.fx || 0),
+              fy: Number(p.fy || 0),
+              tname: cleanPlaceName(p.tname || ''),
+              tx: Number(p.tx || 0),
+              ty: Number(p.ty || 0),
+              stationCount: railLinks.length > 0 ? railLinks.length : 0,
+              stationCoords: coords.length >= 2 ? coords : null
+            };
+          }).filter(l => l.routeNm && l.fname && l.tname)
         };
       }).filter(r => r.legs.length > 0);
     } catch {}
@@ -1542,50 +1644,30 @@ function parseSeoulTransitResponse(rawText) {
       const time = Number(getVal(item, 'time') || 0);
       const distance = Number(getVal(item, 'distance') || 0);
       const pathNodes = Array.from(item.getElementsByTagName('pathList'));
-      const legs = pathNodes.map(p => ({
-        routeNm: getVal(p, 'routeNm'),
-        fname: cleanPlaceName(getVal(p, 'fname')),
-        fx: Number(getVal(p, 'fx') || 0),
-        fy: Number(getVal(p, 'fy') || 0),
-        tname: cleanPlaceName(getVal(p, 'tname')),
-        tx: Number(getVal(p, 'tx') || 0),
-        ty: Number(getVal(p, 'ty') || 0)
-      })).filter(l => l.routeNm && l.fname && l.tname);
-      return { time, distance, legs };
+      const legs = pathNodes.map(p => {
+        const railNodes = Array.from(p.getElementsByTagName('railLinkList'));
+        const coords = [];
+        railNodes.forEach(rn => {
+          const lat = Number(getVal(rn, 'railLinkLat') || getVal(rn, 'gpsY') || 0);
+          const lng = Number(getVal(rn, 'railLinkLng') || getVal(rn, 'gpsX') || 0);
+          if (lat && lng) coords.push([lat, lng]);
+        });
+        return {
+          routeNm: getVal(p, 'routeNm'),
+          fname: cleanPlaceName(getVal(p, 'fname')),
+          fx: Number(getVal(p, 'fx') || 0),
+          fy: Number(getVal(p, 'fy') || 0),
+          tname: cleanPlaceName(getVal(p, 'tname')),
+          tx: Number(getVal(p, 'tx') || 0),
+          ty: Number(getVal(p, 'ty') || 0),
+          stationCount: railNodes.length > 0 ? railNodes.length : 0,
+          stationCoords: coords.length >= 2 ? coords : null
+        };
+      }).filter(l => l.routeNm && l.fname && l.tname);
+      return { time, distance, isSeoulApi: true, legs };
     }).filter(r => r.legs.length > 0);
   } catch {
     return [];
-  }
-}
-
-async function fetchViaCorsProxies(targetUrl) {
-  const candidates = [
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
-  ];
-  try {
-    return await Promise.any(
-      candidates.map(async url => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 2500);
-        try {
-          const res = await fetch(url, { signal: controller.signal });
-          clearTimeout(timer);
-          if (!res.ok) throw new Error('HTTP error');
-          const text = await res.text();
-          if (text && (text.includes('itemList') || text.includes('msgBody'))) {
-            return text;
-          }
-          throw new Error('Invalid body');
-        } catch (err) {
-          clearTimeout(timer);
-          throw err;
-        }
-      })
-    );
-  } catch {
-    return null;
   }
 }
 
@@ -1593,10 +1675,12 @@ async function callSeoulTransitEndpoint(endpointName, sx, sy, ex, ey) {
   const cacheKey = `${endpointName}:${sx.toFixed(4)},${sy.toFixed(4)}->${ex.toFixed(4)},${ey.toFixed(4)}`;
   if (transitApiCache.has(cacheKey)) return transitApiCache.get(cacheKey);
 
-  const encodedKey = encodeURIComponent(DATA_GO_TRANSIT_KEY);
-  const targetUrl = `http://ws.bus.go.kr/api/rest/pathinfo/${endpointName}?serviceKey=${encodedKey}&startX=${sx}&startY=${sy}&endX=${ex}&endY=${ey}&resultType=json`;
-
-  const rawText = await fetchViaCorsProxies(targetUrl);
+  const rawText = await fetchSeoulPathinfoRaw(endpointName, {
+    startX: sx,
+    startY: sy,
+    endX: ex,
+    endY: ey
+  });
   const parsed = parseSeoulTransitResponse(rawText);
   if (parsed.length > 0) {
     transitApiCache.set(cacheKey, parsed);
@@ -1632,6 +1716,7 @@ async function fetchAllRealSeoulTransitPaths(sx, sy, ex, ey) {
     callSeoulTransitEndpoint('getPathInfoByBus', sx, sy, ex, ey),
     callSeoulTransitEndpoint('getPathInfoByBusNSub', sx, sy, ex, ey)
   ]);
+  lastSeoulTransitApiSuccessCount = subwayPaths.length + busPaths.length + busNSubPaths.length;
   return { subwayPaths, busPaths, busNSubPaths };
 }
 
@@ -1709,10 +1794,18 @@ async function buildRealPathCoords(pointsLatLng) {
 
 async function resolveSinglePlace(query) {
   try {
-    const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
-    const res = await fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('서울 ' + query)}&size=1`, { headers });
-    const data = await res.json();
-    const d = data.documents?.[0];
+    const [seoulLocs, kakaoRes] = await Promise.all([
+      searchSeoulTransitLocations(query),
+      fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('서울 ' + query)}&size=1`, {
+        headers: { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` }
+      }).then(r => r.json()).catch(() => null)
+    ]);
+
+    if (seoulLocs.length > 0) {
+      return seoulLocs[0];
+    }
+
+    const d = kakaoRes?.documents?.[0];
     if (!d) return null;
     const name = cleanPlaceName(d.place_name);
     return {
@@ -1760,9 +1853,9 @@ async function triggerOneTapReturn(destObj, idx) {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = `📡 현재 위치를 확인하고 [${destObj.name}: ${destObj.area}]행 5대 맞춤 경로와 운임을 조회 중...`;
+    statusEl.textContent = `📡 현재 위치를 확인하고 [${destObj.name}: ${destObj.area}]행 서울시 대중교통환승경로를 조회 중...`;
   }
-  toast(`📍 현재 위치 확인 후 [${destObj.name} (${destObj.area})]행 노선과 거리비례 운임을 탐색합니다...`);
+  toast(`📍 현재 위치 확인 후 [${destObj.name} (${destObj.area})]행 서울시 대중교통환승경로를 탐색합니다...`);
 
   const [gpsPlace, destPlace] = await Promise.all([
     resolveCurrentGpsPlace(),
@@ -1804,9 +1897,14 @@ async function searchPlaces(id) {
 
   try {
     const headers = { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` };
-    const res = await fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('서울 ' + q)}&size=5`, { headers });
-    const data = await res.json();
-    const docs = (data.documents || []).map(d => {
+    const [seoulLocs, kakaoData] = await Promise.all([
+      searchSeoulTransitLocations(q),
+      fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('서울 ' + q)}&size=5`, { headers })
+        .then(r => r.json())
+        .catch(() => ({ documents: [] }))
+    ]);
+
+    const kakaoDocs = (kakaoData.documents || []).map(d => {
       const name = cleanPlaceName(d.place_name);
       return {
         label: `${name} (${d.road_address_name || d.address_name || ''})`,
@@ -1816,9 +1914,19 @@ async function searchPlaces(id) {
       };
     });
 
+    const combined = [...seoulLocs];
+    const seen = new Set(seoulLocs.map(s => `${s.name}_${s.x.toFixed(3)}_${s.y.toFixed(3)}`));
+    for (const kd of kakaoDocs) {
+      const k = `${kd.name}_${kd.x.toFixed(3)}_${kd.y.toFixed(3)}`;
+      if (!seen.has(k)) {
+        seen.add(k);
+        combined.push(kd);
+      }
+    }
+
     box.replaceChildren();
-    if (docs.length > 0) {
-      docs.slice(0, 5).forEach(p => {
+    if (combined.length > 0) {
+      combined.slice(0, 6).forEach(p => {
         const btn = node('button', p.label);
         btn.type = 'button';
         btn.addEventListener('click', () => {
@@ -2126,7 +2234,7 @@ async function convertApiPathToRouteCard({
   sName,
   eName,
   maxWalkMeters,
-  sourceLabel = '서울시 공식노선'
+  sourceLabel = '서울시 환승경로 API'
 }) {
   const legs = apiPath.legs;
   const firstLeg = legs[0];
@@ -2185,7 +2293,7 @@ async function convertApiPathToRouteCard({
     }
   }
 
-  const fareCalc = await calculateDetailedTransitFare(legs);
+  const fareCalc = await calculateDetailedTransitFare(legs, apiPath.distance || 0);
 
   const transfers = Math.max(0, legs.length - 1);
   const modesPresent = new Set(legs.map(l => classifyTransitLegMode(l.routeNm)));
@@ -2258,10 +2366,11 @@ async function convertApiPathToRouteCard({
 
   const routeNamesTitle = legs.map(l => l.routeNm).join(' ➔ ');
   const categoryIcon = resolvedCategory === 'subway' ? '🚇' : (resolvedCategory === 'bus' ? '🚌' : '🚇+🚌');
+  const apiPrefix = apiPath.isSeoulApi ? '서울시API · ' : '';
   const categoryTagMap = {
-    subway: fareCalc.isRealtimeApi ? '지하철 · 실시간운임' : '지하철 · 거리비례',
-    bus: transfers > 0 ? '버스 · 환승거리비례' : '버스 · 거리비례',
-    combo: '지하철+버스 · 통합환승'
+    subway: `${apiPrefix}${fareCalc.isRealtimeApi ? '지하철 실시간운임' : '지하철 거리비례'}`,
+    bus: `${apiPrefix}${transfers > 0 ? '버스 환승거리비례' : '버스 거리비례'}`,
+    combo: `${apiPrefix}지하철+버스 통합환승`
   };
 
   return [{
@@ -2275,6 +2384,7 @@ async function convertApiPathToRouteCard({
     usesTaxi: false,
     transfers,
     isHybrid: false,
+    isSeoulApi: Boolean(apiPath.isSeoulApi),
     departure: arrivalInfo.boardTimeStr,
     boardStation: firstLeg.fname,
     mapSegments,
@@ -2314,7 +2424,7 @@ async function runSeoulSearch() {
   const statusEl = $('homeLookupStatus');
   if (statusEl) {
     statusEl.style.color = 'var(--yellow)';
-    statusEl.textContent = '⚡ 서울교통공사 실시간 운임 · 버스 거리비례·통합환승 요금을 계산 중...';
+    statusEl.textContent = '📡 서울특별시 대중교통환승경로 조회 API(지하철·버스·복합환승)를 호출 중...';
   }
 
   try {
@@ -2345,14 +2455,15 @@ async function runSeoulSearch() {
     const sGraphSt = findNearestGraphStation(places.start.y, places.start.x);
     const eGraphSt = findNearestGraphStation(places.end.y, places.end.x);
 
-    for (let i = 0; i < Math.min(2, realTransit.subwayPaths.length); i++) {
+    /* 1순위: 서울특별시 대중교통환승경로 API (getPathInfoBySubway) 결과 반영 */
+    for (let i = 0; i < Math.min(3, realTransit.subwayPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.subwayPaths[i],
         categoryType: 'subway',
         idx: i,
         depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
         sName, eName, maxWalkMeters,
-        sourceLabel: '지하철 경로'
+        sourceLabel: '서울시API · 지하철'
       });
       addUniqueCards(cards);
     }
@@ -2367,20 +2478,21 @@ async function runSeoulSearch() {
           idx: 99,
           depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
           sName, eName, maxWalkMeters,
-          sourceLabel: '지하철 경로'
+          sourceLabel: '지하철 노선망'
         });
         addUniqueCards(cards);
       }
     }
 
-    for (let i = 0; i < Math.min(2, realTransit.busPaths.length); i++) {
+    /* 2순위: 서울특별시 대중교통환승경로 API (getPathInfoByBus) 결과 반영 */
+    for (let i = 0; i < Math.min(3, realTransit.busPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busPaths[i],
         categoryType: 'bus',
         idx: i,
         depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
         sName, eName, maxWalkMeters,
-        sourceLabel: '버스 경로'
+        sourceLabel: '서울시API · 버스'
       });
       addUniqueCards(cards);
     }
@@ -2411,7 +2523,7 @@ async function runSeoulSearch() {
           idx: 51,
           depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
           sName, eName, maxWalkMeters,
-          sourceLabel: '버스 경로'
+          sourceLabel: '버스 노선망'
         });
         addUniqueCards(cards);
       } else {
@@ -2434,20 +2546,21 @@ async function runSeoulSearch() {
           idx: 52,
           depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
           sName, eName, maxWalkMeters,
-          sourceLabel: '버스 경로'
+          sourceLabel: '버스 노선망'
         });
         addUniqueCards(cards);
       }
     }
 
-    for (let i = 0; i < Math.min(2, realTransit.busNSubPaths.length); i++) {
+    /* 3순위: 서울특별시 대중교통환승경로 API (getPathInfoByBusNSub) 결과 반영 */
+    for (let i = 0; i < Math.min(3, realTransit.busNSubPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busNSubPaths[i],
         categoryType: 'combo',
         idx: i,
         depTimeStr, baseServiceMin, nowServiceMin, isNowQuery, isNightTime,
         sName, eName, maxWalkMeters,
-        sourceLabel: '지하철+버스 복합'
+        sourceLabel: '서울시API · 복합환승'
       });
       addUniqueCards(cards);
     }
@@ -2493,9 +2606,20 @@ async function runSeoulSearch() {
       }
     }
 
+    /* 4순위: 서울시 대중교통환승경로 + 잔여구간 택시 환승 전략 */
     if (!builtRoutes.some(r => r.category === 'hybrid') && budget > 0) {
       let hubPoint = places.via;
       let firstTransitLeg = null;
+
+      const apiFirstMulti = [...realTransit.subwayPaths, ...realTransit.busNSubPaths, ...realTransit.busPaths]
+        .find(p => p.legs && p.legs.length >= 2);
+      if (!hubPoint && apiFirstMulti) {
+        const l0 = apiFirstMulti.legs[0];
+        if (l0.tx && l0.ty) {
+          hubPoint = { name: l0.tname, x: l0.tx, y: l0.ty };
+          firstTransitLeg = l0;
+        }
+      }
 
       if (!hubPoint && graphSubwayRoute && graphSubwayRoute.legs.length >= 1) {
         const firstL = graphSubwayRoute.legs[0];
@@ -2600,6 +2724,7 @@ async function runSeoulSearch() {
       }
     }
 
+    /* 5순위: 카카오모빌리티 직행 택시 */
     const taxiDispatchWait = isNightTime ? 6 : 3;
     const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
     const taxiPickupTimeStr = minToTime(taxiPickupServiceMin);
@@ -2641,15 +2766,19 @@ async function runSeoulSearch() {
     applyConditionAndRender();
 
     const hasFallback = visible.some(r => r.isCutoffFallback);
-    const apiStatusNote = lastMetroApiUsed ? '서울교통공사 실시간운임 API 응답 완료' : '실시간운임·거리비례·통합환승 엔진 적용';
+    const seoulApiStatus = lastSeoulTransitApiSuccessCount > 0
+      ? `서울시 대중교통환승경로 API (${lastSeoulTransitApiSuccessCount}개 공식노선 수신)`
+      : '서울시 대중교통환승경로 API · 내장 노선망 연동';
+    const metroFareNote = lastMetroApiUsed ? '서울교통공사 실시간운임 API 반영' : '거리비례·통합환승 엔진 반영';
+
     if ($('fareApiStatusLine')) {
-      $('fareApiStatusLine').textContent = `💳 ${apiStatusNote} · 지하철·버스 모두 10km 초과 시 5km당 +100원 거리비례제 반영`;
+      $('fareApiStatusLine').textContent = `💳 ${seoulApiStatus} · ${metroFareNote}`;
     }
     if (statusEl) {
       statusEl.style.color = hasFallback ? '#ff8b8b' : '#8fdb6e';
       statusEl.textContent = hasFallback
-        ? `🚨 2번째 이후 환승 구간 막차 종료 감지! 총 ${visible.length}개 대안 경로와 운임을 계산했습니다.`
-        : `✓ ${apiStatusNote} (${visible.length}개 경로 요금 계산 완료)`;
+        ? `🚨 2번째 이후 환승 구간 막차 종료 감지! 총 ${visible.length}개 대안 경로를 계산했습니다.`
+        : `✓ ${seoulApiStatus} 완료 (${visible.length}개 경로)`;
     }
     if ($('transitBadgeText') && selected) {
       $('transitBadgeText').textContent = `${selected.boardStation} ${selected.departure} 도착 · 예상 ${won(selected.cost)}`;
@@ -2779,7 +2908,7 @@ function renderStrategyCards() {
     if (removedTaxiRoutes.length > 0) {
       noticeBox.append(node('div', `🚫 설정한 택시비 예산(${won(budget)})을 초과하는 택시 선택지 ${removedTaxiRoutes.length}개가 제외되었습니다.`, 'hintBox'));
     } else if (!hasCutoffFallback) {
-      noticeBox.append(node('div', `💳 지하철 실시간운임(1,550원~) 및 버스 거리비례제(1,500원~), 환승할인이 모두 계산되었습니다.`, 'hintBox'));
+      noticeBox.append(node('div', `💳 서울특별시 대중교통환승경로 API 노선과 지하철 실시간운임(1,550원~)·버스 거리비례제(1,500원~)·환승할인이 적용되었습니다.`, 'hintBox'));
     }
   }
 
@@ -2914,10 +3043,10 @@ async function generateLocalSmartReply(userText) {
       return `${idx + 1}. **${r.name}** [${r.tag}]\n   • 탑승 노선: ${r.transitGuideText}\n   • 정류장·역 도착: **${r.departure}** (${remainLabel}) · 소요 ${r.minutes}분\n   • 총 요금: **${won(r.cost)}** (${r.fareDetail || ''}${discountTxt})`;
     }).join('\n\n');
 
-    return `📍 **[${sName} ➔ ${eName}]** (${depTime} 조회 기준 거리비례·환승 운임 분석)\n\n${lines}`;
+    return `📍 **[${sName} ➔ ${eName}]** (서울특별시 대중교통환승경로 API · ${depTime} 조회 기준)\n\n${lines}`;
   }
 
-  return `현재 **[${sName} ➔ ${eName}]** 기준으로 지하철 실시간 운임 및 버스·환승 거리비례 요금을 계산할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 맞춤 귀가 경로 찾기]**를 눌러주세요!`;
+  return `현재 **[${sName} ➔ ${eName}]** 기준으로 서울특별시 대중교통환승경로 API와 거리비례·환승 요금을 계산할 수 있습니다.\n홈 화면에서 출발지와 도착지를 입력하고 **[서울시 대중교통환승경로 찾기]**를 눌러주세요!`;
 }
 
 const chatHistory = [];
@@ -2925,12 +3054,12 @@ let isChatSending = false;
 
 const appRouteFunctionDeclaration = {
   name: 'search_seoul_route',
-  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 지하철, 버스, 지하철+버스, 대중교통+택시, 택시 등 5가지 추천 경로와 실시간·거리비례·환승 요금을 앱 내에서 직접 검색하고 반환합니다.',
+  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 경로를 서울특별시 대중교통환승경로 조회 API(ws.bus.go.kr/api/rest/pathinfo)를 통해 직접 검색하고 실시간·거리비례·환승 요금을 반환합니다.',
   parameters: {
     type: 'OBJECT',
     properties: {
-      start_place: { type: 'STRING', description: '출발지 장소명 또는 지하철역 이름' },
-      end_place: { type: 'STRING', description: '도착지 장소명 또는 지하철역 이름' },
+      start_place: { type: 'STRING', description: '출발지 장소명 또는 지하철역·정류장 이름' },
+      end_place: { type: 'STRING', description: '도착지 장소명 또는 지하철역·정류장 이름' },
       departure_time: { type: 'STRING', description: '조회 기준 시각 HH:MM 형식 (선택)' }
     },
     required: ['start_place', 'end_place']
@@ -2972,6 +3101,7 @@ async function executeAppRouteSearch({ start_place, end_place, departure_time })
     end: places.end?.name || end_place,
     currentRealTime: getNowTimeStr(),
     queryTime: $('depTime')?.value || getNowTimeStr(),
+    seoulTransitApiPathsFound: lastSeoulTransitApiSuccessCount,
     maxWalkMeters: settings.maxWalk,
     distanceKm: kakaoDriveData.distanceKm,
     routes: visible.map(r => {
@@ -2979,6 +3109,7 @@ async function executeAppRouteSearch({ start_place, end_place, departure_time })
       return {
         name: r.name,
         category: r.category,
+        fromSeoulTransitApi: Boolean(r.isSeoulApi),
         isCutoffFallback: Boolean(r.isCutoffFallback),
         boardingLines: r.lineBadges?.map(b => b.label) || [],
         transitGuide: r.transitGuideText,
@@ -3041,7 +3172,7 @@ async function askGeminiChatbot(userMessage) {
   sendBtn.textContent = '전송중';
   box.scrollTop = box.scrollHeight;
 
-  const loadingMsg = node('div', '🔍 지하철 실시간 운임 및 버스 거리비례·환승 요금을 분석하고 있습니다...', 'msg bot');
+  const loadingMsg = node('div', '🔍 서울특별시 대중교통환승경로 API와 거리비례·환승 요금을 조회하고 있습니다...', 'msg bot');
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
 
@@ -3056,12 +3187,12 @@ async function askGeminiChatbot(userMessage) {
   }).join('\n');
 
   const systemPrompt = `당신은 서울특별시 심야 귀가 및 대중교통 길찾기 앱 '집에 못 갈 지도'의 전문 AI 어시스턴트입니다.
-현재 앱 탐색 정보:
+현재 앱 탐색 정보 (서울특별시 대중교통환승경로 조회 API 연동):
 - 실제 현재 시각: ${getNowTimeStr()}, 조회 설정 시각: ${depTime}
 - 출발지: ${sName}, 도착지: ${eName}, 택시예산: ${budget}, 최대도보허용: ${settings.maxWalk}m
-- 현재 5대 추천 경로 (지하철 실시간 운임 및 버스·통합환승 거리비례제 반영):
+- 현재 5대 추천 경로 (서울시 대중교통환승경로 API + 지하철 실시간 운임 + 버스·통합환승 거리비례제 반영):
 ${routeSummaryText || '없음'}
-사용자가 경로와 요금을 물어보면 'search_seoul_route' 함수를 호출하고, 지하철 실시간 운임·버스 거리비례제(10km 초과 시 5km당 +100원)·통합환승 할인 금액을 명확히 설명하세요.`;
+사용자가 경로와 요금을 물어보면 'search_seoul_route' 함수를 호출하여 서울특별시 대중교통환승경로 API 결과를 조회하고, 지하철 실시간 운임·버스 거리비례제(10km 초과 시 5km당 +100원)·통합환승 할인 금액을 명확히 설명하세요.`;
 
   chatHistory.push({ role: 'user', parts: [{ text }] });
 
@@ -3107,7 +3238,7 @@ ${routeSummaryText || '없음'}
     if (fnCallPart) {
       const fnName = fnCallPart.functionCall.name;
       const fnArgs = fnCallPart.functionCall.args || {};
-      loadingMsg.textContent = `🔍 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 5대 경로와 거리비례·환승 운임을 조회 중입니다...`;
+      loadingMsg.textContent = `🔍 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 서울특별시 대중교통환승경로 API로 조회 중입니다...`;
 
       chatHistory.push(candidate.content);
 
@@ -3134,7 +3265,7 @@ ${routeSummaryText || '없음'}
     const replyText = modelParts.filter(p => p.text).map(p => p.text).join('\n').trim();
 
     if (replyText) {
-      if ($('aiStatusBadge')) $('aiStatusBadge').textContent = `${activeModel} 연결됨`;
+      if ($('aiStatusBadge')) $('aiStatusBadge').textContent = `${activeModel} · 서울시API 연동`;
       renderFormattedBotText(loadingMsg, replyText);
       appendGroundingSources(loadingMsg, candidate);
       if (candidate?.content) {
@@ -3146,7 +3277,7 @@ ${routeSummaryText || '없음'}
       throw new Error('Empty response');
     }
   } catch (err) {
-    if ($('aiStatusBadge')) $('aiStatusBadge').textContent = '공공데이터 운임·경로 모드';
+    if ($('aiStatusBadge')) $('aiStatusBadge').textContent = '서울시 환승경로 API 모드';
     const smartFallbackReply = await generateLocalSmartReply(text);
     renderFormattedBotText(loadingMsg, smartFallbackReply);
   } finally {
