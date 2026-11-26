@@ -394,12 +394,12 @@ color: #000;
 <div class="msg bot">안녕하세요! 서울시 심야 귀가 어시스턴트입니다. ✨
 - "강남역에서 홍대입구역 대중교통환승경로와 거리비례 요금 알려줘"
 - "서울역에서 잠실역 통합환승 할인 요금 계산해 줘"
-- "5가지 귀가 경로 요금과 소요시간 비교해 줘"
+- "지금 설정된 경로 막차 시간이랑 요금 비교해 줘"
 무엇이든 물어보세요!</div>
 </div>
 <div class="chat-chips" id="chatQuickChips">
-<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 서울시 대중교통환승경로와 거리비례·환승 요금을 상세히 비교해 줘">💳 5대 경로 환승·운임 비교</button>
-<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="현재 출발지·도착지 기준 심야 올빼미버스(N버스) 노선과 막차 시간 알려줘">🌙 올빼미버스·막차 안내</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="지금 설정된 출발지·도착지 기준 서울시 대중교통환승경로와 거리비례·환승 요금을 상세히 비교해 줘">💳 현재 경로 환승·운임 비교</button>
+<button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="지금 설정된 출발지·도착지 기준 심야 올빼미버스(N버스) 노선과 막차 시간 알려줘">🌙 올빼미버스·막차 안내</button>
 <button type="button" class="chat-chip" onclick="sendQuickChat(this.dataset.q)" data-q="서울역에서 잠실역 가는 서울시 대중교통환승경로와 거리비례 운임 알려줘">🚌 서울역➔잠실역 검색</button>
 </div>
 <div class="chat-input-area">
@@ -595,19 +595,15 @@ const GEMINI_MAX_TOKENS = 8192;
 const $ = id => document.getElementById(id);
 const won = n => Number(n).toLocaleString('ko-KR') + '원';
 
-/* ───────────── 사용자 터치 시 모바일 진동 엔진 사전 활성화 ───────────── */
+/* ───────────── 모바일 진동 및 사운드 피드백 ───────────── */
 function unlockVibrationEngine() {
   if ('vibrate' in navigator) {
-    try {
-      navigator.vibrate(1);
-    } catch {}
+    try { navigator.vibrate(1); } catch {}
   }
 }
 document.addEventListener('pointerdown', unlockVibrationEngine, { passive: true });
 
-/* ───────────── 3회(노랑) / 5회(빨강) 진동 실행기 ───────────── */
 let activeVibrateTimers = [];
-
 function triggerGuaranteedVibration(stage) {
   activeVibrateTimers.forEach(id => clearTimeout(id));
   activeVibrateTimers = [];
@@ -615,7 +611,6 @@ function triggerGuaranteedVibration(stage) {
   const pulseCount = (stage === 'yellow') ? 3 : 5;
   const pulseMs = 420;
   const gapMs = 200;
-
   const pattern = [];
   for (let i = 0; i < pulseCount; i++) {
     pattern.push(pulseMs);
@@ -627,18 +622,14 @@ function triggerGuaranteedVibration(stage) {
       navigator.vibrate(0);
       navigator.vibrate(pattern);
     } catch {}
-
     for (let i = 1; i < pulseCount; i++) {
       const delay = i * (pulseMs + gapMs);
       const tId = setTimeout(() => {
-        try {
-          navigator.vibrate(pulseMs);
-        } catch {}
+        try { navigator.vibrate(pulseMs); } catch {}
       }, delay);
       activeVibrateTimers.push(tId);
     }
   }
-
   return pattern;
 }
 
@@ -651,7 +642,6 @@ function playAlertBeep(stage) {
 
     const count = (stage === 'yellow') ? 3 : 5;
     const freq = (stage === 'yellow') ? 660 : 880;
-
     for (let i = 0; i < count; i++) {
       const offset = i * 0.25;
       const osc = ctx.createOscillator();
@@ -671,7 +661,6 @@ function playAlertBeep(stage) {
 window.triggerStageFeedback = function(stage, title, body) {
   const vibratePattern = triggerGuaranteedVibration(stage);
   playAlertBeep(stage);
-
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
       new Notification(title, {
@@ -696,7 +685,7 @@ async function fetchSafeJson(url) {
   }
 }
 
-/* ───────────── 심야 시간 선형화 & 변환 유틸리티 ───────────── */
+/* ───────────── 시간 및 거리 유틸리티 ───────────── */
 function timeStrToServiceMin(timeStr) {
   const [h, m] = String(timeStr || '00:00').split(':').map(Number);
   return (h < 4 ? h + 24 : h) * 60 + m;
@@ -717,11 +706,9 @@ function calcRemainingFromRealNow(targetTimeStr) {
   const nowTotalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   const [dh, dm] = String(targetTimeStr || getNowTimeStr()).split(':').map(Number);
   let targetTotalSec = dh * 3600 + dm * 60;
-
   if (targetTotalSec < nowTotalSec && (nowTotalSec - targetTotalSec) > 12 * 3600) {
     targetTotalSec += 86400;
   }
-
   const diffSec = Math.max(0, targetTotalSec - nowTotalSec);
   const remainingMin = Math.ceil(diffSec / 60);
   return { diffSec, remainingMin };
@@ -900,9 +887,7 @@ async function calculateDetailedTransitFare(legs, apiDistanceMeters = 0) {
   if (apiDistanceMeters && apiDistanceMeters > 0) {
     totalDistanceKm = Number((apiDistanceMeters / 1000).toFixed(1));
   } else {
-    legs.forEach(l => {
-      totalDistanceKm += estimateLegDistanceKm(l);
-    });
+    legs.forEach(l => { totalDistanceKm += estimateLegDistanceKm(l); });
     totalDistanceKm = Number(totalDistanceKm.toFixed(1));
   }
 
@@ -957,7 +942,6 @@ async function calculateDetailedTransitFare(legs, apiDistanceMeters = 0) {
     const totalBusFare = busBase + busDistExtra;
     const overKmStr = totalDistanceKm > 10 ? `초과 ${(totalDistanceKm - 10).toFixed(1)}km` : '10km 이내';
     const busTypeLabel = hasNightBus ? '심야 N버스 거리비례제' : '버스 거리비례제';
-
     const breakdown = busDistExtra > 0
       ? `${busTypeLabel} · ${totalDistanceKm}km (기본 ${won(busBase)} + ${overKmStr} 거리추가 ${won(busDistExtra)})`
       : `${busTypeLabel} · ${totalDistanceKm}km (10km 이내 기본 ${won(busBase)})`;
@@ -997,7 +981,7 @@ async function calculateDetailedTransitFare(legs, apiDistanceMeters = 0) {
   };
 }
 
-/* ───────────── 서울·수도권 핵심 지하철 노선도 그래프 (API 네트워크 차단 시 예비용) ───────────── */
+/* ───────────── 서울·수도권 핵심 지하철·버스 노선망 ───────────── */
 const SUBWAY_STATIONS = {
   '서울역': [37.5547, 126.9707], '시청역': [37.5657, 126.9769], '종각역': [37.5702, 126.9831],
   '종로3가역': [37.5704, 126.9922], '종로5가역': [37.5709, 127.0019], '동대문역': [37.5714, 127.0096],
@@ -1140,17 +1124,17 @@ function getRouteLastTrainServiceMin(routeNm, isTransferLeg = false) {
   }
 
   if (/^\d{4}$/.test(busNumOnly)) {
-    if (busNumOnly.startsWith('9')) return (23 * 60 + 30) - transferOffset; // 광역버스
-    return (23 * 60 + 42) - transferOffset; // 지선버스
+    if (busNumOnly.startsWith('9')) return (23 * 60 + 30) - transferOffset;
+    return (23 * 60 + 42) - transferOffset;
   }
   if (/^\d{3}$/.test(busNumOnly)) {
-    return (23 * 60 + 52) - transferOffset; // 간선버스
+    return (23 * 60 + 52) - transferOffset;
   }
   if (/^\d{2}$/.test(busNumOnly)) {
-    return (23 * 60 + 35) - transferOffset; // 순환버스
+    return (23 * 60 + 35) - transferOffset;
   }
   if (/마을/.test(cleanNm)) {
-    return (23 * 60 + 40) - transferOffset; // 마을버스
+    return (23 * 60 + 40) - transferOffset;
   }
 
   return (23 * 60 + 50) - transferOffset;
@@ -1590,7 +1574,7 @@ $('setNowBtn')?.addEventListener('click', () => {
   toast(`현재 시각(${$('depTime').value}) 기준으로 경로를 재계산합니다.`);
 });
 
-/* ───────────── 서울특별시 대중교통환승경로 조회 API (ws.bus.go.kr/api/rest/pathinfo) ───────────── */
+/* ───────────── 서울특별시 대중교통환승경로 조회 API ───────────── */
 function buildSeoulPathinfoServiceKey() {
   return DATA_GO_TRANSIT_KEY.includes('%')
     ? DATA_GO_TRANSIT_KEY
@@ -1879,10 +1863,24 @@ async function buildRealPathCoords(pointsLatLng) {
 }
 
 async function resolveSinglePlace(query) {
+  const cleanedQ = cleanPlaceName(query);
+  if (!cleanedQ) return null;
+
+  // 내장 주요 지하철역 좌표 우선 매칭 (정확도 및 응답 속도 향상)
+  const stKey = normStationKey(cleanedQ);
+  if (SUBWAY_STATIONS[stKey]) {
+    return {
+      label: `${stKey} (서울 지하철역)`,
+      name: stKey,
+      x: SUBWAY_STATIONS[stKey][1],
+      y: SUBWAY_STATIONS[stKey][0]
+    };
+  }
+
   try {
     const [seoulLocs, kakaoRes] = await Promise.all([
-      searchSeoulTransitLocations(query),
-      fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('서울 ' + query)}&size=1`, {
+      searchSeoulTransitLocations(cleanedQ),
+      fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent('서울 ' + cleanedQ)}&size=1`, {
         headers: { 'Authorization': `KakaoAK ${KAKAO_REST_KEY}` }
       }).then(r => r.json()).catch(() => null)
     ]);
@@ -2237,7 +2235,6 @@ async function evaluateMultiTransferLastTrainFallback({
 
     const hubArriveServiceMin = runningServiceMin + prevRideMin;
     const hubReadyServiceMin = hubArriveServiceMin + transferWalkMin;
-
     const targetLastServiceMin = getRouteLastTrainServiceMin(targetLeg.routeNm, true);
 
     if (hubReadyServiceMin <= targetLastServiceMin) {
@@ -2432,7 +2429,6 @@ async function convertApiPathToRouteCard({
   const lastLeg = legs[legs.length - 1];
   const firstMode = classifyTransitLegMode(firstLeg.routeNm);
 
-  /* 마지막 환승 대중교통의 막차 시간을 해당 경로의 기준 막차 시간으로 설정 */
   const finalTransitLegLastMin = getRouteLastTrainServiceMin(lastLeg.routeNm, legs.length > 1);
   const finalTransitLastStr = minToTime(finalTransitLegLastMin);
 
@@ -2460,7 +2456,6 @@ async function convertApiPathToRouteCard({
     mode: firstMode
   });
 
-  /* 첫 번째 대중교통부터 막차가 이미 끊긴 경우: 처음부터 도보 또는 직행 택시 연결 */
   const firstLastServiceMin = getRouteLastTrainServiceMin(firstLeg.routeNm, false);
   if (arrivalInfo.boardServiceMin > firstLastServiceMin) {
     return buildFirstLegCutoffDirectFallback({
@@ -2674,7 +2669,6 @@ async function runSeoulSearch() {
     const sGraphSt = findNearestGraphStation(places.start.y, places.start.x);
     const eGraphSt = findNearestGraphStation(places.end.y, places.end.x);
 
-    /* 1순위: 서울특별시 대중교통환승경로 API (getPathInfoBySubway) 결과 반영 */
     for (let i = 0; i < Math.min(3, realTransit.subwayPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.subwayPaths[i],
@@ -2703,7 +2697,6 @@ async function runSeoulSearch() {
       }
     }
 
-    /* 2순위: 서울특별시 대중교통환승경로 API (getPathInfoByBus) 결과 반영 */
     for (let i = 0; i < Math.min(3, realTransit.busPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busPaths[i],
@@ -2771,7 +2764,6 @@ async function runSeoulSearch() {
       }
     }
 
-    /* 3순위: 서울특별시 대중교통환승경로 API (getPathInfoByBusNSub) 결과 반영 */
     for (let i = 0; i < Math.min(3, realTransit.busNSubPaths.length); i++) {
       const cards = await convertApiPathToRouteCard({
         apiPath: realTransit.busNSubPaths[i],
@@ -2825,7 +2817,6 @@ async function runSeoulSearch() {
       }
     }
 
-    /* 4순위: 서울시 대중교통환승경로 + 잔여구간 택시 환승 전략 */
     if (!builtRoutes.some(r => r.category === 'hybrid') && budget > 0) {
       let hubPoint = places.via;
       let firstTransitLeg = null;
@@ -2949,7 +2940,6 @@ async function runSeoulSearch() {
       }
     }
 
-    /* 5순위: 카카오모빌리티 직행 택시 (첫 구간 막차 끊김으로 이미 직행 택시가 추가된 경우 중복 방지) */
     if (!builtRoutes.some(r => r.id === 'kakao_direct_taxi')) {
       const taxiDispatchWait = isNightTime ? 6 : 3;
       const taxiPickupServiceMin = baseServiceMin + taxiDispatchWait;
@@ -3255,10 +3245,97 @@ function renderFormattedBotText(container, rawText) {
   container.innerHTML = formatted;
 }
 
+/* ───────────── 출발지·도착지 자연어 해석 및 입력창 동기화 ───────────── */
+function resolveAliasOrPlaceName(rawName) {
+  const cleaned = String(rawName || '')
+    .trim()
+    .replace(/(에서|부터|까지|으로|로|행|가는|갈래|어떻게|알려줘|검색)$/g, '')
+    .trim();
+  if (!cleaned) return '';
+
+  const savedMatch = (settings.destinations || []).find(d => d.name === cleaned);
+  if (savedMatch && savedMatch.area) {
+    return cleanPlaceName(savedMatch.area);
+  }
+  return cleanPlaceName(cleaned);
+}
+
+async function syncInputsWithPlaces() {
+  const startInputVal = cleanPlaceName($('start')?.value || '');
+  const endInputVal = cleanPlaceName($('end')?.value || '');
+  let changed = false;
+
+  if (startInputVal && startInputVal !== cleanPlaceName(places.start?.name || '')) {
+    const resolvedStart = resolveAliasOrPlaceName(startInputVal);
+    if (resolvedStart.includes('현재')) {
+      const gps = await resolveCurrentGpsPlace();
+      if (gps) {
+        places.start = gps;
+        if ($('startResolved')) $('startResolved').textContent = `✓ ${gps.name} 설정됨`;
+        changed = true;
+      }
+    } else {
+      const sp = await resolveSinglePlace(resolvedStart);
+      if (sp) {
+        places.start = sp;
+        if ($('start')) $('start').value = sp.name;
+        if ($('startResolved')) $('startResolved').textContent = `✓ ${sp.name} 선택됨`;
+        changed = true;
+      }
+    }
+  }
+
+  if (endInputVal && endInputVal !== cleanPlaceName(places.end?.name || '')) {
+    const resolvedEnd = resolveAliasOrPlaceName(endInputVal);
+    const ep = await resolveSinglePlace(resolvedEnd);
+    if (ep) {
+      places.end = ep;
+      if ($('end')) $('end').value = ep.name;
+      if ($('endResolved')) $('endResolved').textContent = `✓ ${ep.name} 선택됨`;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    await runSeoulSearch();
+  }
+}
+
+function extractStartEndFromText(userText) {
+  const text = String(userText || '').trim();
+
+  // 패턴 1: "출발지 A 도착지 B" / "출발: A, 도착: B"
+  const explicitMatch = text.match(/출발(?:지)?\s*[:=]?\s*([가-힣A-Za-z0-9\s]+?)\s*(?:,|\/|\s+)\s*도착(?:지)?\s*[:=]?\s*([가-힣A-Za-z0-9]+)/);
+  if (explicitMatch) {
+    const s = resolveAliasOrPlaceName(explicitMatch[1]);
+    const e = resolveAliasOrPlaceName(explicitMatch[2]);
+    if (s && e) return { start: s, end: e };
+  }
+
+  // 패턴 2: "A에서 B(까지/가는/막차/요금/경로/어떻게...)"
+  const fromToMatch = text.match(/([가-힣A-Za-z0-9]+(?:\s*위치)?)\s*(?:에서|부터)\s*([가-힣A-Za-z0-9]+?)(?:까지|으로|로|가는|행|막차|요금|경로|버스|지하철|택시|\s|$)/);
+  if (fromToMatch && !fromToMatch[1].includes('현재 출발지') && !fromToMatch[1].includes('지금 설정')) {
+    const s = resolveAliasOrPlaceName(fromToMatch[1]);
+    const e = resolveAliasOrPlaceName(fromToMatch[2]);
+    if (s && e) return { start: s, end: e };
+  }
+
+  // 패턴 3: "A -> B" 또는 "A ➔ B"
+  const arrowMatch = text.match(/([가-힣A-Za-z0-9]+)\s*(?:->|➔|→|>|~)\s*([가-힣A-Za-z0-9]+)/);
+  if (arrowMatch) {
+    const s = resolveAliasOrPlaceName(arrowMatch[1]);
+    const e = resolveAliasOrPlaceName(arrowMatch[2]);
+    if (s && e) return { start: s, end: e };
+  }
+
+  return null;
+}
+
 async function generateLocalSmartReply(userText) {
-  const routeMatch = userText.match(/([가-힣A-Za-z0-9]+역?)\s*(?:에서|부터)\s*([가-힣A-Za-z0-9]+역?)\s*(?:까지|가는|행)/);
-  if (routeMatch) {
-    await executeAppRouteSearch({ start_place: routeMatch[1], end_place: routeMatch[2] });
+  await syncInputsWithPlaces();
+  const extracted = extractStartEndFromText(userText);
+  if (extracted && extracted.start && extracted.end) {
+    await executeAppRouteSearch({ start_place: extracted.start, end_place: extracted.end });
   }
 
   const sName = cleanPlaceName(places.start?.name || '출발지');
@@ -3284,12 +3361,12 @@ let isChatSending = false;
 
 const appRouteFunctionDeclaration = {
   name: 'search_seoul_route',
-  description: '사용자가 요청한 서울 내 출발지와 도착지 간의 경로를 서울특별시 대중교통환승경로 조회 API(ws.bus.go.kr/api/rest/pathinfo)를 통해 직접 검색하고 실시간·거리비례·환승 요금을 반환합니다.',
+  description: '사용자가 새로운 출발지나 도착지를 언급했을 때 서울특별시 대중교통환승경로 조회 API를 호출해 경로와 운임을 검색합니다. 사용자가 별도 장소를 말하지 않고 현재 설정된 경로를 물으면 호출하지 마세요.',
   parameters: {
     type: 'OBJECT',
     properties: {
-      start_place: { type: 'STRING', description: '출발지 장소명 또는 지하철역·정류장 이름' },
-      end_place: { type: 'STRING', description: '도착지 장소명 또는 지하철역·정류장 이름' },
+      start_place: { type: 'STRING', description: '출발지 장소명, 지하철역명, 또는 "현재 위치"' },
+      end_place: { type: 'STRING', description: '도착지 장소명 또는 지하철역명' },
       departure_time: { type: 'STRING', description: '조회 기준 시각 HH:MM 형식 (선택)' }
     },
     required: ['start_place', 'end_place']
@@ -3301,34 +3378,41 @@ async function executeAppRouteSearch({ start_place, end_place, departure_time })
     $('depTime').value = departure_time;
   }
 
-  if (start_place.includes('현재')) {
-    const gps = await resolveCurrentGpsPlace();
-    if (gps) {
-      places.start = gps;
-      if ($('start')) $('start').value = gps.name;
-      if ($('startResolved')) $('startResolved').textContent = `✓ ${gps.name} 설정됨`;
-    }
-  } else {
-    const sp = await resolveSinglePlace(start_place);
-    if (sp) {
-      places.start = sp;
-      if ($('start')) $('start').value = sp.name;
-      if ($('startResolved')) $('startResolved').textContent = `✓ ${sp.name} 선택됨`;
+  const normStart = resolveAliasOrPlaceName(start_place);
+  const normEnd = resolveAliasOrPlaceName(end_place);
+
+  if (normStart) {
+    if (normStart.includes('현재')) {
+      const gps = await resolveCurrentGpsPlace();
+      if (gps) {
+        places.start = gps;
+        if ($('start')) $('start').value = gps.name;
+        if ($('startResolved')) $('startResolved').textContent = `✓ ${gps.name} 설정됨`;
+      }
+    } else if (normStart !== cleanPlaceName(places.start?.name || '')) {
+      const sp = await resolveSinglePlace(normStart);
+      if (sp) {
+        places.start = sp;
+        if ($('start')) $('start').value = sp.name;
+        if ($('startResolved')) $('startResolved').textContent = `✓ ${sp.name} 선택됨`;
+      }
     }
   }
 
-  const ep = await resolveSinglePlace(end_place);
-  if (ep) {
-    places.end = ep;
-    if ($('end')) $('end').value = ep.name;
-    if ($('endResolved')) $('endResolved').textContent = `✓ ${ep.name} 선택됨`;
+  if (normEnd && normEnd !== cleanPlaceName(places.end?.name || '')) {
+    const ep = await resolveSinglePlace(normEnd);
+    if (ep) {
+      places.end = ep;
+      if ($('end')) $('end').value = ep.name;
+      if ($('endResolved')) $('endResolved').textContent = `✓ ${ep.name} 선택됨`;
+    }
   }
 
   await runSeoulSearch();
 
   return {
-    start: places.start?.name || start_place,
-    end: places.end?.name || end_place,
+    start: places.start?.name || normStart,
+    end: places.end?.name || normEnd,
     currentRealTime: getNowTimeStr(),
     queryTime: $('depTime')?.value || getNowTimeStr(),
     seoulTransitApiPathsFound: lastSeoulTransitApiSuccessCount,
@@ -3403,27 +3487,44 @@ async function askGeminiChatbot(userMessage) {
   sendBtn.textContent = '전송중';
   box.scrollTop = box.scrollHeight;
 
-  const loadingMsg = node('div', '🔍 서울특별시 대중교통환승경로 API와 거리비례·환승 요금을 조회하고 있습니다...', 'msg bot');
+  const loadingMsg = node('div', '🔍 출발지·도착지 좌표를 확인하고 경로를 조회 중입니다...', 'msg bot');
   box.append(loadingMsg);
   box.scrollTop = box.scrollHeight;
+
+  // 1) 홈 화면 입력창에 미확정 텍스트가 있으면 먼저 동기화
+  await syncInputsWithPlaces();
+
+  // 2) 질문 문장에 명시적인 "A에서 B"가 있으면 AI 함수 호출 전 선행 검색으로 정확도 보장
+  const preExtracted = extractStartEndFromText(text);
+  if (preExtracted && preExtracted.start && preExtracted.end) {
+    loadingMsg.textContent = `🔍 [${preExtracted.start} ➔ ${preExtracted.end}] 서울시 대중교통환승경로 조회 중...`;
+    await executeAppRouteSearch({ start_place: preExtracted.start, end_place: preExtracted.end });
+  }
 
   const depTime = $('depTime')?.value || getNowTimeStr();
   const sName = cleanPlaceName(places.start?.name || '출발지');
   const eName = cleanPlaceName(places.end?.name || '도착지');
   const budget = won($('budget')?.value ?? 30000);
+  const savedDestList = (settings.destinations || []).map(d => `${d.name}(${d.area})`).join(', ');
 
   const routeSummaryText = visible.map((r, idx) => {
     const { remainingMin } = calcRemainingFromRealNow(r.departure);
     return `${idx + 1}. [${r.tag}] ${r.name} | 탑승 노선: ${r.transitGuideText} | 출발 정류장·역 도착: ${r.departure} (현재 시각 기준 ${formatDurationKorean(remainingMin)} 남음) | 소요: ${r.minutes}분 | 비용: ${won(r.cost)} (${r.fareDetail || ''})`;
   }).join('\n');
 
-  const systemPrompt = `당신은 서울특별시 심야 귀가 및 대중교통 길찾기 앱 '집에 못 갈 지도'의 전문 AI 어시스턴트입니다.
-현재 앱 탐색 정보 (서울특별시 대중교통환승경로 조회 API 연동):
-- 실제 현재 시각: ${getNowTimeStr()}, 조회 설정 시각: ${depTime}
-- 출발지: ${sName}, 도착지: ${eName}, 택시예산: ${budget}, 최대도보허용: ${settings.maxWalk}m
-- 현재 5대 추천 경로 (서울시 대중교통환승경로 API + 마지막 환승 대중교통 막차 시각 + 지하철 실시간 운임 + 버스·통합환승 거리비례제 반영):
+  const systemPrompt = `당신은 서울특별시 심야 귀가 길찾기 앱 '집에 못 갈 지도'의 전문 AI 어시스턴트입니다.
+[현재 앱에 확정된 탐색 상태]
+- 실제 현재 시각: ${getNowTimeStr()}, 조회 기준 시각: ${depTime}
+- 현재 출발지: ${sName} (좌표: ${places.start?.y}, ${places.start?.x})
+- 현재 도착지: ${eName} (좌표: ${places.end?.y}, ${places.end?.x})
+- 사용자 저장 목적지 별칭: ${savedDestList}
+- 택시 예산: ${budget}, 최대 도보 허용: ${settings.maxWalk}m
+- 현재 조회된 추천 경로 결과:
 ${routeSummaryText || '없음'}
-사용자가 경로와 요금을 물어보면 'search_seoul_route' 함수를 호출하여 서울특별시 대중교통환승경로 API 결과를 조회하고, 노선별 막차 시간과 지하철 실시간 운임·버스 거리비례제(10km 초과 시 5km당 +100원)·통합환승 할인 금액을 명확히 설명하세요.`;
+
+[중요 규칙]
+1. 사용자가 별도 지명을 말하지 않고 "현재 경로", "지금 설정된 출발지·도착지", "막차 시간", "요금 비교"를 물으면 절대 search_seoul_route를 호출하지 말고 위 [현재 앱에 확정된 탐색 상태]의 출발지(${sName})·도착지(${eName}) 데이터를 기준으로 바로 답변하세요.
+2. 사용자가 위와 다른 새로운 출발지나 도착지를 언급한 경우에만 search_seoul_route를 호출하세요. ("집", "자취방", "본가"는 저장 목적지 별칭의 실제 역명으로 변환해 전달하세요.)`;
 
   chatHistory.push({ role: 'user', parts: [{ text }] });
 
@@ -3434,7 +3535,7 @@ ${routeSummaryText || '없음'}
       contents: contentsPayload,
       generationConfig: {
         maxOutputTokens: GEMINI_MAX_TOKENS,
-        temperature: 0.7
+        temperature: 0.4
       }
     };
     if (toolsPayload && toolsPayload.length > 0) {
@@ -3469,13 +3570,19 @@ ${routeSummaryText || '없음'}
     if (fnCallPart) {
       const fnName = fnCallPart.functionCall.name;
       const fnArgs = fnCallPart.functionCall.args || {};
-      loadingMsg.textContent = `🔍 [${fnArgs.start_place || sName} ➔ ${fnArgs.end_place || eName}] 서울특별시 대중교통환승경로 API로 조회 중입니다...`;
+      const resolvedS = resolveAliasOrPlaceName(fnArgs.start_place) || sName;
+      const resolvedE = resolveAliasOrPlaceName(fnArgs.end_place) || eName;
+      loadingMsg.textContent = `🔍 [${resolvedS} ➔ ${resolvedE}] 서울특별시 대중교통환승경로 API로 조회 중입니다...`;
 
       chatHistory.push(candidate.content);
 
       let fnResult = {};
       if (fnName === 'search_seoul_route') {
-        fnResult = await executeAppRouteSearch(fnArgs);
+        fnResult = await executeAppRouteSearch({
+          start_place: resolvedS,
+          end_place: resolvedE,
+          departure_time: fnArgs.departure_time
+        });
       }
 
       chatHistory.push({
@@ -3496,7 +3603,7 @@ ${routeSummaryText || '없음'}
     const replyText = modelParts.filter(p => p.text).map(p => p.text).join('\n').trim();
 
     if (replyText) {
-      if ($('aiStatusBadge')) $('aiStatusBadge').textContent = `${activeModel} · 서울시API 연동`;
+      if ($('aiStatusBadge')) $('aiStatusBadge').textContent = `${activeModel} · ${places.start?.name}➔${places.end?.name}`;
       renderFormattedBotText(loadingMsg, replyText);
       appendGroundingSources(loadingMsg, candidate);
       if (candidate?.content) {
@@ -3508,7 +3615,7 @@ ${routeSummaryText || '없음'}
       throw new Error('Empty response');
     }
   } catch (err) {
-    if ($('aiStatusBadge')) $('aiStatusBadge').textContent = '서울시 환승경로 API 모드';
+    if ($('aiStatusBadge')) $('aiStatusBadge').textContent = `서울시API · ${places.start?.name}➔${places.end?.name}`;
     const smartFallbackReply = await generateLocalSmartReply(text);
     renderFormattedBotText(loadingMsg, smartFallbackReply);
   } finally {
@@ -3779,8 +3886,16 @@ renderSaved();
 });
 document.querySelectorAll('[data-search]').forEach(b => b.addEventListener('click', () => searchPlaces(b.dataset.search)));
 
-$('homeFind')?.addEventListener('click', () => { runSeoulSearch(); tab('strategy'); });
-$('fetchRoutes')?.addEventListener('click', () => { $('searchDialog')?.close(); runSeoulSearch(); });
+$('homeFind')?.addEventListener('click', async () => {
+  await syncInputsWithPlaces();
+  await runSeoulSearch();
+  tab('strategy');
+});
+$('fetchRoutes')?.addEventListener('click', async () => {
+  $('searchDialog')?.close();
+  await syncInputsWithPlaces();
+  await runSeoulSearch();
+});
 $('openStrategy')?.addEventListener('click', () => tab('strategy'));
 $('settings')?.addEventListener('click', () => $('searchDialog')?.showModal());
 $('homeAdvanced')?.addEventListener('click', () => $('searchDialog')?.showModal());
@@ -3809,7 +3924,6 @@ $('homeSwap')?.addEventListener('click', () => {
 });
 
 let wakeLockSentinel = null;
-
 function updateWakeLockBadge(text) {
   const badge = $('timerWakeLockStatus');
   if (badge) badge.textContent = text;
@@ -3836,9 +3950,7 @@ async function requestScreenWakeLock() {
 
 async function releaseScreenWakeLock() {
   if (wakeLockSentinel) {
-    try {
-      await wakeLockSentinel.release();
-    } catch {}
+    try { await wakeLockSentinel.release(); } catch {}
     wakeLockSentinel = null;
   }
   updateWakeLockBadge('🔆 화면 꺼짐 방지 해제됨');
@@ -3974,6 +4086,10 @@ function tab(id) {
   if (id === 'strategy') applyConditionAndRender();
   if (id === 'group') updateQrCodes();
   if (id === 'chat') {
+    syncInputsWithPlaces();
+    if ($('aiStatusBadge')) {
+      $('aiStatusBadge').textContent = `${cleanPlaceName(places.start?.name || '')} ➔ ${cleanPlaceName(places.end?.name || '')}`;
+    }
     const box = $('chatMessages');
     if (box) box.scrollTop = box.scrollHeight;
   }
